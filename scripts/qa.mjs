@@ -9,10 +9,10 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { transform } from "esbuild";
-import { convert, ConversionError } from "../src/converter/index.mjs";
-import { detectLanguage } from "../src/converter/language.mjs";
-import { describeFont } from "../src/converter/fonts.mjs";
-import { quote, validateFile, MAX_PAGES } from "../src/lib/pricing.mjs";
+import { convert, ConversionError } from "../src/converter/index.ts";
+import { detectLanguage } from "../src/converter/language.ts";
+import { describeFont } from "../src/converter/fonts.ts";
+import { quote, validateFile, MAX_PAGES } from "../src/lib/pricing.ts";
 import { HOSTILE_LINES } from "./make-test-pdf.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");

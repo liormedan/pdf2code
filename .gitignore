@@ -11,3 +11,5 @@ fixtures/*.pdf
 .env.local
 .DS_Store
 *.log
+tsconfig.tsbuildinfo
+*.tsbuildinfo

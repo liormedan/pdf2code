@@ -11,7 +11,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { HtmlValidate } from "html-validate";
 import { transform } from "esbuild";
-import { convert } from "../src/converter/index.mjs";
+import { convert } from "../src/converter/index.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
