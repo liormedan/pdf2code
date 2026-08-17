@@ -15,6 +15,7 @@ import { createJob, buildZip, downloadBlob, type Job, type JobState } from "@/sr
 import { loadPdfjs, openPdf, PdfOpenError } from "@/src/lib/pdf-client.ts";
 import { validateFile, MAX_PAGES, MAX_BYTES } from "@/src/lib/pricing.ts";
 import { useActivity } from "@/src/lib/session-activity";
+import { usePendingFile } from "@/src/lib/pending-file";
 import type { ConversionResult, ConversionWarning, OutputFormat } from "@/src/converter/types.ts";
 import OutputPreview from "./OutputPreview";
 
@@ -31,6 +32,7 @@ export default function Converter() {
   const t = useTranslations("convert");
   const tWarn = useTranslations("warnings");
   const { record } = useActivity();
+  const { take } = usePendingFile();
 
   const [file, setFile] = useState<File | null>(null);
   const [doc, setDoc] = useState<DocProbe | null>(null);
@@ -117,6 +119,13 @@ export default function Converter() {
       window.removeEventListener("drop", onDrop);
     };
   }, [inspectFile]);
+
+  // A file dropped on the overview is waiting here. take() clears it, so a reload
+  // lands on an empty converter rather than silently re-opening the last document.
+  useEffect(() => {
+    const handedOver = take();
+    if (handedOver) inspectFile(handedOver);
+  }, [take, inspectFile]);
 
   const baseName = useMemo(() => (file?.name ?? "document").replace(/\.pdf$/i, ""), [file]);
 
