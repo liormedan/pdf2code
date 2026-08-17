@@ -1,6 +1,6 @@
-# pdf2code
+# PDF to Code
 
-Convert a PDF into a standalone HTML page or a drop-in React component — **entirely in the browser**. The file is never uploaded anywhere.
+Turn a PDF into a standalone HTML page or a drop-in React component — **entirely in the browser**. The file is never uploaded anywhere.
 
 ---
 

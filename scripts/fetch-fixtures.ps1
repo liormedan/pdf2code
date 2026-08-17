@@ -10,7 +10,7 @@
 $dest = Join-Path $PSScriptRoot "..\fixtures"
 if (-not (Test-Path $dest)) { New-Item -ItemType Directory -Path $dest | Out-Null }
 
-$ua = @{ "User-Agent" = "pdf2html-bakeoff" }
+$ua = @{ "User-Agent" = "pdf2code-bakeoff" }
 
 # name = local filename | src = pdf.js corpus filename OR a direct https URL
 $fixtures = @(

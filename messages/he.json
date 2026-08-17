@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "PDF ל-HTML",
-    "tagline": "הפוך PDF לעמוד שאפשר באמת לערוך"
+    "name": "PDF to Code",
+    "tagline": "הפוך PDF ל-HTML או React שאפשר באמת לערוך"
   },
   "nav": {
     "overview": "סקירה",

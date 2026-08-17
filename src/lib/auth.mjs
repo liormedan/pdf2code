@@ -14,7 +14,7 @@
 
 const encoder = new TextEncoder();
 
-const SESSION_COOKIE = "pdf2html_session";
+const SESSION_COOKIE = "pdf2code_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 export { SESSION_COOKIE, SESSION_TTL_SECONDS };

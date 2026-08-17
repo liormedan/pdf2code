@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "PDF to HTML",
-    "tagline": "Convert a PDF into a page you can actually edit"
+    "name": "PDF to Code",
+    "tagline": "Turn a PDF into HTML or React you can actually edit"
   },
   "nav": {
     "overview": "Overview",

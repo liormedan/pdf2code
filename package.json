@@ -1,9 +1,9 @@
 {
-  "name": "pdf2html",
+  "name": "pdf2code",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Convert PDF to standalone HTML or a React component, entirely in the browser",
+  "description": "Turn a PDF into HTML or a React component, entirely in the browser",
   "scripts": {
     "predev": "node scripts/sync-pdf-assets.mjs",
     "dev": "next dev",
