@@ -56,6 +56,22 @@ export interface PageModel {
 
 export type Direction = "ltr" | "rtl";
 
+/**
+ * What paints a page, and therefore how it should be rasterised.
+ *
+ * `photographic` compresses well as JPEG and would be several times larger as PNG for
+ * no visible gain. `lineArt` must be PNG: JPEG rings around glyph and vector edges,
+ * and on output that promises an exact copy that ringing is the whole failure.
+ * `text` needs no raster at all — the text layer already reproduces it.
+ */
+export type PageKind = "photographic" | "lineArt" | "text";
+
+export interface RasterHint {
+  kind: PageKind;
+  format: "jpeg" | "png";
+  quality: number;
+}
+
 export interface DocumentInfo {
   pages: number;
   title: string;
@@ -97,7 +113,7 @@ export interface ConvertOptions {
   /** 0 means no limit. */
   maxPages?: number;
   /** Renders a page to a data: URI. Omit for text-only output. */
-  rasterize?: (page: PdfPageProxy, scale: number) => Promise<string | null>;
+  rasterize?: (page: PdfPageProxy, scale: number, hint: RasterHint) => Promise<string | null>;
   onProgress?: (progress: ConversionProgress) => void;
   signal?: { readonly aborted: boolean };
 }

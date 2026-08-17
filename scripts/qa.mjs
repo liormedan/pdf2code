@@ -9,7 +9,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { transform } from "esbuild";
-import { convert, ConversionError } from "../src/converter/index.ts";
+import { convert, ConversionError, classifyPage } from "../src/converter/index.ts";
 import { detectLanguage } from "../src/converter/language.ts";
 import { describeFont } from "../src/converter/fonts.ts";
 import { quote, validateFile, MAX_PAGES } from "../src/lib/pricing.ts";
@@ -221,6 +221,28 @@ section("5. React output must compile and render");
       check("component renders a tree", false, err.message);
     }
   }
+}
+
+// ───────────────────────────────────────────────────────── raster format
+section("6. Raster format must follow page content");
+{
+  const mk = (vector, images, runs) => ({ stats: { vector, images, total: 0 }, runs: new Array(runs).fill({}) });
+
+  const photo = classifyPage(mk(0, 3, 2));
+  check("a scan is photographic", photo.kind === "photographic", photo.kind);
+  check("a scan uses JPEG", photo.format === "jpeg", photo.format);
+
+  const mixed = classifyPage(mk(40, 1, 150));
+  check("vector-plus-text is line art", mixed.kind === "lineArt", mixed.kind);
+  // The bug this guards: JPEG here rings around every glyph and rule, which is exactly
+  // the artefact an exact copy cannot have.
+  check("line art uses PNG, never JPEG", mixed.format === "png", mixed.format);
+
+  const rules = classifyPage(mk(3, 0, 60));
+  check("a few rules still count as line art", rules.kind === "lineArt", rules.kind);
+
+  const plain = classifyPage(mk(0, 0, 30));
+  check("pure text needs no raster", plain.kind === "text", plain.kind);
 }
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);

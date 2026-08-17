@@ -3,7 +3,7 @@
 // Everything here is client-only: the whole point of the architecture is that the file
 // never leaves the user's machine, so there is no server counterpart to this module.
 
-import type { PdfDocumentProxy, PdfjsModule, PdfPageProxy } from "@/src/converter/types.ts";
+import type { PdfDocumentProxy, PdfjsModule, PdfPageProxy, RasterHint } from "@/src/converter/types.ts";
 
 /** The pdf.js module plus the entry points only the browser side uses. */
 export interface PdfjsBrowserModule extends PdfjsModule {
@@ -74,9 +74,17 @@ export async function openPdf(
 
 /**
  * Render a page to a data: URI for use as the background layer.
- * JPEG keeps output small on photographic pages; PNG would balloon a 30-page document.
+ *
+ * The format follows the page's own content rather than a fixed choice: JPEG only for
+ * genuinely photographic pages, PNG wherever there is vector art or text under the
+ * raster. Compressing line work as JPEG puts ringing around every glyph and rule,
+ * which is the one artefact an exact copy cannot have.
  */
-export async function rasterizePage(page: PdfPageProxy, scale = 2): Promise<string | null> {
+export async function rasterizePage(
+  page: PdfPageProxy,
+  scale = 2,
+  hint: RasterHint = { kind: "lineArt", format: "png", quality: 1 },
+): Promise<string | null> {
   const viewport = page.getViewport({ scale });
   const canvas = document.createElement("canvas");
   canvas.width = Math.floor(viewport.width);
@@ -89,7 +97,7 @@ export async function rasterizePage(page: PdfPageProxy, scale = 2): Promise<stri
 
   await page.render({ canvasContext: ctx, viewport }).promise;
 
-  const url = canvas.toDataURL("image/jpeg", 0.82);
+  const url = canvas.toDataURL(`image/${hint.format}`, hint.quality);
   // Free the backing store immediately — a 30-page document otherwise holds every
   // canvas alive until GC decides otherwise, which is how these tabs run out of memory.
   canvas.width = canvas.height = 0;

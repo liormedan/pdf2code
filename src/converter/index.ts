@@ -16,7 +16,31 @@ import type {
   PageModel,
   PdfDocumentProxy,
   PdfjsModule,
+  RasterHint,
 } from "./types.ts";
+
+/**
+ * Decide how a page should be rasterised from what actually paints it.
+ *
+ * Measured against the fixture corpus with `npm run images`: pages carrying vector art
+ * alongside text are the common case in real documents, and compressing those as JPEG
+ * puts visible ringing around every glyph and rule. That is precisely the artefact an
+ * "exact copy" cannot have, so those pages go to PNG and only genuinely photographic
+ * pages take JPEG.
+ */
+export function classifyPage(page: PageModel): RasterHint {
+  const { vector, images } = page.stats;
+  const text = page.runs.length;
+
+  if (images > 0 && vector <= 4 && text < 20) {
+    // A scan or a full-bleed photo. PNG here is several times larger for no gain.
+    return { kind: "photographic", format: "jpeg", quality: 0.92 };
+  }
+  if (vector > 0 || images > 0) {
+    return { kind: "lineArt", format: "png", quality: 1 };
+  }
+  return { kind: "text", format: "png", quality: 1 };
+}
 
 export { extractPage, inspect, toHtml, toReact };
 export type * from "./types.ts";
@@ -65,12 +89,13 @@ export async function convert(
 
     // Rasterise only where it earns its bytes: a page that is pure text reconstructs
     // perfectly as markup, and a background image there is dead weight.
-    const worthRastering = model.stats.vector > 4 || model.stats.images > 0 || model.runs.length === 0;
+    const hint = classifyPage(model);
+    const worthRastering = hint.kind !== "text" || model.runs.length === 0;
 
     if (opts.background && rasterize && worthRastering) {
       onProgress?.({ page: n, pages: pageCount, phase: "render" });
       try {
-        backgrounds.push(await rasterize(page, opts.backgroundScale));
+        backgrounds.push(await rasterize(page, opts.backgroundScale, hint));
       } catch {
         // A failed raster degrades to text-only for that page rather than killing the job.
         backgrounds.push(null);
