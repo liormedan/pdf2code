@@ -106,6 +106,16 @@ export interface HtmlOptions {
   responsive?: boolean;
   lang?: string;
   dir?: Direction;
+  /**
+   * Drop the viewer chrome — the dark surround, the page gap and the drop shadow —
+   * and let a single page fill the viewport exactly.
+   *
+   * The default styling exists for someone opening the file directly, where a page
+   * floating on a grey ground reads as a document. Rendered into a frame already sized
+   * to the page, that same ground becomes a grey band across the top and shifts the
+   * content out of alignment with whatever it is being compared against.
+   */
+  bare?: boolean;
 }
 
 export function toHtml(pages: PageModel[], {
@@ -114,6 +124,7 @@ export function toHtml(pages: PageModel[], {
   responsive = true,
   lang = "en",
   dir = "ltr",
+  bare = false,
 }: HtmlOptions = {}): string {
   const hasBg = backgrounds.some(Boolean);
 
@@ -153,7 +164,10 @@ export function toHtml(pages: PageModel[], {
 <title>${esc(title)}</title>
 <style>
 html, body { margin: 0; padding: 0; }
-${PAGE_CSS}
+${PAGE_CSS}${bare ? `
+/* Chrome removed: the page is the whole viewport. */
+.pdf-doc { padding: 0; gap: 0; background: none; }
+.pdf-page { box-shadow: none; }` : ""}
 </style>
 </head>
 <body>

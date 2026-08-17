@@ -49,6 +49,10 @@ export default function OutputPreview({ result, file }: { result: ConversionResu
     lang: result.info.lang,
     dir: result.info.dir,
     responsive: false,
+    // The frame is already exactly page-sized, so the viewer's grey surround would
+    // only show as a band across the top and push the page out of alignment with the
+    // original beside it.
+    bare: true,
   });
 
   const source = result.files[activeFile] ?? "";
