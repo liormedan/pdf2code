@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF2HTML — Sprint 0 bake-off</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef0f4;
+    --line: #d8dce4;
+    --ink: #1b1f27;
+    --ink-dim: #5d6472;
+    --accent: #b45309;
+    --accent-soft: #fdf0e2;
+    --ok: #15803d;
+    --warn: #b45309;
+    --bad: #b91c1c;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --surface: #1b1e24;
+      --surface-2: #22262e;
+      --line: #333944;
+      --ink: #e6e8ec;
+      --ink-dim: #949cab;
+      --accent: #f0a45c;
+      --accent-soft: #2a2119;
+      --ok: #4ade80;
+      --warn: #f0a45c;
+      --bad: #f87171;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 18px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+  header h1 small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ctl { display: flex; align-items: center; gap: 7px; }
+  .ctl label { font-size: 12px; color: var(--ink-dim); }
+  select, button {
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 9px;
+  }
+  button { cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  main { display: grid; grid-template-columns: 260px 1fr; min-height: 0; }
+
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 10px;
+  }
+  .side-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    padding: 6px 8px;
+  }
+  .fixture {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    line-height: 1.35;
+  }
+  .fixture:hover { background: var(--surface-2); }
+  .fixture[aria-current="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .fixture .nm { font-size: 12.5px; }
+  .fixture .meta {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .panes { display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+  .pane { display: grid; grid-template-rows: auto 1fr; min-width: 0; min-height: 0; }
+  .pane + .pane { border-left: 1px solid var(--line); }
+  .pane-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 7px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+  }
+  .pane-head b { font-weight: 620; }
+  .pane-head .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--ink-dim);
+  }
+  .pane.candidate .pane-head { background: var(--accent-soft); }
+  .pane.candidate .pane-head .tag { color: var(--accent); }
+  .pane-head .stats {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .viewport { overflow: auto; padding: 18px; display: flex; justify-content: center; }
+
+  .page-wrap {
+    position: relative;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.12);
+    flex: none;
+  }
+  .page-wrap.reconstructed { color: #111; }
+  .page-wrap canvas { display: block; }
+
+  .text-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    opacity: 0.25;
+    line-height: 1;
+    forced-color-adjust: none;
+  }
+  .text-layer :is(span, br) {
+    position: absolute;
+    white-space: pre;
+    transform-origin: 0 0;
+    color: transparent;
+  }
+  .text-layer.show { opacity: 1; }
+  .text-layer.show span { color: #06c; background: rgb(0 102 204 / 0.08); }
+  .text-layer ::selection { background: rgb(0 102 204 / 0.3); }
+
+  .msg { padding: 40px 20px; color: var(--ink-dim); text-align: center; font-size: 13px; }
+  .msg.error { color: var(--bad); font-family: var(--mono); font-size: 12px; text-align: left; }
+
+  .docbar {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 6px 18px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+    flex-wrap: wrap;
+  }
+  .docbar .flag { color: var(--warn); }
+  .docbar .good { color: var(--ok); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bake-off<small>Sprint 0 · conversion engine</small></h1>
+
+  <div class="ctl">
+    <label for="engine">Candidate</label>
+    <select id="engine"></select>
+  </div>
+
+  <div class="ctl">
+    <label for="scale">Scale</label>
+    <select id="scale">
+      <option value="1">100%</option>
+      <option value="1.5" selected>150%</option>
+      <option value="2">200%</option>
+    </select>
+  </div>
+
+  <div class="ctl">
+    <button id="prev">‹ Prev</button>
+    <span id="pageLabel" style="font-family:var(--mono);font-size:12px;min-width:76px;text-align:center">— / —</span>
+    <button id="next">Next ›</button>
+  </div>
+
+  <div class="ctl">
+    <button id="toggleText" title="Reveal the text layer over the reference render">Show text layer</button>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <div class="side-title">Fixtures</div>
+    <div id="fixtures"><div class="msg">loading…</div></div>
+  </aside>
+
+  <div style="display:grid;grid-template-rows:auto 1fr;min-height:0">
+    <div class="docbar" id="docbar">select a fixture</div>
+    <div class="panes">
+      <section class="pane">
+        <div class="pane-head">
+          <span class="tag">Reference</span>
+          <b>What the PDF actually looks like</b>
+          <span class="stats" id="refStats"></span>
+        </div>
+        <div class="viewport" id="refView"><div class="msg">—</div></div>
+      </section>
+      <section class="pane candidate">
+        <div class="pane-head">
+          <span class="tag">Output</span>
+          <b id="candName">—</b>
+          <span class="stats" id="candStats"></span>
+        </div>
+        <div class="viewport" id="candView"><div class="msg">—</div></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="./app.mjs"></script>
+</body>
+</html>

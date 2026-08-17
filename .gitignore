@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.next-build/
+out/
+public/pdf.worker.mjs
+public/standard_fonts/
+public/cmaps/
+public/__test-*
+fixtures/*.pdf
+.env
+.env.local
+.DS_Store
+*.log

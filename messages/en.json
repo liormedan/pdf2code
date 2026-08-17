@@ -1,0 +1,122 @@
+{
+  "app": {
+    "name": "PDF to HTML",
+    "tagline": "Convert a PDF into a page you can actually edit"
+  },
+  "nav": {
+    "overview": "Overview",
+    "convert": "Convert",
+    "activity": "Activity",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "toggleSidebar": "Toggle navigation",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "login": {
+    "title": "Enter your access code",
+    "subtitle": "This tool is in private development. It is not open to the public yet.",
+    "codeLabel": "Access code",
+    "codePlaceholder": "Enter the code you were given",
+    "submit": "Continue",
+    "submitting": "Checking…",
+    "notAPassword": "This is a shared access code, not a personal password. Do not enter a password you use anywhere else.",
+    "genericError": "Something went wrong. Try again.",
+    "devSignIn": "Sign in as developer",
+    "devSignInNote": "Local development only — this button does not exist in a production build."
+  },
+  "overview": {
+    "title": "Overview",
+    "quickConvert": "Drop a PDF to start",
+    "quickConvertHint": "or open the converter",
+    "statConversions": "Conversions",
+    "statPages": "Pages converted",
+    "statSaved": "Output size",
+    "thisSession": "this session",
+    "recent": "Recent activity",
+    "emptyTitle": "Nothing converted yet",
+    "emptyBody": "Activity is kept in this browser tab only and disappears when you refresh. Your files never leave your computer."
+  },
+  "convert": {
+    "title": "Convert",
+    "choosePdf": "Choose a PDF",
+    "dropHere": "Drop it here",
+    "dragHint": "or drag one anywhere on this page",
+    "limits": "Up to {megabytes} MB and {pages} pages",
+    "chooseAnother": "Choose another",
+    "reading": "reading…",
+    "pageCount": "{count, plural, one {# page} other {# pages}}",
+    "outputLabel": "Output",
+    "formatHtml": "HTML",
+    "formatHtmlHint": "One standalone file",
+    "formatReact": "React",
+    "formatReactHint": "Component + CSS",
+    "fidelityLabel": "Fidelity",
+    "keepGraphics": "Keep graphics",
+    "keepGraphicsOn": "Vector art and images are preserved as a background layer. Larger file, looks identical to the PDF.",
+    "keepGraphicsOff": "Text only — clean, editable markup, but any graphics from the original are dropped.",
+    "start": "Convert",
+    "cancel": "Cancel",
+    "download": "Download ZIP",
+    "convertAnother": "Convert another",
+    "tryAgain": "Try again",
+    "failed": "Conversion failed.",
+    "converted": "Converted {count, plural, one {# page} other {# pages}}",
+    "scannedTitle": "This PDF is a scan.",
+    "scannedBody": "It has no text layer, so the output will keep the page images but the text will not be selectable or searchable.",
+    "tooLongTitle": "{count} pages.",
+    "tooLongBody": "Only the first {limit} will be converted."
+  },
+  "preview": {
+    "compare": "Compare",
+    "compareHint": "Original beside the conversion",
+    "output": "Output",
+    "outputHint": "The converted page on its own",
+    "code": "Code",
+    "codeHint": "The files you will download",
+    "original": "Original PDF",
+    "converted": "Converted",
+    "withGraphics": "with graphics",
+    "textOnly": "text only",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "pageOf": "Page {page} of {total}",
+    "truncated": "Showing the first {shown}k characters of {total}k. The download contains the whole file.",
+    "renderFailed": "Could not render the original page."
+  },
+  "activity": {
+    "title": "Activity",
+    "subtitle": "Kept in this tab only. Refreshing clears it.",
+    "file": "File",
+    "pages": "Pages",
+    "output": "Output",
+    "size": "Size",
+    "when": "When",
+    "clear": "Clear"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceHint": "Applies to this browser.",
+    "language": "Language",
+    "languageHint": "The interface language. Your documents are converted in whatever language they are written in.",
+    "defaults": "Conversion defaults",
+    "defaultsHint": "Pre-selected the next time you convert something.",
+    "storage": "Data",
+    "storageHint": "Nothing is stored on our servers — no files, no accounts, no history. Preferences live in this browser only.",
+    "reset": "Reset preferences"
+  },
+  "common": {
+    "megabytes": "MB",
+    "kilobytes": "KB"
+  },
+  "warnings": {
+    "SCANNED": "This PDF has no text layer — it is a scan. The output keeps the page images, but the text will not be selectable or searchable without OCR.",
+    "GRAPHICS_DROPPED": "{count, plural, one {# page contains} other {# pages contain}} graphics that text-only output cannot reproduce. Turn on “Keep graphics” to keep them.",
+    "TRUNCATED": "Only the first {limit} of {total} pages were converted.",
+    "NO_OFFSCREEN_CANVAS": "This browser cannot render page backgrounds, so the output is text-only. Try Chrome, Edge or a recent Firefox for full visual fidelity."
+  }
+}

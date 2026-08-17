@@ -1,0 +1,180 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Paper, ink, and pressed green.
+   The subject is documents, so the ground is warm paper stock and the text is a dense
+   near-black rather than pure #000. The accent is the verdigris of an inked press
+   plate — saturated enough to carry every action, and crucially *not* red, so red
+   stays reserved for the one thing it should mean: something went wrong.
+
+   Every pairing below is verified by `npm run contrast`, which reads this file
+   directly. Change a value here and re-run it. */
+
+:root {
+  --radius: 0.625rem;
+
+  --background: #faf8f3;
+  --foreground: #17150f;
+
+  --card: #ffffff;
+  --card-foreground: #17150f;
+  --popover: #ffffff;
+  --popover-foreground: #17150f;
+
+  --primary: #0d6b5b;
+  --primary-foreground: #ffffff;
+  --primary-hover: #095146;
+
+  --secondary: #f1eee6;
+  --secondary-foreground: #17150f;
+
+  --muted: #f1eee6;
+  /* Small mono labels sit at 11–12px, so they need the full 4.5:1 even though they
+     read as secondary. A lighter grey only reached 3.17:1 on --muted. */
+  --muted-foreground: #6b6658;
+
+  --accent: #e6f2ef;
+  --accent-foreground: #0d6b5b;
+
+  --destructive: #b3341f;
+  --destructive-foreground: #ffffff;
+  --destructive-muted: #fbeee9;
+
+  --warning: #8a5a13;
+  --warning-muted: #fbf3e3;
+
+  /* WCAG 1.4.11: the boundary of an interactive control needs 3:1 when it is what
+     identifies the control. Chips and outline buttons sit on the same colour as the
+     panel behind them, so their border is exactly that. --divider is a decorative
+     hairline and carries no such requirement. */
+  --border: #949080;
+  --divider: #ddd8cc;
+  --input: #eae6dc;
+  --ring: #0d6b5b;
+
+  --sidebar: #f4f1ea;
+  --sidebar-foreground: #17150f;
+  --sidebar-primary: #0d6b5b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6f2ef;
+  --sidebar-accent-foreground: #0d6b5b;
+  --sidebar-border: #ddd8cc;
+  --sidebar-ring: #0d6b5b;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+.dark {
+  --background: #131210;
+  --foreground: #f2eee5;
+
+  --card: #1b1a17;
+  --card-foreground: #f2eee5;
+  --popover: #1b1a17;
+  --popover-foreground: #f2eee5;
+
+  --primary: #4bbfa4;
+  --primary-foreground: #08211c;
+  --primary-hover: #6fd4ba;
+
+  --secondary: #232120;
+  --secondary-foreground: #f2eee5;
+
+  --muted: #232120;
+  --muted-foreground: #9d9585;
+
+  --accent: #102b26;
+  --accent-foreground: #4bbfa4;
+
+  --destructive: #ec7a60;
+  --destructive-foreground: #1a0d0a;
+  --destructive-muted: #2c1a15;
+
+  --warning: #d9a441;
+  --warning-muted: #2a2116;
+
+  --border: #6d6960;
+  --divider: #38352f;
+  --input: #2b2926;
+  --ring: #4bbfa4;
+
+  --sidebar: #191714;
+  --sidebar-foreground: #f2eee5;
+  --sidebar-primary: #4bbfa4;
+  --sidebar-primary-foreground: #08211c;
+  --sidebar-accent: #102b26;
+  --sidebar-accent-foreground: #4bbfa4;
+  --sidebar-border: #38352f;
+  --sidebar-ring: #4bbfa4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  --color-border: var(--border);
+  --color-divider: var(--divider);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-divider outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Digits that sit in columns should line up — counts, sizes, page numbers. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "app": {
+    "name": "PDF ל-HTML",
+    "tagline": "הפוך PDF לעמוד שאפשר באמת לערוך"
+  },
+  "nav": {
+    "overview": "סקירה",
+    "convert": "המרה",
+    "activity": "פעילות",
+    "settings": "הגדרות",
+    "signOut": "יציאה",
+    "toggleSidebar": "פתיחת ניווט",
+    "language": "שפה",
+    "theme": "ערכת נושא",
+    "themeLight": "בהיר",
+    "themeDark": "כהה",
+    "themeSystem": "לפי המערכת"
+  },
+  "login": {
+    "title": "הזן קוד גישה",
+    "subtitle": "הכלי נמצא בפיתוח ואינו פתוח לציבור.",
+    "codeLabel": "קוד גישה",
+    "codePlaceholder": "הזן את הקוד שקיבלת",
+    "submit": "המשך",
+    "submitting": "בודק…",
+    "notAPassword": "זהו קוד גישה משותף, לא סיסמה אישית. אל תזין כאן סיסמה שאתה משתמש בה במקום אחר.",
+    "genericError": "משהו השתבש. נסה שוב.",
+    "devSignIn": "כניסת מפתחים",
+    "devSignInNote": "פיתוח מקומי בלבד — הכפתור הזה לא קיים בבילד לפרודקשן."
+  },
+  "overview": {
+    "title": "סקירה",
+    "quickConvert": "גרור PDF כדי להתחיל",
+    "quickConvertHint": "או פתח את הממיר",
+    "statConversions": "המרות",
+    "statPages": "עמודים שהומרו",
+    "statSaved": "גודל הפלט",
+    "thisSession": "בסשן הזה",
+    "recent": "פעילות אחרונה",
+    "emptyTitle": "עדיין לא הומר דבר",
+    "emptyBody": "הפעילות נשמרת בלשונית הזו בלבד ונמחקת ברענון. הקבצים שלך אף פעם לא עוזבים את המחשב."
+  },
+  "convert": {
+    "title": "המרה",
+    "choosePdf": "בחר קובץ PDF",
+    "dropHere": "שחרר כאן",
+    "dragHint": "או גרור קובץ לכל מקום בדף",
+    "limits": "עד {megabytes} MB ו-{pages} עמודים",
+    "chooseAnother": "בחר קובץ אחר",
+    "reading": "קורא…",
+    "pageCount": "{count, plural, one {עמוד אחד} two {שני עמודים} other {# עמודים}}",
+    "outputLabel": "פלט",
+    "formatHtml": "HTML",
+    "formatHtmlHint": "קובץ עצמאי אחד",
+    "formatReact": "React",
+    "formatReactHint": "רכיב ‎+‎ CSS",
+    "fidelityLabel": "נאמנות",
+    "keepGraphics": "שמור גרפיקה",
+    "keepGraphicsOn": "גרפיקה וקטורית ותמונות נשמרות כשכבת רקע. קובץ גדול יותר, נראה זהה למקור.",
+    "keepGraphicsOff": "טקסט בלבד — קוד נקי וניתן לעריכה, אבל הגרפיקה מהמקור לא נשמרת.",
+    "start": "המר",
+    "cancel": "ביטול",
+    "download": "הורד ZIP",
+    "convertAnother": "המר קובץ נוסף",
+    "tryAgain": "נסה שוב",
+    "failed": "ההמרה נכשלה.",
+    "converted": "{count, plural, one {הומר עמוד אחד} two {הומרו שני עמודים} other {הומרו # עמודים}}",
+    "scannedTitle": "ה-PDF הזה הוא סריקה.",
+    "scannedBody": "אין בו שכבת טקסט, ולכן הפלט ישמור על תמונות העמודים אבל הטקסט לא יהיה ניתן לבחירה או לחיפוש.",
+    "tooLongTitle": "{count} עמודים.",
+    "tooLongBody": "רק {limit} הראשונים יומרו."
+  },
+  "preview": {
+    "compare": "השוואה",
+    "compareHint": "המקור לצד ההמרה",
+    "output": "פלט",
+    "outputHint": "העמוד המומר לבדו",
+    "code": "קוד",
+    "codeHint": "הקבצים שיירדו",
+    "original": "ה-PDF המקורי",
+    "converted": "מומר",
+    "withGraphics": "עם גרפיקה",
+    "textOnly": "טקסט בלבד",
+    "previousPage": "העמוד הקודם",
+    "nextPage": "העמוד הבא",
+    "pageOf": "עמוד {page} מתוך {total}",
+    "truncated": "מוצגים {shown}k התווים הראשונים מתוך {total}k. ההורדה מכילה את הקובץ המלא.",
+    "renderFailed": "לא הצלחנו להציג את העמוד המקורי."
+  },
+  "activity": {
+    "title": "פעילות",
+    "subtitle": "נשמר בלשונית הזו בלבד. רענון מוחק אותה.",
+    "file": "קובץ",
+    "pages": "עמודים",
+    "output": "פלט",
+    "size": "גודל",
+    "when": "מתי",
+    "clear": "נקה"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "appearance": "מראה",
+    "appearanceHint": "חל על הדפדפן הזה.",
+    "language": "שפה",
+    "languageHint": "שפת הממשק. המסמכים שלך מומרים בשפה שבה הם כתובים.",
+    "defaults": "ברירות מחדל להמרה",
+    "defaultsHint": "ייבחרו מראש בפעם הבאה שתמיר קובץ.",
+    "storage": "נתונים",
+    "storageHint": "שום דבר לא נשמר בשרתים שלנו — לא קבצים, לא חשבונות, לא היסטוריה. ההעדפות נשמרות בדפדפן הזה בלבד.",
+    "reset": "אפס העדפות"
+  },
+  "common": {
+    "megabytes": "MB",
+    "kilobytes": "KB"
+  },
+  "warnings": {
+    "SCANNED": "ל-PDF הזה אין שכבת טקסט — הוא סריקה. הפלט שומר על תמונות העמודים, אבל הטקסט לא יהיה ניתן לבחירה או לחיפוש ללא OCR.",
+    "GRAPHICS_DROPPED": "{count, plural, one {עמוד אחד מכיל} two {שני עמודים מכילים} other {# עמודים מכילים}} גרפיקה שפלט טקסט בלבד לא יכול לשחזר. הפעל את ״שמור גרפיקה״ כדי לשמור אותה.",
+    "TRUNCATED": "רק {limit} העמודים הראשונים מתוך {total} הומרו.",
+    "NO_OFFSCREEN_CANVAS": "הדפדפן הזה לא יכול לרנדר רקעי עמודים, ולכן הפלט הוא טקסט בלבד. נסה Chrome, Edge או Firefox עדכני לנאמנות ויזואלית מלאה."
+  }
+}
