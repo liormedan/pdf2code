@@ -64,6 +64,19 @@ Firebase מרשה התחברות רק מדומיינים שרשומים ב-**Aut
 - `.vercelignore` — פיקסצ'רים, `bakeoff/` ומסמכים לא נדחפים. `scripts/` נשאר: `prebuild` מריץ את `sync-pdf-assets.mjs` שמעתיק את ה-worker, הפונטים וטבלאות ה-CMap של pdf.js אל `public/`. הקבצים האלה לא בגיט ונוצרים בכל בנייה
 - `engines.node` ב-`package.json`
 - `distDir` — `.next-build` מקומית כדי לא להתנגש בשרת פיתוח רץ, אבל `.next` על Vercel, כי שם אין במה להתנגש והפלטפורמה מחפשת את התיקייה הרגילה
+- `overrides.jose` ב-`package.json` — ראה למטה
+
+---
+
+## למה `jose` נעול לגרסה 5
+
+`firebase-admin` תלוי ב-`jwks-rsa`, שהוא CommonJS ועושה `require('jose')`. גרסה 6 של `jose` היא ESM בלבד. הטוען של פונקציות ה-serverless ב-Vercel לא תומך ב-`require()` של מודול ESM, ולכן כל קריאה ל-`/api/session` קרסה שם עם `ERR_REQUIRE_ESM` — 500 גנרי, בלי קשר לקונפיגורציה.
+
+הכשל לא מופיע מקומית: Node 22.12 ומעלה תומך ב-`require()` של ESM, כך שהשרת המקומי עובר בשקט. גם גרסת Node על Vercel אינה הסיבה — הפרויקט רץ על 24.x. הבעיה היא בטוען עצמו.
+
+`overrides` מכריח את `jose@^5.10.0`, שמשלב CJS ו-ESM. `jwks-rsa` משתמש בארבעה API-ים בלבד — `importJWK`, `exportSPKI`, `decodeJwt` ו-`decodeProtectedHeader` — וכולם זהים בין הגרסאות.
+
+**את הנעילה מסירים רק כאשר `jwks-rsa` יעבור ל-`import()`,** או כאשר הטוען של Vercel יתמוך ב-ESM. עד אז, שדרוג של `firebase-admin` לבדו לא פותר.
 
 ---
 

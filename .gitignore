@@ -13,3 +13,4 @@ fixtures/*.pdf
 *.log
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+.vercel
