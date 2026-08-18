@@ -14,7 +14,7 @@
 // Only the third involves an upload, which is why prepare() reports the route it took —
 // the interface says so plainly rather than letting the user assume.
 
-import { baseNameOf, detectKind, type SourceKind } from "./pricing.ts";
+import { baseNameOf, detectKind, pptxEnabled, type SourceKind } from "./pricing.ts";
 
 export interface PreparedDocument {
   kind: SourceKind;
@@ -77,7 +77,10 @@ export function fromSlides(name: string, bytes: Uint8Array): PreparedDocument {
 export async function prepare(file: File, options: PrepareOptions = {}): Promise<PreparedDocument> {
   const { onStage, signal } = options;
   const kind = detectKind(file);
-  if (!kind) throw new IntakeError(`“${file.name}” is not a PDF or a PowerPoint file.`, "UNSUPPORTED");
+  if (!kind) throw new IntakeError(`“${file.name}” is not a document this app can read.`, "UNSUPPORTED");
+  if (kind === "pptx" && !pptxEnabled()) {
+    throw new IntakeError("PowerPoint conversion is not available on this deployment.", "PPTX_DISABLED");
+  }
 
   onStage?.("reading");
   const source = new Uint8Array(await file.arrayBuffer());

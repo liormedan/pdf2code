@@ -67,6 +67,7 @@
   "convert": {
     "title": "Convert",
     "chooseFile": "Choose a PDF or PowerPoint file",
+    "choosePdf": "Choose a PDF",
     "importSlides": "Import from Google Slides",
     "dropHere": "Drop it here",
     "dragHint": "or drag one anywhere on this page",
@@ -91,6 +92,7 @@
     "convertAnother": "Convert another",
     "tryAgain": "Try again",
     "failed": "Conversion failed.",
+    "pptxUnavailable": "PowerPoint conversion is not available here. Export “{name}” as a PDF and convert that.",
     "converted": "Converted {count, plural, one {# page} other {# pages}}",
     "scannedTitle": "This PDF is a scan.",
     "scannedBody": "It has no text layer, so the output will keep the page images but the text will not be selectable or searchable.",

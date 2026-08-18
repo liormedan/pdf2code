@@ -9,7 +9,7 @@
 // except the login screen and the endpoint that grants access.
 
 import { OfficeError, presentationToPdf, sniffPresentation } from "@/src/lib/office-server.ts";
-import { MAX_BYTES } from "@/src/lib/pricing.ts";
+import { MAX_BYTES, pptxEnabled } from "@/src/lib/pricing.ts";
 
 export const runtime = "nodejs";
 // LibreOffice is given 60s; the platform must not cut the request off before it.
@@ -19,6 +19,13 @@ const fail = (code: string, message: string, status: number) =>
   Response.json({ code, message }, { status });
 
 export async function POST(request: Request): Promise<Response> {
+  // The interface hides this route when it is switched off; that hiding is a courtesy,
+  // and this is the gate. A deployment without LibreOffice must not accept uploads it
+  // has no way to answer.
+  if (!pptxEnabled()) {
+    return fail("DISABLED", "Presentation conversion is not available on this deployment.", 503);
+  }
+
   // Reject on the declared length before reading the body, so an oversized upload is
   // refused rather than buffered in full and then refused.
   const declared = Number(request.headers.get("content-length") ?? 0);

@@ -12,7 +12,7 @@ Three sources, one engine. Everything becomes a PDF first, so the conversion bel
 | --- | --- | --- |
 | **PDF** | read locally | **No.** Never uploaded, never sent anywhere. |
 | **Google Slides** | exported by Google straight to the browser tab | **No.** It goes from Google to your browser; this app's server is not in that path. |
-| **PowerPoint** (`.pptx`, `.ppt`) | converted to PDF by LibreOffice on the server | **Yes** — and only this one. |
+| **PowerPoint** (`.pptx`, `.ppt`) | converted to PDF by LibreOffice on the server | **Yes** — and only this one. Off unless `NEXT_PUBLIC_ENABLE_PPTX=true`. |
 
 PowerPoint is the exception because browsers have no way to render it: there is no `pptx.js` doing what pdf.js does. Rebuilding DrawingML by hand in the browser was the alternative, and it cannot reach the fidelity this product promises. So a `.pptx` is sent over, converted, and deleted before the response is written — nothing is stored, queued or logged. The interface says so on screen when it happens, rather than leaving it to be assumed.
 
@@ -37,7 +37,7 @@ npm run dev
 
 PDF conversion needs nothing else. The other two sources are optional and each is off until configured — see `.env.example`:
 
-- **PowerPoint** needs LibreOffice reachable as `soffice`, or `SOFFICE_PATH` pointing at it. Without it, `.pptx` is refused with an explanation and everything else still works. In production this means a container image with LibreOffice installed, given no network of its own and a memory and time limit — it is parsing files this app did not write.
+- **PowerPoint** needs `NEXT_PUBLIC_ENABLE_PPTX=true` and LibreOffice reachable as `soffice`, or `SOFFICE_PATH` pointing at it. It is off by default because it cannot run on serverless hosting at all — see `docs/deploy-vercel.md`. In production it means a container image with LibreOffice installed, given no network of its own and a memory and time limit, because it parses files this app did not write. With the flag off, `.pptx` is refused with a way forward and everything else works.
 - **Google Slides** needs a Google Cloud project with the Drive and Picker APIs enabled, and the three `NEXT_PUBLIC_GOOGLE_*` values. The button does not render without them.
 - **Accounts** need a Firebase project with Email/Password and Google sign-in enabled, the four `NEXT_PUBLIC_FIREBASE_*` values, and a service account in `FIREBASE_SERVICE_ACCOUNT`. Required in production; see below for how development gets by without one.
 

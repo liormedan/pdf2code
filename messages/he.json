@@ -67,6 +67,7 @@
   "convert": {
     "title": "המרה",
     "chooseFile": "בחר קובץ PDF או PowerPoint",
+    "choosePdf": "בחר קובץ PDF",
     "importSlides": "ייבוא מ-Google Slides",
     "dropHere": "שחרר כאן",
     "dragHint": "או גרור קובץ לכל מקום בדף",
@@ -91,6 +92,7 @@
     "convertAnother": "המר קובץ נוסף",
     "tryAgain": "נסה שוב",
     "failed": "ההמרה נכשלה.",
+    "pptxUnavailable": "המרת PowerPoint לא זמינה כאן. ייצא את “{name}” כ-PDF והמר אותו.",
     "converted": "{count, plural, one {הומר עמוד אחד} two {הומרו שני עמודים} other {הומרו # עמודים}}",
     "scannedTitle": "ה-PDF הזה הוא סריקה.",
     "scannedBody": "אין בו שכבת טקסט, ולכן הפלט ישמור על תמונות העמודים אבל הטקסט לא יהיה ניתן לבחירה או לחיפוש.",

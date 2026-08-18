@@ -56,6 +56,19 @@ export const formatPrice = (n: number): string =>
  */
 export type SourceKind = "pdf" | "pptx" | "slides";
 
+/**
+ * Whether this deployment can convert PowerPoint at all.
+ *
+ * PPTX is the one source that needs a server: LibreOffice has to render it. That rules
+ * out serverless hosting — there is no LibreOffice binary there, and the request body
+ * cap is far below the file sizes involved. So the intake is switched off unless a
+ * deployment can actually honour it.
+ *
+ * A function rather than a constant so the value is read when asked. The bundler still
+ * inlines the literal, because it substitutes the expression wherever it appears.
+ */
+export const pptxEnabled = (): boolean => process.env.NEXT_PUBLIC_ENABLE_PPTX === "true";
+
 interface KindSpec {
   kind: SourceKind;
   /** Extensions, written the way a file picker's `accept` wants them. */
@@ -93,8 +106,11 @@ export function detectKind(file: { name?: string; type?: string } | null | undef
   return KINDS.find((k) => k.exts.includes(ext) || (!!type && k.mime.includes(type)))?.kind ?? null;
 }
 
-/** Every extension and MIME type the file pickers should offer. */
-export const ACCEPT_ATTRIBUTE = KINDS.flatMap((k) => [...k.mime, ...k.exts]).join(",");
+/** Every extension and MIME type the file pickers should offer, here and now. */
+export const acceptAttribute = (): string =>
+  KINDS.filter((k) => k.kind !== "pptx" || pptxEnabled())
+    .flatMap((k) => [...k.mime, ...k.exts])
+    .join(",");
 
 /** Strip a known source extension, leaving something usable as a title. */
 export const baseNameOf = (name: string): string => name.replace(/\.(pdf|pptx|ppt)$/i, "");
@@ -104,8 +120,17 @@ export const SOURCE_EXTENSIONS = KINDS.flatMap((k) => k.exts);
 
 /** Reject files we cannot serve before the user pays for them. @returns a message, or null when the file is fine. */
 export function validateFile(file: File | null | undefined): string | null {
-  if (!file) return "Choose a PDF or a PowerPoint file to convert.";
-  if (!detectKind(file)) return `“${file.name}” is not a PDF or a PowerPoint file.`;
+  const sources = pptxEnabled() ? "a PDF or a PowerPoint file" : "a PDF";
+
+  if (!file) return `Choose ${sources} to convert.`;
+
+  const kind = detectKind(file);
+  // Named for what it is rather than lumped in with unsupported types: the person
+  // holding a .pptx needs to know the way through, not that they guessed wrong.
+  if (kind === "pptx" && !pptxEnabled()) {
+    return `PowerPoint conversion is not available here. Export “${file.name}” as a PDF and convert that.`;
+  }
+  if (!kind) return `“${file.name}” is not ${sources}.`;
   if (file.size === 0) return `“${file.name}” is empty.`;
   if (file.size > MAX_BYTES) {
     return `“${file.name}” is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_BYTES / 1024 / 1024} MB.`;

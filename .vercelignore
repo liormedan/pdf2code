@@ -1,0 +1,7 @@
+# Test corpus, harnesses and planning notes: none of them are served, and the PDFs
+# alone are tens of megabytes. scripts/ stays — prebuild runs sync-pdf-assets.mjs.
+fixtures
+bakeoff
+docs
+out
+.next-build

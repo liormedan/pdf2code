@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Turn a PDF into HTML or a React component, entirely in the browser",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "predev": "node scripts/sync-pdf-assets.mjs",
     "dev": "next dev",

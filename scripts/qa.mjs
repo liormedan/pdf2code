@@ -5,14 +5,14 @@
 // sane time and memory envelope, whether cancellation and limits actually hold, and
 // whether the generated React really compiles and renders.
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { transform } from "esbuild";
 import { convert, ConversionError, classifyPage } from "../src/converter/index.ts";
 import { detectLanguage } from "../src/converter/language.ts";
 import { describeFont } from "../src/converter/fonts.ts";
-import { quote, validateFile, baseNameOf, detectKind, MAX_PAGES } from "../src/lib/pricing.ts";
+import { quote, validateFile, baseNameOf, detectKind, pptxEnabled, MAX_PAGES } from "../src/lib/pricing.ts";
 import { sniffPresentation } from "../src/lib/office-server.ts";
 import { createGate, createSession, createToken, readSession, verifySession } from "../src/lib/auth.ts";
 import { HOSTILE_LINES } from "./make-test-pdf.mjs";
@@ -158,8 +158,16 @@ section("4. Units — pricing, validation, language, fonts");
   check("0/undefined pages floors at 1", quote(0).price === 4.99 && quote(undefined).price === 4.99);
 
   check("rejects an unsupported type", !!validateFile({ name: "a.txt", type: "text/plain", size: 10 }));
-  check("accepts a presentation",
-    validateFile({ name: "deck.pptx", type: "", size: 1000 }) === null);
+  // PowerPoint is the one source that needs a server, so a deployment can switch it
+  // off — and then it must be refused with a way forward, not with "wrong file type".
+  const pptx = { name: "deck.pptx", type: "", size: 1000 };
+  const pptxVerdict = validateFile(pptx);
+  check(
+    pptxEnabled() ? "accepts a presentation when enabled" : "refuses a presentation when disabled",
+    pptxEnabled() ? pptxVerdict === null : /Export .* as a PDF/.test(pptxVerdict ?? ""),
+    pptxVerdict ?? "accepted",
+  );
+  check("the classifier still knows what a .pptx is", detectKind(pptx) === "pptx");
   check("classifies pdf and pptx apart",
     detectKind({ name: "a.pdf" }) === "pdf" && detectKind({ name: "a.pptx" }) === "pptx");
   check("a dotless name is not an extension", detectKind({ name: "README" }) === null);
@@ -276,6 +284,56 @@ section("6. Raster format must follow page content");
 
   const plain = classifyPage(mk(0, 0, 30));
   check("pure text needs no raster", plain.kind === "text", plain.kind);
+}
+
+// ──────────────────────────────────────────────────── secrets vs the client bundle
+section("7. No server-only secret may reach the browser");
+{
+  // Anything named NEXT_PUBLIC_ is inlined into the bundle at build time. The check is
+  // on the *name*, because that prefix is the whole of what decides it — a private key
+  // does not become private again by being handled carefully afterwards.
+  const SOURCE_DIRS = ["app", "src", "components", "lib", "scripts"];
+  const SERVER_ONLY = ["src/lib/firebase/admin.ts", "src/lib/office-server.ts"];
+
+  async function walk(dir) {
+    const out = [];
+    for (const entry of await readdir(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) out.push(...await walk(rel));
+      else if (/\.(ts|tsx|mjs|js)$/.test(entry.name)) out.push(rel);
+    }
+    return out;
+  }
+
+  const files = (await Promise.all(SOURCE_DIRS.map(walk))).flat();
+  const sources = new Map();
+  for (const file of files) sources.set(file, await readFile(join(ROOT, file), "utf8"));
+
+  const publicSecrets = [];
+  for (const [file, text] of sources) {
+    for (const [, name] of text.matchAll(/NEXT_PUBLIC_([A-Z0-9_]+)/g)) {
+      if (/SECRET|PRIVATE|SERVICE_ACCOUNT|ACCESS_CODE|CREDENTIAL/.test(name)) {
+        publicSecrets.push(`${file}: NEXT_PUBLIC_${name}`);
+      }
+    }
+  }
+  check("no secret is named NEXT_PUBLIC_", publicSecrets.length === 0, publicSecrets[0]);
+
+  // A "use client" file that imports the admin SDK ships a service account to the
+  // browser. Direct imports only, which is the mistake that actually happens.
+  const leaks = [];
+  for (const [file, text] of sources) {
+    if (!/^\s*["']use client["']/m.test(text)) continue;
+    for (const server of SERVER_ONLY) {
+      const bare = server.replace(/^src\//, "").replace(/\.ts$/, "");
+      if (text.includes(server) || text.includes(bare)) leaks.push(`${file} imports ${server}`);
+    }
+  }
+  check("no client component imports a server-only module", leaks.length === 0, leaks[0]);
+
+  const env = await readFile(join(ROOT, ".env.example"), "utf8");
+  check("the service account is documented without a NEXT_PUBLIC prefix",
+    /^FIREBASE_SERVICE_ACCOUNT=/m.test(env) && !/NEXT_PUBLIC_FIREBASE_SERVICE/.test(env));
 }
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
