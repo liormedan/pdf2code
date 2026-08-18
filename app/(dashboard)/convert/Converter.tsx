@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Download, Loader2, Upload } from "lucide-react";
+import { CheckCircle2, Download, Loader2, Presentation, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -13,13 +13,19 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { createJob, buildZip, downloadBlob, type Job, type JobState } from "@/src/lib/conversion-service.ts";
 import { loadPdfjs, openPdf, PdfOpenError } from "@/src/lib/pdf-client.ts";
-import { validateFile, MAX_PAGES, MAX_BYTES } from "@/src/lib/pricing.ts";
+import { bytesFor, fromSlides, prepare, IntakeError, type IntakeStage, type PreparedDocument } from "@/src/lib/intake.ts";
+import { pickPresentation, slidesConfig, SlidesError } from "@/src/lib/google-slides.ts";
+import { validateFile, ACCEPT_ATTRIBUTE, MAX_PAGES, MAX_BYTES } from "@/src/lib/pricing.ts";
 import { useActivity } from "@/src/lib/session-activity";
 import { usePendingFile } from "@/src/lib/pending-file";
 import type { ConversionResult, ConversionWarning, OutputFormat } from "@/src/converter/types.ts";
 import OutputPreview from "./OutputPreview";
 
 const FORMATS: OutputFormat[] = ["html", "react"];
+
+// Fixed at build time, since the configuration is inlined then. A deployment without
+// Google credentials never shows the button rather than offering one that cannot work.
+const SLIDES_ENABLED = slidesConfig() !== null;
 
 /** What we learn from a quick probe of page 1, before any conversion runs. */
 interface DocProbe {
@@ -34,9 +40,11 @@ export default function Converter() {
   const { record } = useActivity();
   const { take } = usePendingFile();
 
-  const [file, setFile] = useState<File | null>(null);
+  const [source, setSource] = useState<PreparedDocument | null>(null);
   const [doc, setDoc] = useState<DocProbe | null>(null);
-  const [inspecting, setInspecting] = useState(false);
+  // Null when nothing is in flight; otherwise which part of intake is running, because
+  // "reading a file" and "converting a deck on the server" deserve different words.
+  const [stage, setStage] = useState<IntakeStage | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [formats, setFormats] = useState<OutputFormat[]>(["html"]);
   const [background, setBackground] = useState(true);
@@ -55,37 +63,65 @@ export default function Converter() {
 
   const busy = job.status === "reading" || job.status === "processing";
 
-  const inspectFile = useCallback(async (nextFile: File) => {
-    const problem = validateFile(nextFile);
-    if (problem) {
-      setFileError(problem);
-      setFile(null);
-      setDoc(null);
-      return;
-    }
-
+  /**
+   * Take in a document, however it was obtained.
+   *
+   * A PowerPoint file becomes a PDF on the server and a Slides deck is exported by
+   * Google; by the time `obtain` resolves, all three routes have converged on PDF
+   * bytes, and everything from the probe onwards is the same work.
+   */
+  const accept = useCallback(async (obtain: () => Promise<PreparedDocument>) => {
     setFileError(null);
-    setFile(nextFile);
+    setSource(null);
     setDoc(null);
-    setInspecting(true);
+    setStage("reading");
     job$.reset();
 
     try {
+      const ready = await obtain();
+
       const pdfjs = await loadPdfjs();
-      const pdf = await openPdf(new Uint8Array(await nextFile.arrayBuffer()), pdfjs);
+      const pdf = await openPdf(bytesFor(ready), pdfjs);
       const page = await pdf.getPage(1);
       const { items } = await page.getTextContent();
       const chars = items.reduce((n, i) => n + (i.str?.length ?? 0), 0);
 
+      setSource(ready);
       setDoc({ pages: pdf.numPages, scanned: chars < 30, tooLong: pdf.numPages > MAX_PAGES });
       await pdf.destroy();
     } catch (err) {
-      setFileError(err instanceof PdfOpenError ? err.message : t("failed"));
-      setFile(null);
+      // Backing out of Google's dialog is a decision, not an error to report back.
+      const cancelled =
+        (err instanceof SlidesError || err instanceof IntakeError) && err.code === "CANCELLED";
+      if (!cancelled) {
+        setFileError(
+          err instanceof IntakeError || err instanceof SlidesError || err instanceof PdfOpenError
+            ? err.message
+            : t("failed"),
+        );
+      }
+      setSource(null);
     } finally {
-      setInspecting(false);
+      setStage(null);
     }
   }, [t]);
+
+  const inspectFile = useCallback((nextFile: File) => {
+    const problem = validateFile(nextFile);
+    if (problem) {
+      setFileError(problem);
+      setSource(null);
+      setDoc(null);
+      return;
+    }
+    return accept(() => prepare(nextFile, { onStage: setStage }));
+  }, [accept]);
+
+  const importSlides = useCallback(() => accept(async () => {
+    setStage("importing");
+    const picked = await pickPresentation();
+    return fromSlides(picked.name, picked.bytes);
+  }), [accept]);
 
   // A counter, not a boolean: dragleave fires for every child element the pointer
   // crosses, so a naive flag flickers the drop zone off while it is still inside.
@@ -127,19 +163,19 @@ export default function Converter() {
     if (handedOver) inspectFile(handedOver);
   }, [take, inspectFile]);
 
-  const baseName = useMemo(() => (file?.name ?? "document").replace(/\.pdf$/i, ""), [file]);
+  const baseName = source?.baseName ?? "document";
 
   // Log each finished conversion once, not on every re-render that follows it.
   useEffect(() => {
     if (job.status !== "done" || !job.result || recorded.current === job.result) return;
     recorded.current = job.result;
     record({
-      name: file?.name ?? baseName,
+      name: source?.name ?? baseName,
       pages: job.result.info.converted,
       formats: [...formats],
       bytes: Object.values(job.result.files).reduce((n, c) => n + c.length, 0),
     });
-  }, [job, file, baseName, formats, record]);
+  }, [job, source, baseName, formats, record]);
 
   function toggleFormat(id: OutputFormat) {
     setFormats((current) =>
@@ -152,8 +188,8 @@ export default function Converter() {
   const start = () => {
     // The control that calls this only renders once a file has been probed, but the
     // type does not know that — and a guard is cheaper than an assertion that lies.
-    if (!file) return;
-    return job$.start(file, {
+    if (!source) return;
+    return job$.start(source, {
       formats,
       background,
       title: baseName,
@@ -164,7 +200,7 @@ export default function Converter() {
 
   function clearAll() {
     job$.reset();
-    setFile(null);
+    setSource(null);
     setDoc(null);
     setFileError(null);
     recorded.current = null;
@@ -173,7 +209,7 @@ export default function Converter() {
 
   return (
     <div className="space-y-4">
-      {!file && (
+      {!source && !stage && (
         <Card
           className={cn(
             "border-dashed transition-colors",
@@ -185,23 +221,35 @@ export default function Converter() {
               ref={inputRef}
               id="pdf-input"
               type="file"
-              accept="application/pdf,.pdf"
+              accept={ACCEPT_ATTRIBUTE}
               className="sr-only"
               onChange={(e) => e.target.files?.[0] && inspectFile(e.target.files[0])}
             />
             <Label
               htmlFor="pdf-input"
-              className="flex cursor-pointer flex-col items-center gap-1.5 px-6 py-14 text-center"
+              className={cn(
+                "flex cursor-pointer flex-col items-center gap-1.5 px-6 text-center",
+                SLIDES_ENABLED ? "pt-14 pb-8" : "py-14",
+              )}
             >
               <Upload className="mb-2 size-7 text-primary" aria-hidden="true" />
               <span className="text-base font-semibold">
-                {dragging ? t("dropHere") : t("choosePdf")}
+                {dragging ? t("dropHere") : t("chooseFile")}
               </span>
               <span className="text-sm font-normal text-muted-foreground">{t("dragHint")}</span>
               <span className="tabular mt-1 font-mono text-xs font-normal text-muted-foreground">
                 {t("limits", { megabytes: MAX_BYTES / 1024 / 1024, pages: MAX_PAGES })}
               </span>
             </Label>
+            {/* Outside the Label: anything inside it opens the file picker instead. */}
+            {SLIDES_ENABLED && (
+              <div className="flex justify-center pb-10">
+                <Button variant="outline" size="sm" onClick={importSlides}>
+                  <Presentation className="size-4" aria-hidden="true" />
+                  {t("importSlides")}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -212,15 +260,13 @@ export default function Converter() {
         </Alert>
       )}
 
-      {file && (
+      {source && (
         <Card>
           <CardContent className="flex flex-wrap items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold" title={file.name}>{file.name}</p>
+              <p className="truncate text-sm font-semibold" title={source.name}>{source.name}</p>
               <p className="tabular font-mono text-xs text-muted-foreground">
-                {inspecting
-                  ? t("reading")
-                  : `${doc ? t("pageCount", { count: doc.pages }) + " · " : ""}${(file.size / 1024 / 1024).toFixed(1)} MB`}
+                {`${doc ? t("pageCount", { count: doc.pages }) + " · " : ""}${(source.sourceSize / 1024 / 1024).toFixed(1)} MB`}
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={clearAll} disabled={busy}>
@@ -230,6 +276,12 @@ export default function Converter() {
         </Card>
       )}
 
+      {source?.uploaded && (
+        <Alert>
+          <AlertTitle>{t("uploadedTitle")}</AlertTitle>
+          <AlertDescription>{t("uploadedBody")}</AlertDescription>
+        </Alert>
+      )}
       {doc?.scanned && (
         <Alert>
           <AlertTitle>{t("scannedTitle")}</AlertTitle>
@@ -352,7 +404,7 @@ export default function Converter() {
             </CardContent>
           </Card>
 
-          <OutputPreview result={job.result} file={file} />
+          <OutputPreview result={job.result} original={source} />
 
           {job.result.warnings.map((w) => (
             <Alert key={w.code}>
@@ -374,10 +426,10 @@ export default function Converter() {
         </div>
       )}
 
-      {inspecting && (
+      {stage && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          {t("reading")}
+          {t(stage === "uploading" ? "converting" : stage === "importing" ? "importing" : "reading")}
         </p>
       )}
     </div>

@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toHtml } from "@/src/converter/html.ts";
 import { loadPdfjs, openPdf } from "@/src/lib/pdf-client.ts";
+import { bytesFor, type PreparedDocument } from "@/src/lib/intake.ts";
 import type { ConversionResult } from "@/src/converter/types.ts";
 
 type Mode = "compare" | "output" | "code";
@@ -30,7 +31,7 @@ const CODE_LIMIT = 80_000;
  * Compare mode puts the source page beside it, because the only question that matters
  * is whether the two match.
  */
-export default function OutputPreview({ result, file }: { result: ConversionResult; file: File | null }) {
+export default function OutputPreview({ result, original }: { result: ConversionResult; original: PreparedDocument | null }) {
   const t = useTranslations("preview");
   const [mode, setMode] = useState<Mode>("compare");
   const [index, setIndex] = useState(0);
@@ -118,7 +119,7 @@ export default function OutputPreview({ result, file }: { result: ConversionResu
         <div className={cn(mode === "compare" && "grid md:grid-cols-2")}>
           {mode === "compare" && (
             <Pane label={t("original")}>
-              <SourcePage file={file} pageNumber={page.number} width={page.width} height={page.height} fallback={t("renderFailed")} />
+              <SourcePage source={original} pageNumber={page.number} width={page.width} height={page.height} fallback={t("renderFailed")} />
             </Pane>
           )}
           <Pane
@@ -229,8 +230,14 @@ function Sheet({ width, height, children }: SheetProps) {
   );
 }
 
-/** Renders one page of the source PDF, for side-by-side comparison. */
-function SourcePage({ file, pageNumber, width, height, fallback }: { file: File | null; pageNumber: number; width: number; height: number; fallback: string }) {
+/**
+ * Renders one page of the source document, for side-by-side comparison.
+ *
+ * It reads the prepared PDF rather than the file the user picked, which is the same
+ * thing for a PDF and the converted deck for a PowerPoint — either way, what sits
+ * beside the output is what the converter actually read.
+ */
+function SourcePage({ source, pageNumber, width, height, fallback }: { source: PreparedDocument | null; pageNumber: number; width: number; height: number; fallback: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -241,8 +248,8 @@ function SourcePage({ file, pageNumber, width, height, fallback }: { file: File 
     (async () => {
       try {
         const pdfjs = await loadPdfjs();
-        if (!file) return;
-        doc = await openPdf(new Uint8Array(await file.arrayBuffer()), pdfjs);
+        if (!source) return;
+        doc = await openPdf(bytesFor(source), pdfjs);
         if (cancelled) return;
 
         const page = await doc.getPage(pageNumber);
@@ -269,7 +276,7 @@ function SourcePage({ file, pageNumber, width, height, fallback }: { file: File 
     })();
 
     return () => { cancelled = true; };
-  }, [file, pageNumber]);
+  }, [source, pageNumber]);
 
   return (
     <Sheet width={width} height={height}>

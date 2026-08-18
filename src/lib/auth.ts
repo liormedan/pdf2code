@@ -1,23 +1,37 @@
-// Access gate.
+// Signed cookies, and the two gates they carry.
 //
-// This is a shared access code, not a user account system — there is no user record,
-// no email, and nothing stored anywhere. It exists to keep the tool off the open web
-// while it is in development.
+// There are two independent things to prove, so there are two cookies:
 //
-// Two things it is deliberately NOT:
-//   - It is not a per-user identity. Everyone who gets in is indistinguishable.
-//   - It is not protecting server-side data, because there is none: conversion runs
-//     entirely in the browser. It gates access to the app, not to anyone's files.
+//   pdf2code_gate     the shared beta access code was entered. Says nothing about who
+//                     you are — only that this browser was let past the front door.
+//   pdf2code_session  a Firebase account was verified. Carries the uid, which is what
+//                     everything user-scoped is keyed on.
 //
-// Built on Web Crypto so the same code runs in middleware (Edge) and in route
-// handlers (Node) without a second implementation.
+// The gate is a temporary measure for the beta and can be removed by deleting one
+// check; the session is the real identity. Keeping them apart means neither has to
+// know about the other, and losing the gate does not log anyone out of their account.
+//
+// Firebase verifies an account exactly once, at sign-in, in a Node route handler —
+// firebase-admin cannot run on the Edge. What middleware sees on every request after
+// that is this HMAC, which Web Crypto verifies in either runtime with no network call.
 
 const encoder = new TextEncoder();
 
+const GATE_COOKIE = "pdf2code_gate";
 const SESSION_COOKIE = "pdf2code_session";
+
+/** The gate outlives a session deliberately: re-entering the beta code daily is noise. */
+const GATE_TTL_SECONDS = 60 * 60 * 24 * 30;
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
-export { SESSION_COOKIE, SESSION_TTL_SECONDS };
+export { GATE_COOKIE, SESSION_COOKIE, GATE_TTL_SECONDS, SESSION_TTL_SECONDS };
+
+/** Who is signed in. Mirrors the Firebase account, and nothing more of it than this. */
+export interface SessionClaims {
+  uid: string;
+  email: string | null;
+  exp: number;
+}
 
 const b64url = {
   encode(bytes: Uint8Array): string {
@@ -66,33 +80,72 @@ async function sign(payload: string, secret: string): Promise<string> {
   return b64url.encode(new Uint8Array(signature));
 }
 
-/** Mint a session token. It carries an expiry and nothing else — there is no identity. */
-export async function createSession(secret: string, ttlSeconds: number = SESSION_TTL_SECONDS): Promise<string> {
+/** Mint a signed cookie value carrying these claims and an expiry. */
+export async function createToken(
+  claims: Record<string, unknown>,
+  secret: string,
+  ttlSeconds: number,
+): Promise<string> {
   const payload = b64url.encode(
-    encoder.encode(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + ttlSeconds })),
+    encoder.encode(JSON.stringify({ ...claims, exp: Math.floor(Date.now() / 1000) + ttlSeconds })),
   );
   return `${payload}.${await sign(payload, secret)}`;
 }
 
-/** Whether the token is authentic and unexpired. */
+/** Verify a token and return its claims, or null if it is forged, malformed or expired. */
+export async function readToken(
+  token: string | null | undefined,
+  secret: string | null | undefined,
+): Promise<Record<string, unknown> | null> {
+  if (!token || !secret) return null;
+
+  const [payload, signature] = String(token).split(".");
+  if (!payload || !signature) return null;
+
+  // Verify the signature before parsing: never trust the payload of an unsigned token.
+  if (!constantTimeEqual(signature, await sign(payload, secret))) return null;
+
+  try {
+    const claims = JSON.parse(new TextDecoder().decode(b64url.decode(payload)));
+    const exp = claims?.exp;
+    if (typeof exp !== "number" || exp <= Math.floor(Date.now() / 1000)) return null;
+    return claims as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/** Whether the token is authentic and unexpired. All the gate ever needs to know. */
 export async function verifySession(
   token: string | null | undefined,
   secret: string | null | undefined,
 ): Promise<boolean> {
-  if (!token || !secret) return false;
+  return (await readToken(token, secret)) !== null;
+}
 
-  const [payload, signature] = String(token).split(".");
-  if (!payload || !signature) return false;
+/** Mint the beta gate cookie. It carries no identity, because the code is shared. */
+export const createGate = (secret: string): Promise<string> =>
+  createToken({ gate: true }, secret, GATE_TTL_SECONDS);
 
-  // Verify the signature before parsing: never trust the payload of an unsigned token.
-  if (!constantTimeEqual(signature, await sign(payload, secret))) return false;
+/** Mint the session cookie for a verified Firebase account. */
+export const createSession = (
+  secret: string,
+  account: { uid: string; email: string | null },
+): Promise<string> => createToken(account, secret, SESSION_TTL_SECONDS);
 
-  try {
-    const { exp } = JSON.parse(new TextDecoder().decode(b64url.decode(payload)));
-    return typeof exp === "number" && exp > Math.floor(Date.now() / 1000);
-  } catch {
-    return false;
-  }
+/** Read a session cookie back into claims. A token without a uid is not a session. */
+export async function readSession(
+  token: string | null | undefined,
+  secret: string | null | undefined,
+): Promise<SessionClaims | null> {
+  const claims = await readToken(token, secret);
+  if (!claims || typeof claims.uid !== "string" || !claims.uid) return null;
+
+  return {
+    uid: claims.uid,
+    email: typeof claims.email === "string" ? claims.email : null,
+    exp: claims.exp as number,
+  };
 }
 
 /**

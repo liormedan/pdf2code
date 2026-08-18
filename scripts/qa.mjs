@@ -12,7 +12,9 @@ import { transform } from "esbuild";
 import { convert, ConversionError, classifyPage } from "../src/converter/index.ts";
 import { detectLanguage } from "../src/converter/language.ts";
 import { describeFont } from "../src/converter/fonts.ts";
-import { quote, validateFile, MAX_PAGES } from "../src/lib/pricing.ts";
+import { quote, validateFile, baseNameOf, detectKind, MAX_PAGES } from "../src/lib/pricing.ts";
+import { sniffPresentation } from "../src/lib/office-server.ts";
+import { createGate, createSession, createToken, readSession, verifySession } from "../src/lib/auth.ts";
 import { HOSTILE_LINES } from "./make-test-pdf.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -155,12 +157,43 @@ section("4. Units — pricing, validation, language, fonts");
   check("51 pages → overage", quote(51).price === 20.34, `${quote(51).price}`);
   check("0/undefined pages floors at 1", quote(0).price === 4.99 && quote(undefined).price === 4.99);
 
-  check("rejects non-PDF", !!validateFile({ name: "a.txt", type: "text/plain", size: 10 }));
+  check("rejects an unsupported type", !!validateFile({ name: "a.txt", type: "text/plain", size: 10 }));
+  check("accepts a presentation",
+    validateFile({ name: "deck.pptx", type: "", size: 1000 }) === null);
+  check("classifies pdf and pptx apart",
+    detectKind({ name: "a.pdf" }) === "pdf" && detectKind({ name: "a.pptx" }) === "pptx");
+  check("a dotless name is not an extension", detectKind({ name: "README" }) === null);
+  check("base name strips either extension",
+    baseNameOf("deck.pptx") === "deck" && baseNameOf("report.PDF") === "report");
   check("rejects empty", !!validateFile({ name: "a.pdf", type: "application/pdf", size: 0 }));
   check("rejects oversize", !!validateFile({ name: "a.pdf", type: "application/pdf", size: 99e6 }));
   check("accepts by extension when type is missing",
     validateFile({ name: "a.PDF", type: "", size: 1000 }) === null);
   check("rejects nothing selected", !!validateFile(null));
+
+  // The server decides what to parse from the bytes, never from the name it was given.
+  const sig = (...bytes) => new Uint8Array([...bytes, 0, 0, 0, 0, 0, 0, 0, 0]);
+  check("zip signature reads as pptx", sniffPresentation(sig(0x50, 0x4b, 0x03, 0x04)) === "pptx");
+  check("OLE2 signature reads as ppt",
+    sniffPresentation(sig(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1)) === "ppt");
+  check("a PDF is not a presentation", sniffPresentation(sig(0x25, 0x50, 0x44, 0x46)) === null);
+  check("a truncated file is not a presentation", sniffPresentation(new Uint8Array([0x50, 0x4b])) === null);
+
+  // The two cookies prove different things, and the gate must never be mistaken for an
+  // identity — it is a shared code, so a token carrying no uid is nobody.
+  const secret = "s".repeat(32);
+  const gate = await createGate(secret);
+  const session = await createSession(secret, { uid: "u1", email: "a@example.com" });
+
+  check("gate token is authentic", await verifySession(gate, secret));
+  check("gate token is not a session", (await readSession(gate, secret)) === null);
+  check("session reads back its uid", (await readSession(session, secret))?.uid === "u1");
+  check("a tampered session is rejected",
+    (await readSession(`${session.slice(0, -2)}aa`, secret)) === null);
+  check("another secret cannot mint a session",
+    (await readSession(session, "d".repeat(32))) === null);
+  check("an expired session is rejected",
+    (await readSession(await createToken({ uid: "u1" }, secret, -10), secret)) === null);
 
   check("Hebrew detected", detectLanguage("שלום עולם ".repeat(4)).lang === "he");
   check("Hebrew is rtl", detectLanguage("שלום עולם ".repeat(4)).dir === "rtl");

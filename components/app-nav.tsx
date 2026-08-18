@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Activity, FileType2, LayoutDashboard, LogOut, Settings, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { signOut } from "@/src/actions/preferences";
+import { FIREBASE_ENABLED, firebaseAuth } from "@/src/lib/firebase/client.ts";
 
 const ITEMS = [
   { href: "/", key: "overview", icon: LayoutDashboard },
@@ -18,6 +18,23 @@ const ITEMS = [
 export default function AppNav({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("nav");
   const tApp = useTranslations("app");
+  const router = useRouter();
+
+  /**
+   * Sign out of both halves.
+   *
+   * Clearing our cookie alone would leave the Firebase SDK still holding the account
+   * in this browser, and the next visit to the sign-in screen would quietly restore it.
+   */
+  async function signOut() {
+    if (FIREBASE_ENABLED) {
+      const { signOut: firebaseSignOut } = await import("firebase/auth");
+      await firebaseSignOut(firebaseAuth()).catch(() => {});
+    }
+    await fetch("/api/session", { method: "DELETE" }).catch(() => {});
+    router.replace("/login");
+    router.refresh();
+  }
   const pathname = usePathname();
 
   return (
@@ -58,16 +75,15 @@ export default function AppNav({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <form action={signOut}>
-        <Button
-          type="submit"
-          variant="ghost"
-          className="w-full justify-start gap-3 px-3 text-muted-foreground"
-        >
-          <LogOut className="size-4" aria-hidden="true" />
-          {t("signOut")}
-        </Button>
-      </form>
+      <Button
+        type="button"
+        variant="ghost"
+        className="w-full justify-start gap-3 px-3 text-muted-foreground"
+        onClick={signOut}
+      >
+        <LogOut className="size-4" aria-hidden="true" />
+        {t("signOut")}
+      </Button>
     </div>
   );
 }

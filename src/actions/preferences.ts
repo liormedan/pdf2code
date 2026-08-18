@@ -3,7 +3,6 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { LOCALE_COOKIE, isSupported } from "@/src/i18n/config.ts";
-import { SESSION_COOKIE } from "@/src/lib/auth.ts";
 
 /**
  * Persist the interface language.
@@ -24,9 +23,4 @@ export async function setLocale(locale: string): Promise<{ ok: boolean }> {
 
   revalidatePath("/", "layout");
   return { ok: true };
-}
-
-export async function signOut() {
-  const store = await cookies();
-  store.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
 }

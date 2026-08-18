@@ -14,6 +14,7 @@
 import { zipSync, strToU8 } from "fflate";
 import { convert, ConversionError } from "@/src/converter/index.ts";
 import type { ConversionResult, ConvertOptions } from "@/src/converter/types.ts";
+import { bytesFor, type PreparedDocument } from "./intake.ts";
 import { loadPdfjs, openPdf, rasterizePage, PdfOpenError } from "./pdf-client.ts";
 
 export type JobStatus = "idle" | "reading" | "processing" | "done" | "failed" | "cancelled";
@@ -33,7 +34,14 @@ export interface JobState {
 
 export interface Job {
   readonly state: JobState;
-  start(file: File, options: ConvertOptions): Promise<void>;
+  /**
+   * Convert an already-prepared document.
+   *
+   * The job takes PDF bytes rather than a File because by this point a PowerPoint
+   * source has already become a PDF — see src/lib/intake.ts. It keeps this module
+   * knowing about exactly one format.
+   */
+  start(doc: PreparedDocument, options: ConvertOptions): Promise<void>;
   cancel(): void;
   reset(): void;
 }
@@ -45,7 +53,6 @@ const PHASE_LABEL = {
 } as const;
 
 const FRIENDLY: Record<string, string> = {
-  READ_FAILED: "The file could not be read. It may have been moved or renamed since you selected it.",
   OUT_OF_MEMORY: "This document is too large for your browser to hold in memory. Try turning off “Keep graphics”, which is what consumes most of it.",
   UNKNOWN: "Something went wrong during conversion.",
 };
@@ -65,22 +72,17 @@ export function createJob({ onChange }: { onChange: (state: JobState) => void })
   return {
     get state() { return state; },
 
-    async start(file, options) {
+    async start(source, options) {
       const id = ++runId;
       cancelled = false;
-      set({ status: "reading", progress: 0, message: "Reading file…", result: null, error: null });
+      set({ status: "reading", progress: 0, message: "Reading document…", result: null, error: null });
 
       // A late callback from a superseded or cancelled run must not touch the UI.
       const live = () => id === runId && !cancelled;
 
-      let data: Uint8Array;
-      try {
-        data = new Uint8Array(await file.arrayBuffer());
-      } catch {
-        if (live()) set({ status: "failed", error: { code: "READ_FAILED", message: FRIENDLY.READ_FAILED! } });
-        return;
-      }
-      if (!live()) return;
+      // Its own copy: pdf.js detaches the buffer it is handed, and these bytes are
+      // opened again by the preview and by any re-run.
+      const data = bytesFor(source);
 
       try {
         const pdfjs = await loadPdfjs();

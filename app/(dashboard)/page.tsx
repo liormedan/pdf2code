@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useActivity } from "@/src/lib/session-activity";
 import { usePendingFile } from "@/src/lib/pending-file";
-import { validateFile } from "@/src/lib/pricing.ts";
+import { validateFile, ACCEPT_ATTRIBUTE } from "@/src/lib/pricing.ts";
 import { useFormat } from "@/src/lib/format.ts";
 
 export default function OverviewPage() {
@@ -106,7 +106,7 @@ export default function OverviewPage() {
           <input
             id="overview-input"
             type="file"
-            accept="application/pdf,.pdf"
+            accept={ACCEPT_ATTRIBUTE}
             className="sr-only"
             onChange={(e) => e.target.files?.[0] && accept(e.target.files[0])}
           />

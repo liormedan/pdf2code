@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySession } from "@/src/lib/auth.ts";
+import { SESSION_COOKIE, readSession } from "@/src/lib/auth.ts";
 
 export async function middleware(request: NextRequest) {
   const secret = process.env.SESSION_SECRET;
   const token = request.cookies.get(SESSION_COOKIE)?.value;
 
-  if (await verifySession(token, secret)) return NextResponse.next();
+  // readSession, not a bare signature check: a token that carries no uid is not an
+  // identity, and the dashboard is entirely user-scoped from here on.
+  if (await readSession(token, secret)) return NextResponse.next();
 
   const login = new URL("/login", request.url);
   // Carry where they were headed, so signing in lands them there rather than at the
@@ -18,9 +20,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except the login screen, the endpoint that grants access, Next's own
-  // assets, and the pdf.js runtime files the converter fetches.
+  // Everything except the login screen, the two endpoints that grant access — the beta
+  // gate and the sign-in exchange, neither of which can require a session to reach —
+  // Next's own assets, and the pdf.js runtime files the converter fetches.
   matcher: [
-    "/((?!login|api/access|_next/static|_next/image|favicon.ico|pdf.worker.mjs|standard_fonts|cmaps).*)",
+    "/((?!login|api/access|api/session|_next/static|_next/image|favicon.ico|pdf.worker.mjs|standard_fonts|cmaps).*)",
   ],
 };

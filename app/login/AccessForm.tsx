@@ -3,13 +3,19 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Info, Wrench } from "lucide-react";
+import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function AccessForm({ devLoginAvailable = false }: { devLoginAvailable?: boolean }) {
+/**
+ * The first of the two gates: the shared beta code.
+ *
+ * Passing it does not sign anyone in — it only reveals the account form. The developer
+ * bypass lives beside this component rather than inside it, because it skips both.
+ */
+export default function AccessForm() {
   const t = useTranslations("login");
   const router = useRouter();
   const params = useSearchParams();
@@ -18,7 +24,7 @@ export default function AccessForm({ devLoginAvailable = false }: { devLoginAvai
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  async function requestAccess(payload: { code?: string; dev?: boolean }) {
+  async function requestAccess(payload: { code: string }) {
     setPending(true);
     setError(null);
 
@@ -36,10 +42,11 @@ export default function AccessForm({ devLoginAvailable = false }: { devLoginAvai
         return;
       }
 
-      // Only ever a same-site path — an absolute URL here would be an open redirect.
+      // Passing the gate lands on this same screen, now showing the sign-in step; the
+      // requested destination rides along in the query for the account form to use.
       const next = params.get("next");
-      const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
-      router.replace(target);
+      const target = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+      router.replace(target ? `/login?next=${encodeURIComponent(target)}` : "/login");
       router.refresh();
     } catch {
       setError(t("genericError"));
@@ -94,23 +101,6 @@ export default function AccessForm({ devLoginAvailable = false }: { devLoginAvai
         <span>{t("notAPassword")}</span>
       </p>
 
-      {devLoginAvailable && (
-        <div className="space-y-2 border-t border-dashed border-border pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full border-warning/50 text-warning hover:bg-warning-muted hover:text-warning"
-            disabled={pending}
-            onClick={() => requestAccess({ dev: true })}
-          >
-            <Wrench className="size-4" aria-hidden="true" />
-            {t("devSignIn")}
-          </Button>
-          {/* Says why it is safe rather than just that it exists — the next person to
-              read this screen should not have to go find out. */}
-          <p className="text-center text-[11px] text-muted-foreground">{t("devSignInNote")}</p>
-        </div>
-      )}
     </form>
   );
 }
