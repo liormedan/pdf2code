@@ -134,6 +134,14 @@ for v in ACCESS_CODE SESSION_SECRET NEXT_PUBLIC_FIREBASE_API_KEY NEXT_PUBLIC_FIR
 while IFS='=' read -r k v; do [ -n "$k" ] && [ "${k#\#}" = "$k" ] && printf '%s' "$v" | vercel env add "$k" production; done < .env.local
 ```
 
+**`printf` ולא `echo`, ולא צינור של PowerShell.** `vercel env add` לוקח את הערך מ-stdin כמו שהוא, כולל תו שורה נגרר. `SESSION_SECRET` שנגמר ב-`\n` נכשל בשקט ובצורה מבלבלת במיוחד: `/api/access` מקבל את הקוד ומנפיק עוגייה, אבל מסך הכניסה לא מצליח לאמת אותה, ולכן השער פשוט לא נפתח — בלי הודעת שגיאה. לאמת אחרי ההעלאה:
+
+```bash
+vercel env pull /tmp/check --environment=production --yes
+```
+
+אם אורך ערך שונה מהאורך אחרי `trim`, ההעלאה מזוהמת.
+
 **לא מוסיפים** `SOFFICE_PATH`, `NEXT_PUBLIC_GOOGLE_*` ו-`NEXT_PUBLIC_ENABLE_PPTX`. אין LibreOffice על Vercel, ו-Slides עוד לא מוגדר — כפתור שייראה שם רק ייכשל.
 
 ### 3.5 לפרוס מחדש
@@ -154,7 +162,9 @@ vercel --prod
 - [x] אומת מקומית — 71 בדיקות QA, בדיקות הממיר, `tsc` נקי
 - [x] 11 המשתנים הריקים נמחקו מ-Vercel; ששת התקינים הועלו
 - [x] `jose` ננעל לגרסה 5 — קריסת `/api/session` בפרודקשן נפתרה
-- [x] נפרס לפרודקשן ואומת: שער הביתא, ההפניות, `/api/presentation` מוגן
+- [x] תוקן `\r\n` נגרר בערכי הסביבה, שמנע מהשער להיפתח
+- [x] הסוד עובר `trim` בנקודה שבה הוא הופך למפתח, וכך הנפקה ואימות תמיד מסכימים
+- [x] נפרס לפרודקשן ואומת בדפדפן: מסך החשבון נפתח עם הרשמה, איפוס סיסמה ו"המשך עם Google"
 
 ### מיד — דורש התחברות בדפדפן, ולכן חוסם
 
@@ -168,7 +178,7 @@ vercel --prod
 - [ ] הרשמה אמיתית אחת דרך האפליקציה
 - [ ] לוודא שנוצרה רשומת `users/{uid}` עם `keepFileNames`, `locale` ו-`usage`
 - [ ] המרת PDF מקצה לקצה בפרודקשן, כולל הורדת ה-ZIP
-- [ ] להוסיף את `pdf2code.vercel.app` ל-Firebase → Authentication → Settings → **Authorized domains**, אחרת "המשך עם Google" ייכשל בפרודקשן
+- [ ] להוסיף את `pdf2code.vercel.app` ל-Firebase → Authentication → Settings → **Authorized domains**. אומת שהוא חסר: הפרויקט מרשה כרגע רק `localhost`, `pdf-to-code.firebaseapp.com` ו-`pdf-to-code.web.app`, ולכן "המשך עם Google" נכשל בפרודקשן עם `auth/unauthorized-domain`
 
 ### ספרינט 2 — פרויקטים ב-Firestore — 10%
 

@@ -49,6 +49,7 @@
     "errorTooMany": "Too many attempts. Wait a few minutes and try again.",
     "errorNetwork": "Could not reach the sign-in service. Check your connection.",
     "errorProviderOff": "That sign-in method is not enabled for this project.",
+    "errorUnauthorizedDomain": "This domain is not registered with Firebase, so Google sign-in is blocked here. Email and password still work.",
     "devSignIn": "Sign in as developer",
     "devSignInNote": "Local development only — this button does not exist in a production build."
   },

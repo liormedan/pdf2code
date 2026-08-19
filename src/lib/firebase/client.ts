@@ -26,10 +26,13 @@ export interface FirebaseConfig {
  * browser.
  */
 export function firebaseConfig(): FirebaseConfig | null {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+  // Trimmed because these are baked in at build time from whatever the hosting
+  // dashboard holds. A trailing newline survives into the bundle and turns authDomain
+  // into a host that does not exist, which surfaces only as a failed sign-in popup.
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim();
+  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim();
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim();
 
   if (!apiKey || !authDomain || !projectId || !appId) return null;
   return { apiKey, authDomain, projectId, appId };

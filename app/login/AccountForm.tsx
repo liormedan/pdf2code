@@ -30,6 +30,10 @@ const ERROR_KEYS: Record<string, string> = {
   "auth/too-many-requests": "errorTooMany",
   "auth/network-request-failed": "errorNetwork",
   "auth/operation-not-allowed": "errorProviderOff",
+  // Every preview deployment gets a hostname that cannot be registered in advance, so
+  // this one is expected rather than exceptional — and it points at a setting, not at
+  // anything the person signing in did wrong.
+  "auth/unauthorized-domain": "errorUnauthorizedDomain",
 };
 
 const codeOf = (err: unknown): string =>

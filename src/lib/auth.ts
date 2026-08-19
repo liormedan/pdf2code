@@ -67,7 +67,12 @@ export function constantTimeEqual(a: unknown, b: unknown): boolean {
 async function hmacKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     "raw",
-    encoder.encode(secret),
+    // Trimmed here, at the one point the secret becomes a key, so that minting and
+    // verifying always derive the same one. readAuthConfig trims, but middleware and
+    // the login page read process.env directly — and a value pasted into a hosting
+    // dashboard with a trailing newline would otherwise sign with one secret and
+    // verify with another. That failure is silent: every cookie simply looks forged.
+    encoder.encode(secret.trim()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
