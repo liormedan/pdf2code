@@ -6,8 +6,11 @@ export default async function ConvertPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
-      <Converter />
+      <div className="space-y-1.5">
+        <h1 className="text-xl font-semibold tracking-tight">{t("pdfTitle")}</h1>
+        <p className="max-w-[62ch] text-sm text-muted-foreground">{t("pdfIntro")}</p>
+      </div>
+      <Converter mode="pdf" />
     </div>
   );
 }

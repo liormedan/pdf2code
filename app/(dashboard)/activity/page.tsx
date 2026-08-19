@@ -188,7 +188,7 @@ export default function ActivityPage() {
                             variant="ghost"
                             size="sm"
                             className="gap-1.5 text-xs"
-                            onClick={() => router.push(`/convert?project=${entry.id}`)}
+                            onClick={() => router.push(`${entry.kind === "pdf" ? "/convert" : "/presentations"}?project=${entry.id}`)}
                             title={t(entry.driveFileId ? "runAgainHint" : "repickHint")}
                           >
                             <RotateCw className="size-3.5" />

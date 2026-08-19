@@ -106,9 +106,25 @@ export function detectKind(file: { name?: string; type?: string } | null | undef
   return KINDS.find((k) => k.exts.includes(ext) || (!!type && k.mime.includes(type)))?.kind ?? null;
 }
 
-/** Every extension and MIME type the file pickers should offer, here and now. */
-export const acceptAttribute = (): string =>
-  KINDS.filter((k) => k.kind !== "pptx" || pptxEnabled())
+/**
+ * Which intake screen a source belongs to.
+ *
+ * The engine treats all three sources identically — they converge on PDF bytes long
+ * before it sees them. The split exists for the person: a PDF and a Google Slides deck
+ * never leave the browser, while a PowerPoint file is sent to a server to be converted.
+ * That is a difference worth stating before someone hands over a document, not after.
+ */
+export type ConvertMode = "pdf" | "presentation";
+
+export const modeOf = (kind: SourceKind): ConvertMode => (kind === "pdf" ? "pdf" : "presentation");
+
+/** Every source this deployment takes, for a drop zone that routes rather than refuses. */
+export const acceptAnySource = (): string =>
+  [acceptAttribute("pdf"), acceptAttribute("presentation")].filter(Boolean).join(",");
+
+/** Every extension and MIME type one screen's file picker should offer. */
+export const acceptAttribute = (mode: ConvertMode): string =>
+  KINDS.filter((k) => modeOf(k.kind) === mode && (k.kind !== "pptx" || pptxEnabled()))
     .flatMap((k) => [...k.mime, ...k.exts])
     .join(",");
 

@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useActivity } from "@/src/lib/session-activity";
 import { usePendingFile } from "@/src/lib/pending-file";
-import { validateFile, acceptAttribute } from "@/src/lib/pricing.ts";
+import { validateFile, acceptAnySource, detectKind, modeOf } from "@/src/lib/pricing.ts";
 import { useFormat } from "@/src/lib/format.ts";
 
 export default function OverviewPage() {
@@ -38,7 +38,10 @@ export default function OverviewPage() {
     }
     setError(null);
     put(file);
-    router.push("/convert");
+    // The overview takes anything and sends it to the screen that handles it, rather
+    // than making the person pick the right door before they have dropped the file.
+    const kind = detectKind(file);
+    router.push(kind && modeOf(kind) === "presentation" ? "/presentations" : "/convert");
   }, [put, router]);
 
   // A counter, not a boolean: dragleave fires for every child element the pointer
@@ -106,7 +109,7 @@ export default function OverviewPage() {
           <input
             id="overview-input"
             type="file"
-            accept={acceptAttribute()}
+            accept={acceptAnySource()}
             className="sr-only"
             onChange={(e) => e.target.files?.[0] && accept(e.target.files[0])}
           />

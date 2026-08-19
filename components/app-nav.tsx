@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Activity, FileType2, LayoutDashboard, LogOut, Settings, Wand2 } from "lucide-react";
+import { Activity, FileType2, LayoutDashboard, LogOut, Presentation, Settings, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FIREBASE_ENABLED, firebaseAuth } from "@/src/lib/firebase/client.ts";
 
+// One entry per source, because the two differ in whether the document leaves the
+// browser — a distinction that belongs in front of the choice, not behind it.
 const ITEMS = [
   { href: "/", key: "overview", icon: LayoutDashboard },
-  { href: "/convert", key: "convert", icon: Wand2 },
+  { href: "/convert", key: "pdf", icon: Wand2 },
+  { href: "/presentations", key: "presentations", icon: Presentation },
   { href: "/activity", key: "activity", icon: Activity },
   { href: "/settings", key: "settings", icon: Settings },
 ];

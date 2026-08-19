@@ -16,7 +16,7 @@ import { createJob, buildZip, downloadBlob, type Job, type JobState } from "@/sr
 import { loadPdfjs, openPdf, PdfOpenError } from "@/src/lib/pdf-client.ts";
 import { bytesFor, fromSlides, prepare, IntakeError, type IntakeStage, type PreparedDocument } from "@/src/lib/intake.ts";
 import { exportPresentation, pickPresentation, slidesConfig, SlidesError } from "@/src/lib/google-slides.ts";
-import { validateFile, acceptAttribute, detectKind, pptxEnabled, MAX_PAGES, MAX_BYTES } from "@/src/lib/pricing.ts";
+import { validateFile, acceptAttribute, detectKind, modeOf, pptxEnabled, type ConvertMode, MAX_PAGES, MAX_BYTES } from "@/src/lib/pricing.ts";
 import { useActivity, type ActivityEntry } from "@/src/lib/session-activity";
 import { usePendingFile } from "@/src/lib/pending-file";
 import type { ConversionResult, ConversionWarning, OutputFormat } from "@/src/converter/types.ts";
@@ -35,7 +35,15 @@ interface DocProbe {
   tooLong: boolean;
 }
 
-export default function Converter() {
+/**
+ * One converter, two screens.
+ *
+ * The engine and every control below the intake are identical; `mode` decides only what
+ * can come in. Splitting the screens is what lets each one say, before a document is
+ * handed over, whether it will leave the browser — which is the one way the two routes
+ * genuinely differ.
+ */
+export default function Converter({ mode }: { mode: ConvertMode }) {
   const t = useTranslations("convert");
   const tWarn = useTranslations("warnings");
   const { record, entries, quota } = useActivity();
@@ -68,6 +76,11 @@ export default function Converter() {
   const job$ = jobRef.current;
 
   const busy = job.status === "reading" || job.status === "processing";
+
+  // On the presentations screen with PowerPoint switched off there is nothing a file
+  // picker could accept, so it is not offered — Google Slides is the whole intake.
+  const fileIntake = mode === "pdf" || pptxEnabled();
+  const showSlides = SLIDES_ENABLED && mode === "presentation";
 
   /**
    * Take in a document, however it was obtained.
@@ -116,7 +129,18 @@ export default function Converter() {
     // The one rejection a user is actually likely to hit gets said in their language.
     // validateFile answers in English for the rest, which is a gap worth closing when
     // its messages move to codes the way conversion warnings already have.
-    if (detectKind(nextFile) === "pptx" && !pptxEnabled()) {
+    const kind = detectKind(nextFile);
+
+    if (kind && modeOf(kind) !== mode) {
+      // Not an error on the user's part — they are one click from the right place, so
+      // the message names it rather than saying no.
+      setFileError(t(mode === "pdf" ? "belongsOnDecks" : "belongsOnPdf", { name: nextFile.name }));
+      setSource(null);
+      setDoc(null);
+      return;
+    }
+
+    if (kind === "pptx" && !pptxEnabled()) {
       setFileError(t("pptxUnavailable", { name: nextFile.name }));
       setSource(null);
       setDoc(null);
@@ -143,7 +167,7 @@ export default function Converter() {
     }
 
     return accept(() => prepare(nextFile, { onStage: setStage }));
-  }, [accept, t]);
+  }, [accept, t, mode]);
 
   const importSlides = useCallback(() => accept(async () => {
     setStage("importing");
@@ -327,32 +351,48 @@ export default function Converter() {
           )}
         >
           <CardContent className="p-0">
-            <input
-              ref={inputRef}
-              id="pdf-input"
-              type="file"
-              accept={acceptAttribute()}
-              className="sr-only"
-              onChange={(e) => e.target.files?.[0] && inspectFile(e.target.files[0])}
-            />
-            <Label
-              htmlFor="pdf-input"
-              className={cn(
-                "flex cursor-pointer flex-col items-center gap-1.5 px-6 text-center",
-                SLIDES_ENABLED ? "pt-14 pb-8" : "py-14",
-              )}
-            >
-              <Upload className="mb-2 size-7 text-primary" aria-hidden="true" />
-              <span className="text-base font-semibold">
-                {dragging ? t("dropHere") : t(pptxEnabled() ? "chooseFile" : "choosePdf")}
-              </span>
-              <span className="text-sm font-normal text-muted-foreground">{t("dragHint")}</span>
-              <span className="tabular mt-1 font-mono text-xs font-normal text-muted-foreground">
-                {t("limits", { megabytes: MAX_BYTES / 1024 / 1024, pages: MAX_PAGES })}
-              </span>
-            </Label>
+            {fileIntake ? (
+              <>
+                <input
+                  ref={inputRef}
+                  id="pdf-input"
+                  type="file"
+                  accept={acceptAttribute(mode)}
+                  className="sr-only"
+                  onChange={(e) => e.target.files?.[0] && inspectFile(e.target.files[0])}
+                />
+                <Label
+                  htmlFor="pdf-input"
+                  className={cn(
+                    "flex cursor-pointer flex-col items-center gap-1.5 px-6 text-center",
+                    showSlides ? "pt-14 pb-8" : "py-14",
+                  )}
+                >
+                  <Upload className="mb-2 size-7 text-primary" aria-hidden="true" />
+                  <span className="text-base font-semibold">
+                    {dragging ? t("dropHere") : t(mode === "pdf" ? "choosePdf" : "chooseDeck")}
+                  </span>
+                  <span className="text-sm font-normal text-muted-foreground">{t("dragHint")}</span>
+                  <span className="tabular mt-1 font-mono text-xs font-normal text-muted-foreground">
+                    {t("limits", { megabytes: MAX_BYTES / 1024 / 1024, pages: MAX_PAGES })}
+                  </span>
+                </Label>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-1.5 px-6 pt-14 pb-8 text-center">
+                <Presentation className="mb-2 size-7 text-primary" aria-hidden="true" />
+                {/* A heading that names an action there is no button for would be a
+                    dead end. When neither intake exists, the screen says exactly that. */}
+                <span className="text-base font-semibold">
+                  {t(showSlides ? "slidesOnlyTitle" : "deckUnavailableTitle")}
+                </span>
+                <span className="max-w-[48ch] text-sm leading-relaxed text-muted-foreground">
+                  {t(showSlides ? "slidesOnlyBody" : "deckUnavailableBody")}
+                </span>
+              </div>
+            )}
             {/* Outside the Label: anything inside it opens the file picker instead. */}
-            {SLIDES_ENABLED && (
+            {showSlides && (
               <div className="flex justify-center pb-10">
                 <Button variant="outline" size="sm" onClick={importSlides}>
                   <Presentation className="size-4" aria-hidden="true" />
