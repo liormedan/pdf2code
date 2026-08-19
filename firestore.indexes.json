@@ -1,0 +1,14 @@
+{
+  "__comment": "Required once the list filters on `archived` — an equality filter beside a sort on another field needs a composite index. Nothing archives yet, so the query sorts only and needs no index; deploy this with the projects screen, before that filter ships. Firestore fails on a missing index at runtime, never at build.",
+  "indexes": [
+    {
+      "collectionGroup": "projects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "archived", "order": "ASCENDING" },
+        { "fieldPath": "lastConvertedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

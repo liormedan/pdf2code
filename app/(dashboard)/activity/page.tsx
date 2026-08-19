@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +13,22 @@ export default function ActivityPage() {
   const tOverview = useTranslations("overview");
   const tConvert = useTranslations("convert");
   const format = useFormat();
-  const { entries, clear } = useActivity();
+  const { entries, clear, loading } = useActivity();
+
+  // This button used to empty a tab. It now deletes the record for good, so it asks —
+  // in place rather than in a dialog, because the question is one word long.
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function confirmClear() {
+    setDeleting(true);
+    try {
+      await clear();
+      setConfirming(false);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
@@ -20,13 +36,38 @@ export default function ActivityPage() {
         <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         {entries.length > 0 && (
-          <Button variant="outline" size="sm" className="ms-auto" onClick={clear}>
-            {t("clear")}
-          </Button>
+          <span className="ms-auto flex flex-wrap items-center gap-2">
+            {confirming ? (
+              <>
+                <span className="text-xs text-muted-foreground">{t("clearConfirm")}</span>
+                <Button variant="outline" size="sm" onClick={() => setConfirming(false)} disabled={deleting}>
+                  {t("clearCancel")}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={confirmClear}
+                  disabled={deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {t(deleting ? "clearing" : "clearYes")}
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setConfirming(true)}>
+                {t("clear")}
+              </Button>
+            )}
+          </span>
         )}
       </div>
 
-      {entries.length === 0 ? (
+      {loading && entries.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="text-sm text-muted-foreground">{t("loading")}</p>
+          </CardContent>
+        </Card>
+      ) : entries.length === 0 ? (
         <Card>
           <CardContent className="space-y-1.5 py-10 text-center">
             <p className="text-sm font-semibold">{tOverview("emptyTitle")}</p>

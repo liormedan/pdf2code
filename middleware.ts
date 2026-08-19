@@ -9,6 +9,14 @@ export async function middleware(request: NextRequest) {
   // identity, and the dashboard is entirely user-scoped from here on.
   if (await readSession(token, secret)) return NextResponse.next();
 
+  // An API caller needs to be refused, not redirected. fetch follows redirects on its
+  // own, so sending it to the sign-in page hands it 200 and a page of HTML — response.ok
+  // is true, and the caller parses a login screen as if it were the answer it asked for.
+  // A session expiring mid-conversion surfaced as "corrupt PDF" because of this.
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
   const login = new URL("/login", request.url);
   // Carry where they were headed, so signing in lands them there rather than at the
   // top of the app. Only a same-site path — never an absolute URL an attacker supplied.

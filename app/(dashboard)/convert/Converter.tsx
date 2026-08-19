@@ -181,11 +181,17 @@ export default function Converter() {
     recorded.current = job.result;
     record({
       name: source?.name ?? baseName,
+      kind: source?.kind ?? "pdf",
+      // Only a Slides deck carries one, and it is the whole reason such a project can be
+      // run again later without asking for the file back.
+      driveFileId: source?.driveFileId,
+      sourceSize: source?.sourceSize,
       pages: job.result.info.converted,
       formats: [...formats],
-      bytes: Object.values(job.result.files).reduce((n, c) => n + c.length, 0),
+      background,
+      outputBytes: Object.values(job.result.files).reduce((n, c) => n + c.length, 0),
     });
-  }, [job, source, baseName, formats, record]);
+  }, [job, source, baseName, formats, background, record]);
 
   function toggleFormat(id: OutputFormat) {
     setFormats((current) =>

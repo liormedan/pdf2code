@@ -1,7 +1,16 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { OutputFormat } from "@/src/converter/types.ts";
+import type { Project, ProjectDraft } from "./projects.ts";
 
 export interface ActivityEntry {
   id: string;
@@ -20,34 +29,93 @@ export interface ActivityTotals {
 
 interface ActivityContextValue {
   entries: ActivityEntry[];
-  record: (entry: Omit<ActivityEntry, "id" | "at">) => void;
-  clear: () => void;
+  record: (draft: ProjectDraft) => void;
+  clear: () => Promise<void>;
   totals: ActivityTotals;
+  /** True until the first load finishes, so a screen can tell empty from not-yet-known. */
+  loading: boolean;
 }
 
 /**
- * Conversion history for the current tab.
+ * Conversion history, kept with the account.
  *
- * Held in React state on purpose — not localStorage, not a server, not IndexedDB. The
- * promise the product makes is that nothing about a document is kept, and a history
- * that survives a refresh is a record of what someone converted. Closing the tab
- * should genuinely leave nothing behind.
+ * It used to live in React state and nowhere else, so closing the tab left nothing
+ * behind. That was the right default while there were no accounts; now that there are,
+ * a history that evaporates on refresh is a bug rather than a promise — and the promise
+ * that actually matters is untouched, because a project record holds a name, a page
+ * count and a date, never the document.
+ *
+ * The name is the sensitive part of that record, which is why `keepFileNames` exists and
+ * why it is applied on the server when the row is written. See src/lib/projects.ts.
+ *
+ * The shape below is deliberately the one the screens already consumed, so moving the
+ * storage changed no screen.
  */
 const ActivityContext = createContext<ActivityContextValue | null>(null);
 
-const MAX_ENTRIES = 50;
+const asEntry = (p: Project): ActivityEntry => ({
+  id: p.id,
+  at: p.lastConvertedAt,
+  name: p.name,
+  pages: p.pages,
+  formats: p.formats,
+  bytes: p.outputBytes,
+});
 
 export function ActivityProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const record = useCallback<ActivityContextValue["record"]>((entry) => {
-    setEntries((current) => [
-      { ...entry, id: crypto.randomUUID(), at: Date.now() },
-      ...current,
-    ].slice(0, MAX_ENTRIES));
+  const load = useCallback(async () => {
+    try {
+      const response = await fetch("/api/projects");
+      if (!response.ok) return;
+      const body = await response.json() as { projects?: Project[] };
+      setEntries((body.projects ?? []).map(asEntry));
+    } catch {
+      // An unreachable server should leave the last known list on screen rather than
+      // blanking it — nothing here is worth interrupting a conversion for.
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const clear = useCallback(() => setEntries([]), []);
+  useEffect(() => { void load(); }, [load]);
+
+  const record = useCallback<ActivityContextValue["record"]>((draft) => {
+    // Shown immediately under a temporary id, then replaced by what the server actually
+    // stored — which may carry a different name, if this account keeps none.
+    const optimistic: ActivityEntry = {
+      id: `pending-${crypto.randomUUID()}`,
+      at: Date.now(),
+      name: draft.name,
+      pages: draft.pages,
+      formats: draft.formats,
+      bytes: draft.outputBytes,
+    };
+    setEntries((current) => [optimistic, ...current]);
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(draft),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+        await load();
+      } catch {
+        // Drop the optimistic row rather than leave a conversion listed that was never
+        // saved: a list that lies about what survived is worse than a short one.
+        setEntries((current) => current.filter((e) => e.id !== optimistic.id));
+      }
+    })();
+  }, [load]);
+
+  const clear = useCallback(async () => {
+    const response = await fetch("/api/projects", { method: "DELETE" });
+    if (response.ok) setEntries([]);
+  }, []);
 
   const totals = useMemo<ActivityTotals>(
     () => ({
@@ -58,7 +126,10 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     [entries],
   );
 
-  const value = useMemo(() => ({ entries, record, clear, totals }), [entries, record, clear, totals]);
+  const value = useMemo(
+    () => ({ entries, record, clear, totals, loading }),
+    [entries, record, clear, totals, loading],
+  );
 
   return <ActivityContext.Provider value={value}>{children}</ActivityContext.Provider>;
 }

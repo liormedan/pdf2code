@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Nothing reaches Firestore from a browser.
+//
+// Every read and every write goes through a route handler using the Admin SDK, which
+// bypasses these rules entirely — so this file is not the access policy for the app, it
+// is the guarantee that no *other* path exists. A leaked API key or a copied web config
+// buys nothing.
+//
+// That is a deliberate trade against the obvious alternative, which is to open reads to
+// the owner and let the client subscribe for realtime updates. It costs a round trip and
+// live updates, and it buys two things: the client bundle does not carry the Firestore
+// SDK, and there is no rule expression to get subtly wrong. If realtime is ever worth
+// its weight, the read below is where it opens — one line, for the owner only:
+//
+//   allow read: if request.auth != null && request.auth.uid == uid;
+//
+// Writes stay closed even then. keepFileNames is enforced when the record is written,
+// and a policy a client could bypass from its own console is not a policy.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

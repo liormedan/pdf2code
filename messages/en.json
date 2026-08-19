@@ -119,13 +119,18 @@
   },
   "activity": {
     "title": "Activity",
-    "subtitle": "Kept in this tab only. Refreshing clears it.",
+    "subtitle": "Kept with your account. Your documents are not.",
     "file": "File",
     "pages": "Pages",
     "output": "Output",
     "size": "Size",
     "when": "When",
-    "clear": "Clear"
+    "loading": "Loading your history…",
+    "clear": "Delete all",
+    "clearConfirm": "Delete every record? This cannot be undone.",
+    "clearYes": "Delete",
+    "clearCancel": "Keep",
+    "clearing": "Deleting…"
   },
   "settings": {
     "title": "Settings",
