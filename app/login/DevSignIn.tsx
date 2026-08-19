@@ -27,7 +27,7 @@ export default function DevSignIn() {
     try {
       const response = await fetch("/api/dev-session", { method: "POST" });
       if (!response.ok) return;
-      router.replace("/");
+      router.replace("/dashboard");
       router.refresh();
     } finally {
       setPending(false);

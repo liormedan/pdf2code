@@ -67,7 +67,7 @@ export default function AccountForm() {
 
     // Only ever a same-site path — an absolute URL here would be an open redirect.
     const next = params.get("next");
-    const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
     router.replace(target);
     router.refresh();
   }

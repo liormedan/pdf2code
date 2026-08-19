@@ -1,7 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, readSession } from "@/src/lib/auth.ts";
 
+/**
+ * Paths anyone may reach.
+ *
+ * A list rather than a hole in the matcher's regex. The matcher excludes by negative
+ * lookahead, and the webpage lives at "/" — where the captured group is empty, so no
+ * amount of exclusion there spares it. Worse, that is the kind of expression that looks
+ * right and fails silently. The gate is easier to trust when it is written as words.
+ */
+const PUBLIC_PATHS = new Set(["/", "/login"]);
+
 export async function middleware(request: NextRequest) {
+  if (PUBLIC_PATHS.has(request.nextUrl.pathname)) return NextResponse.next();
+
   const secret = process.env.SESSION_SECRET;
   const token = request.cookies.get(SESSION_COOKIE)?.value;
 

@@ -3,6 +3,14 @@
     "name": "PDF to Code",
     "tagline": "Turn a PDF into HTML or React you can actually edit"
   },
+  "webpage": {
+    "brand": "PDF to Code",
+    "headline": "Turn a PDF into a page you can actually edit",
+    "subhead": "A standalone HTML page or a drop-in React component — converted in your browser, so the file is never uploaded anywhere.",
+    "getStarted": "Get started",
+    "signIn": "Sign in",
+    "openApp": "Open the app"
+  },
   "nav": {
     "overview": "Overview",
     "pdf": "PDF",

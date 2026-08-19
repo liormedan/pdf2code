@@ -3,6 +3,14 @@
     "name": "PDF to Code",
     "tagline": "הפוך PDF ל-HTML או React שאפשר באמת לערוך"
   },
+  "webpage": {
+    "brand": "PDF to Code",
+    "headline": "הפוך PDF לדף שאפשר באמת לערוך",
+    "subhead": "דף HTML עצמאי או רכיב React — ההמרה רצה בדפדפן שלך, כך שהקובץ לא נשלח לשום מקום.",
+    "getStarted": "בואו נתחיל",
+    "signIn": "התחברות",
+    "openApp": "כניסה לאפליקציה"
+  },
   "nav": {
     "overview": "סקירה",
     "pdf": "PDF",

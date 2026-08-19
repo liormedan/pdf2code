@@ -11,7 +11,7 @@ import { FIREBASE_ENABLED, firebaseAuth } from "@/src/lib/firebase/client.ts";
 // One entry per source, because the two differ in whether the document leaves the
 // browser — a distinction that belongs in front of the choice, not behind it.
 const ITEMS = [
-  { href: "/", key: "overview", icon: LayoutDashboard },
+  { href: "/dashboard", key: "overview", icon: LayoutDashboard },
   { href: "/convert", key: "pdf", icon: Wand2 },
   { href: "/presentations", key: "presentations", icon: Presentation },
   { href: "/activity", key: "activity", icon: Activity },
@@ -43,7 +43,7 @@ export default function AppNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-6 p-4">
       <Link
-        href="/"
+        href="/dashboard"
         onClick={onNavigate}
         className="flex items-center gap-2.5 rounded-md px-2 py-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
