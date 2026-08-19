@@ -28,10 +28,12 @@ function apply(theme: ThemeChoice) {
 
 export default function ThemeToggle() {
   const t = useTranslations("nav");
-  const [theme, setTheme] = useState<ThemeChoice>("system");
+  const [theme, setTheme] = useState<ThemeChoice>("dark");
 
   useEffect(() => {
-    setTheme((localStorage.getItem("theme") as ThemeChoice | null) ?? "system");
+    // Dark unless something else was chosen — the same rule the inline script in
+    // app/layout.tsx applies before this component has mounted.
+    setTheme((localStorage.getItem("theme") as ThemeChoice | null) ?? "dark");
   }, []);
 
   // Following the OS means following it as it changes, not only at load.
@@ -45,8 +47,9 @@ export default function ThemeToggle() {
 
   function choose(next: ThemeChoice) {
     setTheme(next);
-    if (next === "system") localStorage.removeItem("theme");
-    else localStorage.setItem("theme", next);
+    // "system" is stored rather than cleared: an empty slot means "never chose", and
+    // that now resolves to dark.
+    localStorage.setItem("theme", next);
     apply(next);
   }
 
