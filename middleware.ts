@@ -20,10 +20,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except the login screen, the two endpoints that grant access — the beta
-  // gate and the sign-in exchange, neither of which can require a session to reach —
-  // Next's own assets, and the pdf.js runtime files the converter fetches.
+  // Everything except the login screen, the two endpoints that grant a session —
+  // neither of which can require a session to reach — Next's own assets, and the pdf.js
+  // runtime files the converter fetches.
   matcher: [
-    "/((?!login|api/access|api/session|_next/static|_next/image|favicon.ico|pdf.worker.mjs|standard_fonts|cmaps).*)",
+    "/((?!login|api/session|api/dev-session|_next/static|_next/image|favicon.ico|pdf.worker.mjs|standard_fonts|cmaps).*)",
   ],
 };

@@ -17,13 +17,7 @@
     "themeSystem": "לפי המערכת"
   },
   "login": {
-    "title": "הזן קוד גישה",
-    "subtitle": "הכלי נמצא בפיתוח ואינו פתוח לציבור.",
-    "codeLabel": "קוד גישה",
-    "codePlaceholder": "הזן את הקוד שקיבלת",
-    "submit": "המשך",
     "submitting": "בודק…",
-    "notAPassword": "זהו קוד גישה משותף, לא סיסמה אישית. אל תזין כאן סיסמה שאתה משתמש בה במקום אחר.",
     "genericError": "משהו השתבש. נסה שוב.",
     "accountSubtitle": "התחבר לחשבון שלך, או צור חשבון חדש.",
     "accountsUnavailable": "חשבונות לא מוגדרים בפריסה הזו. הגדר את משתני Firebase ב-.env.local.",

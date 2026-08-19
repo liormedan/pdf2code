@@ -31,7 +31,7 @@ Right-to-left scripts are handled properly. `<html lang>` and `dir` are derived 
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in ACCESS_CODE and SESSION_SECRET
+cp .env.example .env.local   # then fill in SESSION_SECRET
 npm run dev
 ```
 
@@ -43,17 +43,17 @@ PDF conversion needs nothing else. The other two sources are optional and each i
 
 ## Getting in
 
-Two gates, and they prove different things.
-
-**The beta access code** is shared and says only that this browser was let past the front door. Set `ACCESS_CODE` and `SESSION_SECRET`:
+An account is the only thing that proves anything. Set `SESSION_SECRET`, which signs the cookie that carries it:
 
 ```bash
-node -e "console.log(crypto.randomUUID()+crypto.randomUUID())"   # a SESSION_SECRET
+node -e "console.log(crypto.randomUUID()+crypto.randomUUID())"
 ```
 
-**The account** is the identity everything user-scoped is keyed on. Firebase verifies it once, at sign-in, in a Node route handler — `firebase-admin` cannot run on the Edge. What middleware checks on every request after that is an HMAC-signed cookie carrying the uid, which Web Crypto verifies in either runtime with no network call. The gate outliving a session is deliberate: re-entering the beta code daily would be noise, and losing the gate should not sign anyone out.
+Firebase verifies the account once, at sign-in, in a Node route handler — `firebase-admin` cannot run on the Edge. What middleware checks on every request after that is an HMAC-signed cookie carrying the uid, which Web Crypto verifies in either runtime with no network call.
 
-The code is a temporary beta measure and comes out by deleting one check. The account does not.
+A shared beta code used to stand in front of this, and it is gone. Anyone who reaches the app can now create an account, so **who may sign in is Firebase Authentication's decision** — restrict it there, not in this codebase.
+
+In development the sign-in screen also offers a developer button, which mints a session outright so the app runs with no Firebase project at all. Its route answers 404 whenever `NODE_ENV` is production, so it cannot be reached on a deployment.
 
 In development a **Sign in as developer** button skips both, so a machine with no Firebase project can still run the app. It is gated on `NODE_ENV` inside the route handler, not merely hidden — the endpoint refuses the developer path in any production build, so it cannot be reached by calling the API directly either.
 

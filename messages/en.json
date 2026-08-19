@@ -17,13 +17,7 @@
     "themeSystem": "System"
   },
   "login": {
-    "title": "Enter your access code",
-    "subtitle": "This tool is in private development. It is not open to the public yet.",
-    "codeLabel": "Access code",
-    "codePlaceholder": "Enter the code you were given",
-    "submit": "Continue",
     "submitting": "Checking…",
-    "notAPassword": "This is a shared access code, not a personal password. Do not enter a password you use anywhere else.",
     "genericError": "Something went wrong. Try again.",
     "accountSubtitle": "Sign in to your account, or create one.",
     "accountsUnavailable": "Accounts are not configured on this deployment. Set the Firebase variables in .env.local.",

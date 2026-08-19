@@ -36,7 +36,7 @@
 
 **מה נוסף למטען העוגייה:** `uid`. זה מה שמאפשר את כל השאר.
 
-`/api/access` **נשאר** ומנפיק כעת עוגיית שער נפרדת (`pdf2code_gate`), בהתאם להחלטה להשאיר את קוד הגישה כשער נוסף בביתא. `/api/session` מנפיק את עוגיית הזהות. כפתור **כניסת מפתחים** מדלג על שניהם — הוא חסום לפי `NODE_ENV` בתוך ה-route ולא רק מוסתר בממשק.
+`/api/access` ועוגיית `pdf2code_gate` **הוסרו** — קוד הגישה בוטל, וחשבון הוא הדבר היחיד שמוכיח משהו. `/api/session` מנפיק את עוגיית הזהות. כפתור **כניסת מפתחים** מדלג עליו דרך `/api/dev-session`, שמחזיר 404 לפי `NODE_ENV` ולא רק מוסתר בממשק.
 
 ---
 
@@ -133,7 +133,7 @@ match /users/{uid} {
 src/lib/firebase/client.ts      אתחול ה-SDK המודולרי, auth ו-firestore
 src/lib/firebase/admin.ts       Admin SDK — server-only, לעולם לא מיובא מקומפוננטת לקוח
 src/lib/projects.ts             קריאות realtime בלקוח + עטיפות הכתיבה מול ה-API
-app/api/session/route.ts        idToken → עוגיית זהות (ולצדו /api/access, שער הביתא)
+app/api/session/route.ts        idToken → עוגיית זהות
 app/api/projects/route.ts       יצירה ורשימה
 app/api/projects/[id]/route.ts  שינוי שם, ארכוב, מחיקה
 firestore.rules

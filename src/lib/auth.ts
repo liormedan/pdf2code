@@ -1,15 +1,11 @@
-// Signed cookies, and the two gates they carry.
+// The signed cookie that carries who is signed in.
 //
-// There are two independent things to prove, so there are two cookies:
-//
-//   pdf2code_gate     the shared beta access code was entered. Says nothing about who
-//                     you are — only that this browser was let past the front door.
 //   pdf2code_session  a Firebase account was verified. Carries the uid, which is what
 //                     everything user-scoped is keyed on.
 //
-// The gate is a temporary measure for the beta and can be removed by deleting one
-// check; the session is the real identity. Keeping them apart means neither has to
-// know about the other, and losing the gate does not log anyone out of their account.
+// There used to be a second cookie beside it, holding a shared beta access code that
+// had to be entered before the sign-in screen would appear. It was always described as
+// temporary, and it is gone: an account is now the only thing that proves anything.
 //
 // Firebase verifies an account exactly once, at sign-in, in a Node route handler —
 // firebase-admin cannot run on the Edge. What middleware sees on every request after
@@ -17,14 +13,11 @@
 
 const encoder = new TextEncoder();
 
-const GATE_COOKIE = "pdf2code_gate";
 const SESSION_COOKIE = "pdf2code_session";
 
-/** The gate outlives a session deliberately: re-entering the beta code daily is noise. */
-const GATE_TTL_SECONDS = 60 * 60 * 24 * 30;
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
-export { GATE_COOKIE, SESSION_COOKIE, GATE_TTL_SECONDS, SESSION_TTL_SECONDS };
+export { SESSION_COOKIE, SESSION_TTL_SECONDS };
 
 /** Who is signed in. Mirrors the Firebase account, and nothing more of it than this. */
 export interface SessionClaims {
@@ -128,10 +121,6 @@ export async function verifySession(
   return (await readToken(token, secret)) !== null;
 }
 
-/** Mint the beta gate cookie. It carries no identity, because the code is shared. */
-export const createGate = (secret: string): Promise<string> =>
-  createToken({ gate: true }, secret, GATE_TTL_SECONDS);
-
 /** Mint the session cookie for a verified Firebase account. */
 export const createSession = (
   secret: string,
@@ -154,25 +143,21 @@ export async function readSession(
 }
 
 /**
- * Read configuration, refusing to run with placeholder values.
- * A gate with a default password is worse than no gate, because it looks like one.
+ * Read configuration, refusing to run with a secret too short to be one.
+ * Every session cookie is only as trustworthy as this value.
  */
 export interface AuthConfig {
-  code: string | undefined;
   secret: string | undefined;
   problems: string[];
   ok: boolean;
 }
 
 export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
-  const code = env.ACCESS_CODE?.trim();
   const secret = env.SESSION_SECRET?.trim();
 
   const problems: string[] = [];
-  if (!code) problems.push("ACCESS_CODE is not set");
-  else if (code.length < 8) problems.push("ACCESS_CODE is shorter than 8 characters");
   if (!secret) problems.push("SESSION_SECRET is not set");
   else if (secret.length < 32) problems.push("SESSION_SECRET is shorter than 32 characters");
 
-  return { code, secret, problems, ok: problems.length === 0 };
+  return { secret, problems, ok: problems.length === 0 };
 }

@@ -14,7 +14,7 @@ import { detectLanguage } from "../src/converter/language.ts";
 import { describeFont } from "../src/converter/fonts.ts";
 import { quote, validateFile, baseNameOf, detectKind, pptxEnabled, MAX_PAGES } from "../src/lib/pricing.ts";
 import { sniffPresentation } from "../src/lib/office-server.ts";
-import { createGate, createSession, createToken, readSession, verifySession } from "../src/lib/auth.ts";
+import { createSession, createToken, readSession, verifySession } from "../src/lib/auth.ts";
 import { HOSTILE_LINES } from "./make-test-pdf.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -187,14 +187,14 @@ section("4. Units — pricing, validation, language, fonts");
   check("a PDF is not a presentation", sniffPresentation(sig(0x25, 0x50, 0x44, 0x46)) === null);
   check("a truncated file is not a presentation", sniffPresentation(new Uint8Array([0x50, 0x4b])) === null);
 
-  // The two cookies prove different things, and the gate must never be mistaken for an
-  // identity — it is a shared code, so a token carrying no uid is nobody.
+  // A token carrying no uid is nobody, however well signed it is. Nothing mints one
+  // any more, but readSession is what stands between a forged cookie and the app.
   const secret = "s".repeat(32);
-  const gate = await createGate(secret);
   const session = await createSession(secret, { uid: "u1", email: "a@example.com" });
+  const uidless = await createToken({ gate: true }, secret, 60);
 
-  check("gate token is authentic", await verifySession(gate, secret));
-  check("gate token is not a session", (await readSession(gate, secret)) === null);
+  check("an authentic token without a uid is not a session",
+    (await verifySession(uidless, secret)) && (await readSession(uidless, secret)) === null);
   check("session reads back its uid", (await readSession(session, secret))?.uid === "u1");
   check("a tampered session is rejected",
     (await readSession(`${session.slice(0, -2)}aa`, secret)) === null);

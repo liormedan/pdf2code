@@ -2,7 +2,7 @@
 
 איפה הפרויקט עומד, מה חסום, ומה עושים כדי להמשיך ממחשב חדש.
 
-עודכן: 19 באוגוסט 2026 — אחרי שהמשתנים תוקנו ב-Vercel ושהקריסה ב-`/api/session` נפתרה.
+עודכן: 19 באוגוסט 2026 — החשבונות עובדים בפרודקשן, ושער הביתא הוסר.
 
 ---
 
@@ -12,31 +12,43 @@
 
 | רכיב | מצב |
 | --- | --- |
-| מנוע ההמרה | ✅ עומד. 71 בדיקות QA, בדיקות ממיר, ולידציית פלט |
+| מנוע ההמרה | ✅ עומד. 70 בדיקות QA, בדיקות ממיר, ולידציית פלט |
 | קליטת PDF | ✅ מאומת מקצה לקצה בדפדפן |
 | קליטת Google Slides | 🟡 קוד שלם, **לא מוגדר** — Picker API ו-Drive API כבויים |
 | קליטת PowerPoint | 🟡 קוד שלם, **דגל כבוי**. לא ניתן להרצה על Vercel |
-| חשבונות (Auth) | ✅ Email/Password ו-Google פעילים בפרויקט Firebase |
-| פרויקטים ב-Firestore | ⬜ לא התחיל — ספרינט 2 |
-| פריסה | 🟡 **שער הביתא עובד; חשבונות חסומים** — ראה §2 |
+| חשבונות (Auth) | ✅ מוגדרים מקצה לקצה בפרודקשן |
+| פרויקטים ב-Firestore | 🟡 המסד נוצר; החוקים והמסכים בספרינט 2 |
+| פריסה | ✅ **חיה ושמישה** |
 
 **כתובת הפרודקשן:** https://pdf2code.vercel.app
 
-מה שכבר אומת שם: `/` מפנה ל-`/login`, שער הביתא מקבל את הקוד ומחזיר `{"ok":true}`, `/convert` מפנה להתחברות, `/api/presentation` מוגן, וכפתור כניסת המפתחים **לא קיים** בבילד הפרודקשן.
+מה שאומת שם: `/` מפנה ל-`/login`, מסך החשבון נטען מיד עם הרשמה ו"המשך עם Google", `/convert` מפנה להתחברות, `/api/presentation` מוגן, ו-`/api/dev-session` מחזיר 404.
 
 ---
 
-## 2. מה חסום כרגע — מפתח השירות
+## 2. אין חסם פתוח
 
-שני החסמים הקודמים נפתרו:
+שלושת החסמים שהיו כאן נסגרו:
 
-**משתני הסביבה** — 11 המשתנים הריקים נמחקו מ-Vercel, וששת הערכים התקינים הועלו מ-`.env.local`. הפרודקשן כבר לא מחזיר `Server is not configured`.
+**משתני הסביבה** — 11 המשתנים הריקים נמחקו מ-Vercel והתקינים הועלו. נדרשו שתי העלאות: הראשונה נשאה `\r\n` נגרר, ראה §3.4.
 
-**קריסת `/api/session`** — הפרודקשן החזיר 500 גנרי בכל קריאה, בגלל `ERR_REQUIRE_ESM` ב-`jose`. נפתר בנעילת `jose` לגרסה 5 דרך `overrides`; ההסבר המלא ב-[deploy-vercel.md](deploy-vercel.md).
+**קריסת `/api/session`** — 500 גנרי בכל קריאה, בגלל `ERR_REQUIRE_ESM` ב-`jose`. נפתר בנעילת `jose` לגרסה 5; ההסבר המלא ב-[deploy-vercel.md](deploy-vercel.md).
 
-**מה שנשאר:** `FIREBASE_SERVICE_ACCOUNT` ריק, ולכן `/api/session` מחזיר 503 — "חשבונות לא מוגדרים". זה המצב הנכון והמכוון בהיעדר מפתח, לא תקלה, אבל בלעדיו אי אפשר להירשם.
+**מפתח השירות** — הופק מקונסולת Firebase (לא דרך `gcloud`, שאינו מותקן) והועלה. `/api/session` מחזיר עכשיו 401 על טוקן מזויף במקום 503, כלומר ה-Admin SDK אותחל ומאמת באמת.
 
-הפקת המפתח (§3.2) חוסמת עליך: `gcloud` לא מותקן במחשב הזה, וטוקן הרענון של Firebase CLI פג — `firebase login:list` מזהה את החשבון, אבל כל קריאה מוחזרת עם 401. שתי הדרכים דורשות התחברות בדפדפן.
+**מזהה המפתח החדש:** `…bb0f06`. קובץ ה-JSON נמחק מ-`Downloads` מיד אחרי הקידוד; הערך חי רק ב-Vercel וב-`.env.local`.
+
+---
+
+## 2א. שער הביתא הוסר
+
+`ACCESS_CODE`, `/api/access`, `AccessForm` ועוגיית `pdf2code_gate` נמחקו. מסך הכניסה מציג מיד את טופס החשבון.
+
+**המשמעות: כל מי שמגיע לכתובת יכול לפתוח חשבון.** מי רשאי להיכנס הוא מעכשיו החלטה של Firebase Authentication, ומגבילים אותה שם — לא בקוד. אם צריך לסגור את זה שוב, האפשרויות הן להשבית הרשמה עצמית ב-Firebase, או להחזיר את השער מהיסטוריית הגיט.
+
+עוגיות `pdf2code_gate` שנשארו בדפדפנים פשוט לא נקראות יותר, ויפוגו מעצמן.
+
+כניסת המפתחים שרדה במסלול נפרד, `/api/dev-session`, כי היא הדרך היחידה להריץ את האפליקציה בלי פרויקט Firebase. היא מחזירה 404 בכל בילד פרודקשן.
 
 ---
 
@@ -68,7 +80,6 @@ node scripts/make-test-pdf.mjs fixtures/10-large-150p.pdf 150
 
 ```bash
 cat > .env.local <<'EOF'
-ACCESS_CODE=
 SESSION_SECRET=
 NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBBGM9Z9aMKsuJtW8tmHpYqz_okFDJ1YwE
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=pdf-to-code.firebaseapp.com
@@ -84,20 +95,17 @@ EOF
 node -e "console.log(crypto.randomUUID()+crypto.randomUUID())"
 ```
 
-**`ACCESS_CODE`** — קוד הביתא המשותף. אם נשכח, אפשר לבחור חדש; הוא לא קשור לשום נתון.
+**`FIREBASE_SERVICE_ACCOUNT`** — את המפתח הפרטי אי אפשר להוריד שוב, גוגל נותנת אותו פעם אחת. הדרך הקצרה היא דרך הדפדפן ולא `gcloud`, שדורש התקנה והתחברות:
 
-**`FIREBASE_SERVICE_ACCOUNT`** — את המפתח הפרטי אי אפשר להוריד שוב, גוגל נותנת אותו פעם אחת. מושכים חדש:
+Firebase Console → **Project settings → Service accounts → Generate new private key**. יורד קובץ JSON. ואז:
 
 ```bash
-gcloud auth login
-gcloud iam service-accounts keys create sa.json \
-  --iam-account=firebase-adminsdk-fbsvc@pdf-to-code.iam.gserviceaccount.com \
-  --project pdf-to-code
-node -e "console.log(require('fs').readFileSync('sa.json').toString('base64'))"
-rm sa.json
+node -e "console.log(require('fs').readFileSync('key.json').toString('base64'))"
 ```
 
-את הפלט מדביקים אחרי `FIREBASE_SERVICE_ACCOUNT=`, בשורה אחת. **למחוק את `sa.json`** — אסור שיישאר עותק שני של קרדנשיאל חי.
+את הפלט מדביקים אחרי `FIREBASE_SERVICE_ACCOUNT=`, בשורה אחת, **ומוחקים את קובץ ה-JSON** — אסור שיישאר עותק שני של קרדנשיאל חי.
+
+מפתח חדש לא מבטל מפתחות קיימים; הם חיים במקביל עד שמוחקים אותם במפורש.
 
 ### 3.3 לוודא מקומית לפני שנוגעים בפרודקשן
 
@@ -105,7 +113,7 @@ rm sa.json
 npm run dev
 ```
 
-אם `/login` מציג את שער הביתא ולא "Server is not configured" — הקובץ תקין. כדאי גם:
+אם `/login` מציג את טופס החשבון ולא את הודעת "חשבונות לא מוגדרים" — הקובץ תקין. כדאי גם:
 
 ```bash
 npm run qa
@@ -125,7 +133,7 @@ vercel link --yes --project pdf2code --scope liormedans-projects
 קודם למחוק את הריקים, אחרת הם ידרסו את מה שיתווסף:
 
 ```bash
-for v in ACCESS_CODE SESSION_SECRET NEXT_PUBLIC_FIREBASE_API_KEY NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN NEXT_PUBLIC_FIREBASE_PROJECT_ID NEXT_PUBLIC_FIREBASE_APP_ID FIREBASE_SERVICE_ACCOUNT SOFFICE_PATH NEXT_PUBLIC_GOOGLE_CLIENT_ID NEXT_PUBLIC_GOOGLE_API_KEY NEXT_PUBLIC_GOOGLE_APP_ID; do vercel env rm "$v" production -y; done
+for v in SESSION_SECRET NEXT_PUBLIC_FIREBASE_API_KEY NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN NEXT_PUBLIC_FIREBASE_PROJECT_ID NEXT_PUBLIC_FIREBASE_APP_ID FIREBASE_SERVICE_ACCOUNT SOFFICE_PATH NEXT_PUBLIC_GOOGLE_CLIENT_ID NEXT_PUBLIC_GOOGLE_API_KEY NEXT_PUBLIC_GOOGLE_APP_ID; do vercel env rm "$v" production -y; done
 ```
 
 ואז להעלות מהקובץ התקין:
@@ -134,7 +142,7 @@ for v in ACCESS_CODE SESSION_SECRET NEXT_PUBLIC_FIREBASE_API_KEY NEXT_PUBLIC_FIR
 while IFS='=' read -r k v; do [ -n "$k" ] && [ "${k#\#}" = "$k" ] && printf '%s' "$v" | vercel env add "$k" production; done < .env.local
 ```
 
-**`printf` ולא `echo`, ולא צינור של PowerShell.** `vercel env add` לוקח את הערך מ-stdin כמו שהוא, כולל תו שורה נגרר. `SESSION_SECRET` שנגמר ב-`\n` נכשל בשקט ובצורה מבלבלת במיוחד: `/api/access` מקבל את הקוד ומנפיק עוגייה, אבל מסך הכניסה לא מצליח לאמת אותה, ולכן השער פשוט לא נפתח — בלי הודעת שגיאה. לאמת אחרי ההעלאה:
+**`printf` ולא `echo`, ולא צינור של PowerShell.** `vercel env add` לוקח את הערך מ-stdin כמו שהוא, כולל תו שורה נגרר, וזה מזהם את הסוד. הקוד עצמו כבר עמיד לזה — ה-`trim` יושב בתוך `hmacKey`, בנקודה היחידה שבה הסוד הופך למפתח — אבל ערך מזוהם עדיין מבלבל כל בדיקה ידנית. לאמת אחרי ההעלאה:
 
 ```bash
 vercel env pull /tmp/check --environment=production --yes
@@ -158,32 +166,31 @@ vercel --prod
 
 ### בוצע
 
-- [x] `.env.local` נבנה, עם `ACCESS_CODE` ו-`SESSION_SECRET` חדשים
-- [x] אומת מקומית — 71 בדיקות QA, בדיקות הממיר, `tsc` נקי
-- [x] 11 המשתנים הריקים נמחקו מ-Vercel; ששת התקינים הועלו
+- [x] `.env.local` נבנה, עם `SESSION_SECRET` חדש
+- [x] אומת מקומית — 70 בדיקות QA, בדיקות הממיר, `tsc` נקי
+- [x] המשתנים הריקים נמחקו מ-Vercel; התקינים הועלו
 - [x] `jose` ננעל לגרסה 5 — קריסת `/api/session` בפרודקשן נפתרה
-- [x] תוקן `\r\n` נגרר בערכי הסביבה, שמנע מהשער להיפתח
-- [x] הסוד עובר `trim` בנקודה שבה הוא הופך למפתח, וכך הנפקה ואימות תמיד מסכימים
-- [x] נפרס לפרודקשן ואומת בדפדפן: מסך החשבון נפתח עם הרשמה, איפוס סיסמה ו"המשך עם Google"
+- [x] תוקן `\r\n` נגרר בערכי הסביבה, וה-`trim` הועבר לתוך `hmacKey` כדי שזה לא יחזור
+- [x] `pdf2code.vercel.app` נוסף ל-Authorized domains
+- [x] מפתח השירות הופק והועלה — `/api/session` מחזיר 401 ולא 503
+- [x] מסד Firestore נוצר ונגיש
+- [x] שער הביתא הוסר; מסך הכניסה מציג מיד הרשמה ו"המשך עם Google"
 
-### מיד — דורש התחברות בדפדפן, ולכן חוסם
+### מיד
 
-- [ ] להפיק מפתח שירות חדש (§3.2) ולהעלות אותו:
-      `printf '%s' "<base64>" | vercel env add FIREBASE_SERVICE_ACCOUNT production`
-- [ ] `vercel --prod` — לא נדרש טכנית עבור סוד שאינו `NEXT_PUBLIC_`, אבל דרוש כדי שהפונקציות יקבלו אותו
-- [ ] לדחוף את הקומיט המקומי (נעילת `jose` והמסמכים). בלעדיו, בנייה מגיט תחזיר את הקריסה
-
-### לסגור את ספרינט 1 — 4%
-
-- [ ] הרשמה אמיתית אחת דרך האפליקציה
+- [ ] **לדחוף את הקומיטים המקומיים.** הפרודקשן נפרס מהקבצים המקומיים, ולכן בנייה מגיט בלעדיהם תחזיר את קריסת `jose` ואת השער
+- [ ] הרשמה אמיתית אחת דרך האפליקציה — עדיין לא נוצר אף משתמש
 - [ ] לוודא שנוצרה רשומת `users/{uid}` עם `keepFileNames`, `locale` ו-`usage`
 - [ ] המרת PDF מקצה לקצה בפרודקשן, כולל הורדת ה-ZIP
-- [ ] להוסיף את `pdf2code.vercel.app` ל-Firebase → Authentication → Settings → **Authorized domains**. אומת שהוא חסר: הפרויקט מרשה כרגע רק `localhost`, `pdf-to-code.firebaseapp.com` ו-`pdf-to-code.web.app`, ולכן "המשך עם Google" נכשל בפרודקשן עם `auth/unauthorized-domain`
+
+### להחליט
+
+- [ ] **הרשמה פתוחה לכל.** אחרי הסרת השער, כל מי שמגיע לכתובת יכול לפתוח חשבון. אם זה לא הכוונה — להשבית הרשמה עצמית ב-Firebase Authentication, או להגביל לדומיין אימייל
+- [ ] למחוק מפתחות שירות ישנים. קיימים כעת `0d5af2c5…` מהמחשב הקודם ו-`…bb0f06` הנוכחי. מפתח חדש לא מבטל ישן
 
 ### ספרינט 2 — פרויקטים ב-Firestore — 10%
 
-- [ ] ליצור מסד Firestore בפרויקט (עוד לא קיים)
-- [ ] `firestore.rules` ו-`firestore.indexes.json`
+- [ ] `firestore.rules` ו-`firestore.indexes.json` — המסד פתוח כרגע לפי חוקי ברירת המחדל
 - [ ] `/api/projects` — יצירה, שינוי שם, ארכוב, מחיקה
 - [ ] מסך הפעילות הופך למסך פרויקטים
 - [ ] `keepFileNames` בהגדרות

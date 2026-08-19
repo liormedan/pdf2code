@@ -1,27 +1,20 @@
-import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { FileType2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { GATE_COOKIE, verifySession } from "@/src/lib/auth.ts";
 import { FIREBASE_ENABLED } from "@/src/lib/firebase/client.ts";
-import AccessForm from "./AccessForm";
 import AccountForm from "./AccountForm";
 import DevSignIn from "./DevSignIn";
 
 /**
- * Two gates, one screen.
+ * One screen, one thing to prove: that you hold an account.
  *
- * The shared beta code comes first and proves only that this browser was let in; the
- * account comes second and is the actual identity. Which step shows is decided here on
- * the server from the gate cookie, so the sign-in form is not even sent to a browser
- * that has not passed the code.
+ * A shared beta code used to come first. Removing it means anyone who reaches this URL
+ * can create an account, which is the intended trade — who may sign in is now Firebase
+ * Authentication's decision, and is configured there rather than here.
  */
 export default async function LoginPage() {
   const t = await getTranslations("login");
   const tApp = await getTranslations("app");
-
-  const store = await cookies();
-  const pastGate = await verifySession(store.get(GATE_COOKIE)?.value, process.env.SESSION_SECRET);
 
   // Read on the server so the button is absent from the production bundle entirely,
   // rather than shipped and hidden with CSS.
@@ -35,14 +28,10 @@ export default async function LoginPage() {
             <FileType2 className="size-5" aria-hidden="true" />
           </div>
           <h1 className="text-xl font-semibold tracking-tight">{tApp("name")}</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            {pastGate ? t("accountSubtitle") : t("subtitle")}
-          </p>
+          <p className="text-sm text-balance text-muted-foreground">{t("accountSubtitle")}</p>
         </div>
 
-        {!pastGate ? (
-          <AccessForm />
-        ) : FIREBASE_ENABLED ? (
+        {FIREBASE_ENABLED ? (
           <AccountForm />
         ) : (
           <Alert variant="destructive">

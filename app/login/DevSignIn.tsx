@@ -7,15 +7,15 @@ import { Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Skip both gates at once, in development only.
+ * Sign in without an account, in development only.
  *
- * It sits beside whichever step is showing rather than inside one of the forms,
- * because it replaces both of them: /api/access with `dev` opens the beta gate and
- * mints an identity, so a machine with no Firebase project can still run the app.
+ * It sits beside the account form rather than inside it, because it replaces the form
+ * entirely: it mints an identity outright, so a machine with no Firebase project can
+ * still run the app.
  *
  * The button not existing in production is the lesser guard. The real one is in the
- * route handler, which refuses the developer path whenever NODE_ENV is production —
- * hiding a control that still answers is not a gate at all.
+ * route handler, which answers 404 whenever NODE_ENV is production — hiding a control
+ * that still responds is not a gate at all.
  */
 export default function DevSignIn() {
   const t = useTranslations("login");
@@ -25,11 +25,7 @@ export default function DevSignIn() {
   async function signIn() {
     setPending(true);
     try {
-      const response = await fetch("/api/access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dev: true }),
-      });
+      const response = await fetch("/api/dev-session", { method: "POST" });
       if (!response.ok) return;
       router.replace("/");
       router.refresh();
