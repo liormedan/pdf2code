@@ -186,10 +186,12 @@ users/{uid}/projects/{projectId}
   createdAt        timestamp
   lastConvertedAt  timestamp
   runCount         number
-  archivedAt       timestamp?
+  archived         boolean
 ```
 
 **מה לא ייכנס לכאן לעולם:** הקובץ, הפלט, טקסט מהמסמך, תמונה ממנו.
+
+המפרט המלא — חוקים, אינדקס, חוזה ה-API ותנאי קבלה — ב-[projects-plan.md](projects-plan.md).
 
 ### 5.3 בונוס שנופל מהארכיטקטורה
 
