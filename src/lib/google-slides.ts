@@ -145,8 +145,14 @@ async function exportAsPdf(fileId: string, token: string): Promise<Uint8Array> {
   return new Uint8Array(await response.arrayBuffer());
 }
 
-/** Sign in, pick a deck, and bring it back as PDF bytes. */
-export async function pickPresentation(): Promise<{ name: string; bytes: Uint8Array }> {
+/**
+ * Sign in, pick a deck, and bring it back as PDF bytes.
+ *
+ * The Drive file id comes back alongside them, and is the only thing that makes a saved
+ * Slides project re-runnable: no source file is ever stored, so every other source has
+ * to be picked again by hand, while this one can simply be exported a second time.
+ */
+export async function pickPresentation(): Promise<{ name: string; bytes: Uint8Array; fileId: string }> {
   const config = slidesConfig();
   if (!config) throw new SlidesError("Google Slides is not configured on this deployment.", "NOT_CONFIGURED");
 
@@ -157,5 +163,5 @@ export async function pickPresentation(): Promise<{ name: string; bytes: Uint8Ar
   const bytes = await exportAsPdf(picked.id, token);
 
   if (!bytes.length) throw new SlidesError("The exported presentation was empty.", "EMPTY");
-  return { name: `${picked.name}.pdf`, bytes };
+  return { name: `${picked.name}.pdf`, bytes, fileId: picked.id };
 }

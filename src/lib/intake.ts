@@ -28,6 +28,14 @@ export interface PreparedDocument {
   sourceSize: number;
   /** True when the bytes passed through our server to get here. */
   uploaded: boolean;
+  /**
+   * The Drive file id, for a Slides deck only.
+   *
+   * The one source that can be fetched again later. No source file is ever stored, so a
+   * saved PDF or PPTX project can only be re-run by asking the person to pick the file
+   * a second time — a Slides deck still lives in their Drive, and this is what finds it.
+   */
+  driveFileId?: string;
 }
 
 export class IntakeError extends Error {
@@ -62,7 +70,7 @@ export const bytesFor = (doc: PreparedDocument): Uint8Array => new Uint8Array(do
  * It arrives already converted, so there is nothing to prepare — but it still becomes a
  * PreparedDocument, because everything downstream should keep seeing one shape.
  */
-export function fromSlides(name: string, bytes: Uint8Array): PreparedDocument {
+export function fromSlides(name: string, bytes: Uint8Array, driveFileId?: string): PreparedDocument {
   return {
     kind: "slides",
     name,
@@ -70,6 +78,7 @@ export function fromSlides(name: string, bytes: Uint8Array): PreparedDocument {
     bytes,
     sourceSize: bytes.length,
     uploaded: false,
+    driveFileId,
   };
 }
 

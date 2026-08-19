@@ -130,7 +130,7 @@ export default function Converter() {
   const importSlides = useCallback(() => accept(async () => {
     setStage("importing");
     const picked = await pickPresentation();
-    return fromSlides(picked.name, picked.bytes);
+    return fromSlides(picked.name, picked.bytes, picked.fileId);
   }), [accept]);
 
   // A counter, not a boolean: dragleave fires for every child element the pointer

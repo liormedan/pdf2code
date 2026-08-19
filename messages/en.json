@@ -132,7 +132,7 @@
     "defaults": "Conversion defaults",
     "defaultsHint": "Pre-selected the next time you convert something.",
     "storage": "Data",
-    "storageHint": "Nothing is stored on our servers — no files, no accounts, no history. Preferences live in this browser only.",
+    "storageHint": "Your documents are never uploaded or stored — a PDF is converted entirely in this browser. We keep your account: your email and name, and a count of what you have converted. History lives in this tab only and is gone when you refresh.",
     "reset": "Reset preferences"
   },
   "common": {
