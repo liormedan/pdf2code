@@ -38,7 +38,7 @@ interface DocProbe {
 export default function Converter() {
   const t = useTranslations("convert");
   const tWarn = useTranslations("warnings");
-  const { record, entries } = useActivity();
+  const { record, entries, quota } = useActivity();
   const { take } = usePendingFile();
   const params = useSearchParams();
 
@@ -255,6 +255,14 @@ export default function Converter() {
     );
   }
 
+  /**
+   * Whether this conversion would be recorded, were it to run.
+   *
+   * Re-running a project the account already owns never counts, so it is never blocked —
+   * which also means a quota that has run out does not strand documents already saved.
+   */
+  const overQuota = !!quota && !quota.allowed && !rerun?.driveFileId;
+
   const start = () => {
     // The control that calls this only renders once a file has been probed, but the
     // type does not know that — and a guard is cheaper than an assertion that lies.
@@ -285,6 +293,15 @@ export default function Converter() {
 
   return (
     <div className="space-y-4">
+      {overQuota && (
+        <Alert variant="destructive">
+          <AlertTitle>{t("quotaSpentTitle")}</AlertTitle>
+          <AlertDescription>
+            {t("quotaSpent", { limit: quota!.limit })}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {rerun && !source && (
         <Alert>
           <RotateCw className="size-4" aria-hidden="true" />
@@ -460,7 +477,7 @@ export default function Converter() {
                   </Button>
                 </>
               ) : (
-                <Button onClick={start}>{t("start")}</Button>
+                <Button onClick={start} disabled={overQuota}>{t("start")}</Button>
               )}
             </div>
           </CardContent>

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LOCALES } from "@/src/i18n/config.ts";
 import LocaleChoice from "./LocaleChoice";
 import FileNames from "./FileNames";
+import Allowance from "./Allowance";
 import ThemeToggle from "@/components/theme-toggle";
 
 export default async function SettingsPage() {
@@ -13,6 +14,12 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-5">
       <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
+
+      <Card>
+        <CardContent className="py-5">
+          <Allowance />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-4 py-5">

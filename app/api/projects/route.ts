@@ -12,6 +12,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { SESSION_COOKIE, readAuthConfig, readSession } from "@/src/lib/auth.ts";
 import { adminDb, AdminConfigError } from "@/src/lib/firebase/admin.ts";
 import { ANONYMOUS_NAME, readDraft, usageMonth, type Project } from "@/src/lib/projects.ts";
+import { quotaFor, type Usage } from "@/src/lib/plans.ts";
 
 export const runtime = "nodejs";
 
@@ -34,15 +35,19 @@ export async function GET() {
   if (!uid) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
   try {
+    const user = adminDb().collection("users").doc(uid);
+
     // Sorted, not filtered. An equality filter beside a sort on another field needs a
     // composite index, and nothing is archived yet — archiving arrives with the projects
     // screen, and the index in firestore.indexes.json arrives with it. Until then the
     // filter below costs nothing and the query needs no index at all.
-    const snapshot = await adminDb()
-      .collection("users").doc(uid).collection("projects")
-      .orderBy("lastConvertedAt", "desc")
-      .limit(PAGE_SIZE)
-      .get();
+    const [profile, snapshot] = await Promise.all([
+      user.get(),
+      user.collection("projects")
+        .orderBy("lastConvertedAt", "desc")
+        .limit(PAGE_SIZE)
+        .get(),
+    ]);
 
     const projects: Project[] = snapshot.docs.filter((doc) => doc.data().archived !== true).map((doc) => {
       const d = doc.data();
@@ -65,7 +70,11 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ projects });
+    // The quota rides along with the list rather than on a route of its own: every screen
+    // that wants one wants the other, and two round trips to say one thing is one too many.
+    const quota = quotaFor(profile.data()?.usage as Usage | undefined, usageMonth(new Date()));
+
+    return NextResponse.json({ projects, quota });
   } catch (err) {
     if (err instanceof AdminConfigError) return notConfigured();
     throw err;
@@ -98,6 +107,7 @@ export async function POST(request: Request) {
     const name = keepFileNames ? draft.name : ANONYMOUS_NAME;
 
     const now = new Date();
+    const month = usageMonth(now);
 
     // Only a Slides deck has an identity that survives the conversion, so only a Slides
     // deck can be recognised as the same document a second time.
@@ -105,6 +115,22 @@ export async function POST(request: Request) {
       ? await projects.where("driveFileId", "==", draft.driveFileId).limit(1).get()
       : null;
     const previous = existing?.docs[0];
+
+    // The one place a quota can actually be applied. The conversion itself ran on the
+    // user's machine and has already finished — what is refused here is the record of
+    // it, and with it the count.
+    //
+    // Re-running a document this account already owns costs nothing, and is exempt from
+    // the check for the same reason it does not increment below: the unit is a document,
+    // not a run. Charging twice for one deck because it was exported again would be the
+    // wrong lesson to teach about a feature we built on purpose.
+    const quota = quotaFor(profile.data()?.usage as Usage | undefined, month);
+    if (!quota.allowed && !previous) {
+      return NextResponse.json(
+        { error: "This month's conversions are used up.", quota },
+        { status: 429 },
+      );
+    }
 
     let id: string;
     if (previous) {
@@ -133,9 +159,16 @@ export async function POST(request: Request) {
       id = created.id;
     }
 
-    await recordUsage(user, draft.pages, now);
+    // Counted per document, so a re-run adds nothing — matching the exemption above.
+    if (!previous) await recordUsage(user, draft.pages, now);
 
-    return NextResponse.json({ id, created: !previous }, { status: previous ? 200 : 201 });
+    const after = await user.get();
+    const updated = quotaFor(after.data()?.usage as Usage | undefined, month);
+
+    return NextResponse.json(
+      { id, created: !previous, quota: updated },
+      { status: previous ? 200 : 201 },
+    );
   } catch (err) {
     if (err instanceof AdminConfigError) return notConfigured();
     throw err;

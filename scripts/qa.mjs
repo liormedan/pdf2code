@@ -13,6 +13,7 @@ import { convert, ConversionError, classifyPage } from "../src/converter/index.t
 import { detectLanguage } from "../src/converter/language.ts";
 import { describeFont } from "../src/converter/fonts.ts";
 import { quote, validateFile, baseNameOf, detectKind, pptxEnabled, MAX_PAGES } from "../src/lib/pricing.ts";
+import { quotaFor, FREE } from "../src/lib/plans.ts";
 import { sniffPresentation } from "../src/lib/office-server.ts";
 import { createSession, createToken, readSession, verifySession } from "../src/lib/auth.ts";
 import { HOSTILE_LINES } from "./make-test-pdf.mjs";
@@ -156,6 +157,22 @@ section("4. Units — pricing, validation, language, fonts");
   check("50 page boundary → $19.99", quote(50).price === 19.99);
   check("51 pages → overage", quote(51).price === 20.34, `${quote(51).price}`);
   check("0/undefined pages floors at 1", quote(0).price === 4.99 && quote(undefined).price === 4.99);
+
+  // The unit is a document, not a page: the converter runs in the browser, so a page
+  // count is the browser's word for it while a recorded conversion is our own.
+  const thisMonth = "2026-08";
+  check("a fresh account has the whole allowance",
+    quotaFor(undefined, thisMonth).remaining === FREE.conversions);
+  check("used conversions come off the allowance",
+    quotaFor({ month: thisMonth, conversions: 3, pages: 40 }, thisMonth).remaining === FREE.conversions - 3);
+  check("the allowance runs out exactly at the limit",
+    quotaFor({ month: thisMonth, conversions: FREE.conversions, pages: 0 }, thisMonth).allowed === false);
+  check("overshooting never reports a negative remainder",
+    quotaFor({ month: thisMonth, conversions: FREE.conversions + 5, pages: 0 }, thisMonth).remaining === 0);
+  // A count belonging to a month that has passed is not this month's count. The stored
+  // value is only rewritten on the next conversion, so the reset has to happen on read.
+  check("last month's count does not spend this month",
+    quotaFor({ month: "2026-07", conversions: FREE.conversions, pages: 0 }, thisMonth).allowed === true);
 
   check("rejects an unsupported type", !!validateFile({ name: "a.txt", type: "text/plain", size: 10 }));
   // PowerPoint is the one source that needs a server, so a deployment can switch it

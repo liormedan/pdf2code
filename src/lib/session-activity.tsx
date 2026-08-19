@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { OutputFormat } from "@/src/converter/types.ts";
 import type { SourceKind } from "./pricing.ts";
+import type { Quota } from "./plans.ts";
 import type { Project, ProjectDraft } from "./projects.ts";
 
 export interface ActivityEntry {
@@ -43,6 +44,8 @@ interface ActivityContextValue {
   remove: (id: string) => Promise<void>;
   clear: () => Promise<void>;
   totals: ActivityTotals;
+  /** This month's allowance, as the server counts it. Null until the first load. */
+  quota: Quota | null;
   /** True until the first load finishes, so a screen can tell empty from not-yet-known. */
   loading: boolean;
 }
@@ -79,14 +82,16 @@ const asEntry = (p: Project): ActivityEntry => ({
 
 export function ActivityProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
+  const [quota, setQuota] = useState<Quota | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
       const response = await fetch("/api/projects");
       if (!response.ok) return;
-      const body = await response.json() as { projects?: Project[] };
+      const body = await response.json() as { projects?: Project[]; quota?: Quota };
       setEntries((body.projects ?? []).map(asEntry));
+      if (body.quota) setQuota(body.quota);
     } catch {
       // An unreachable server should leave the last known list on screen rather than
       // blanking it — nothing here is worth interrupting a conversion for.
@@ -121,6 +126,10 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(draft),
         });
+        // A refusal carries the quota that caused it, so the interface can say why
+        // rather than only that something went wrong.
+        const body = await response.json().catch(() => null) as { quota?: Quota } | null;
+        if (body?.quota) setQuota(body.quota);
         if (!response.ok) throw new Error(String(response.status));
         await load();
       } catch {
@@ -189,8 +198,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ entries, record, rename, archive, remove, clear, totals, loading }),
-    [entries, record, rename, archive, remove, clear, totals, loading],
+    () => ({ entries, record, rename, archive, remove, clear, totals, quota, loading }),
+    [entries, record, rename, archive, remove, clear, totals, quota, loading],
   );
 
   return <ActivityContext.Provider value={value}>{children}</ActivityContext.Provider>;
