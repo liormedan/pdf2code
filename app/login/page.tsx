@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { FileType2 } from "lucide-react";
+import { LogoMark } from "@/components/logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FIREBASE_ENABLED } from "@/src/lib/firebase/client.ts";
 import AccountForm from "./AccountForm";
@@ -25,7 +25,7 @@ export default async function LoginPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="space-y-3 text-center">
           <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-            <FileType2 className="size-5" aria-hidden="true" />
+            <LogoMark className="size-5" />
           </div>
           <h1 className="text-xl font-semibold tracking-tight">{tApp("name")}</h1>
           <p className="text-sm text-balance text-muted-foreground">{t("accountSubtitle")}</p>

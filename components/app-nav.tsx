@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Activity, FileType2, LayoutDashboard, LogOut, Presentation, Settings, Wand2 } from "lucide-react";
+import { Activity, LayoutDashboard, LogOut, Presentation, Settings, Wand2 } from "lucide-react";
+import { LogoMark } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FIREBASE_ENABLED, firebaseAuth } from "@/src/lib/firebase/client.ts";
@@ -48,7 +49,7 @@ export default function AppNav({ onNavigate }: { onNavigate?: () => void }) {
         className="flex items-center gap-2.5 rounded-md px-2 py-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-          <FileType2 className="size-4" aria-hidden="true" />
+          <LogoMark className="size-4.5" />
         </span>
         <span className="text-sm font-semibold tracking-tight">{tApp("name")}</span>
       </Link>

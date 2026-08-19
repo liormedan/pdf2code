@@ -8,6 +8,14 @@
     "navSignIn": "Sign in",
     "headline": "Turn a PDF into a page you can actually edit",
     "subhead": "A standalone HTML page or a drop-in React component — converted in your browser, so the file is never uploaded anywhere.",
+    "figureBefore": "PDF",
+    "figureBeforeNote": "the words are part of the picture",
+    "figureAfter": "HTML",
+    "figureAfterNote": "the words are still words",
+    "sampleTitle": "Quarterly report",
+    "sample1": "Revenue rose 12% against the same period last year.",
+    "sample2": "Select this line — in the PDF you could not.",
+    "sample3": "Headcount held steady across all three sites.",
     "getStarted": "Start converting — free",
     "openApp": "Open the app",
     "signIn": "Sign in",
@@ -34,6 +42,7 @@
     "outputsAvailable": "Available now",
     "outputsPlanned": "Being considered",
     "notify": "I'd use this",
+    "votes": "{count} asked for this",
     "noted": "Noted — thank you. Signed-in accounts get told when it lands.",
     "notedSignIn": "Noted. Sign in and we can tell you when it lands.",
     "interestFailed": "That did not get recorded. Try again in a moment.",
@@ -59,7 +68,8 @@
     "limit3": "PowerPoint files are not supported yet.",
     "closingTitle": "Convert your first document",
     "closingBody": "It takes about as long as opening the file.",
-    "footerNote": "In development. Sign-ups are open."
+    "footerNote": "In development. Sign-ups are open.",
+    "goodToKnowTitle": "Worth knowing"
   },
   "nav": {
     "overview": "Overview",

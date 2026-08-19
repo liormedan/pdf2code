@@ -16,6 +16,11 @@ const PUBLIC_PATHS = new Set([
   // records the answer has to be reachable without an account. It stores only which of a
   // closed list was chosen — see src/lib/outputs.ts.
   "/api/interest",
+  // Same reason: the webpage offers a language switch before anyone signs in.
+  "/api/locale",
+  // The tab icon. Next serves it from a route, so the gate would otherwise redirect it
+  // and every visitor would get a blank favicon.
+  "/icon.svg",
 ]);
 
 export async function middleware(request: NextRequest) {

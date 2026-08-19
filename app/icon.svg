@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- The favicon carries its own colours: a tab has no theme to inherit. -->
+  <rect width="24" height="24" rx="5" fill="#0f1113"/>
+  <rect x="4" y="3.5" width="12.5" height="15" rx="2.2" fill="#5cc3a8" opacity="0.35"/>
+  <rect x="7.5" y="6" width="12.5" height="15" rx="2.2" fill="#0f1113" stroke="#5cc3a8" stroke-width="1.5"/>
+  <path d="M10.6 11h6.3M10.6 14h6.3M10.6 17h3.6" stroke="#5cc3a8" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
