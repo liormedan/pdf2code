@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive, Pencil, Trash2 } from "lucide-react";
+import { Archive, Pencil, RotateCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ export default function ActivityPage() {
   const tOverview = useTranslations("overview");
   const tConvert = useTranslations("convert");
   const format = useFormat();
+  const router = useRouter();
   const { entries, rename, archive, remove, clear, loading } = useActivity();
 
   const [editing, setEditing] = useState<string | null>(null);
@@ -179,6 +181,19 @@ export default function ActivityPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="flex justify-end gap-1">
+                          {/* Two different promises, so two different words. A deck is
+                              fetched from Drive on its own; anything else has to be
+                              handed over again, because it was never kept. */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-xs"
+                            onClick={() => router.push(`/convert?project=${entry.id}`)}
+                            title={t(entry.driveFileId ? "runAgainHint" : "repickHint")}
+                          >
+                            <RotateCw className="size-3.5" />
+                            {t(entry.driveFileId ? "runAgain" : "repick")}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"

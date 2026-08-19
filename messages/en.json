@@ -93,6 +93,11 @@
     "scannedBody": "It has no text layer, so the output will keep the page images but the text will not be selectable or searchable.",
     "tooLongTitle": "{count} pages.",
     "tooLongBody": "Only the first {limit} will be converted.",
+    "rerunTitle": "Running “{name}” again",
+    "rerunSlides": "Fetching it from Google Drive. You may be asked to allow access again — the permission is short-lived by design.",
+    "rerunPick": "The file itself was never stored, so choose it again to continue. Your settings from last time are already selected.",
+    "rerunMismatchTitle": "This is not quite the file from last time.",
+    "rerunMismatch": "The name or size is different. That is fine if you meant to convert an updated version — carry on.",
     "uploadedTitle": "This presentation was converted on our server.",
     "uploadedBody": "PowerPoint has no browser converter, so the file was sent to us, turned into a PDF and deleted immediately — nothing was stored. Everything from here on happens in your browser, as it does for a PDF."
   },
@@ -128,6 +133,10 @@
     "loading": "Loading your history…",
     "actions": "Actions",
     "rename": "Rename",
+    "runAgain": "Run again",
+    "runAgainHint": "Fetch it from Drive and convert it again",
+    "repick": "Convert again",
+    "repickHint": "The file was never stored — you will be asked to choose it again",
     "archive": "Archive",
     "remove": "Delete",
     "filter": {

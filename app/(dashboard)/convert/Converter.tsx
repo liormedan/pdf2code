@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Download, Loader2, Presentation, Upload } from "lucide-react";
+import { CheckCircle2, Download, Loader2, Presentation, RotateCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -14,9 +15,9 @@ import { cn } from "@/lib/utils";
 import { createJob, buildZip, downloadBlob, type Job, type JobState } from "@/src/lib/conversion-service.ts";
 import { loadPdfjs, openPdf, PdfOpenError } from "@/src/lib/pdf-client.ts";
 import { bytesFor, fromSlides, prepare, IntakeError, type IntakeStage, type PreparedDocument } from "@/src/lib/intake.ts";
-import { pickPresentation, slidesConfig, SlidesError } from "@/src/lib/google-slides.ts";
+import { exportPresentation, pickPresentation, slidesConfig, SlidesError } from "@/src/lib/google-slides.ts";
 import { validateFile, acceptAttribute, detectKind, pptxEnabled, MAX_PAGES, MAX_BYTES } from "@/src/lib/pricing.ts";
-import { useActivity } from "@/src/lib/session-activity";
+import { useActivity, type ActivityEntry } from "@/src/lib/session-activity";
 import { usePendingFile } from "@/src/lib/pending-file";
 import type { ConversionResult, ConversionWarning, OutputFormat } from "@/src/converter/types.ts";
 import OutputPreview from "./OutputPreview";
@@ -37,8 +38,9 @@ interface DocProbe {
 export default function Converter() {
   const t = useTranslations("convert");
   const tWarn = useTranslations("warnings");
-  const { record } = useActivity();
+  const { record, entries } = useActivity();
   const { take } = usePendingFile();
+  const params = useSearchParams();
 
   const [source, setSource] = useState<PreparedDocument | null>(null);
   const [doc, setDoc] = useState<DocProbe | null>(null);
@@ -57,6 +59,10 @@ export default function Converter() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const dragDepth = useRef(0);
   const recorded = useRef<ConversionResult | null>(null);
+  // A ref beside the state below, because the file handler reads it and is defined
+  // before it — and re-declaring the handler on every change would rebuild the drop
+  // listeners for nothing.
+  const rerunRef = useRef<ActivityEntry | null>(null);
 
   if (!jobRef.current) jobRef.current = createJob({ onChange: setJob });
   const job$ = jobRef.current;
@@ -124,6 +130,18 @@ export default function Converter() {
       setDoc(null);
       return;
     }
+
+    // Re-running a saved project: say so when this does not look like the same file, and
+    // then get out of the way. Someone converting a corrected draft of the same document
+    // is doing exactly what they meant to, and a block would be wrong.
+    if (rerunRef.current) {
+      const expected = rerunRef.current;
+      setMismatch(
+        nextFile.name !== expected.name ||
+        (expected.sourceSize !== undefined && nextFile.size !== expected.sourceSize),
+      );
+    }
+
     return accept(() => prepare(nextFile, { onStage: setStage }));
   }, [accept, t]);
 
@@ -132,6 +150,42 @@ export default function Converter() {
     const picked = await pickPresentation();
     return fromSlides(picked.name, picked.bytes, picked.fileId);
   }), [accept]);
+
+  /**
+   * Pick up a saved project.
+   *
+   * A Slides deck is fetched from Drive and converts without another word — nothing of it
+   * was ever stored here except its id, so what comes back is whatever the deck says
+   * today. Every other source has to be handed over again, and `rerun` stays set so the
+   * screen can say which document it is waiting for.
+   */
+  const [rerun, setRerun] = useState<ActivityEntry | null>(null);
+  const [mismatch, setMismatch] = useState(false);
+  const startedRerun = useRef<string | null>(null);
+
+  useEffect(() => {
+    const id = params.get("project");
+    if (!id || startedRerun.current === id) return;
+
+    const project = entries.find((e) => e.id === id);
+    if (!project) return; // Still loading; this runs again when the list arrives.
+
+    startedRerun.current = id;
+    rerunRef.current = project;
+    setRerun(project);
+    setMismatch(false);
+    setFormats(project.formats.length ? [...project.formats] : ["html"]);
+    setBackground(project.background);
+
+    const fileId = project.driveFileId;
+    if (!fileId) return; // Waits for the file, which only the person can supply.
+
+    void accept(async () => {
+      setStage("importing");
+      const bytes = await exportPresentation(fileId);
+      return fromSlides(project.name, bytes, fileId);
+    });
+  }, [params, entries, accept]);
 
   // A counter, not a boolean: dragleave fires for every child element the pointer
   // crosses, so a naive flag flickers the drop zone off while it is still inside.
@@ -220,11 +274,34 @@ export default function Converter() {
     setDoc(null);
     setFileError(null);
     recorded.current = null;
+    // Leaving the project behind too: from here on this is a new conversion, and the
+    // screen should stop claiming to be waiting for a particular document.
+    setRerun(null);
+    setMismatch(false);
+    rerunRef.current = null;
+    startedRerun.current = null;
     if (inputRef.current) inputRef.current.value = "";
   }
 
   return (
     <div className="space-y-4">
+      {rerun && !source && (
+        <Alert>
+          <RotateCw className="size-4" aria-hidden="true" />
+          <AlertTitle>{t("rerunTitle", { name: rerun.name })}</AlertTitle>
+          <AlertDescription>
+            {t(rerun.driveFileId ? "rerunSlides" : "rerunPick")}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {mismatch && (
+        <Alert variant="destructive">
+          <AlertTitle>{t("rerunMismatchTitle")}</AlertTitle>
+          <AlertDescription>{t("rerunMismatch")}</AlertDescription>
+        </Alert>
+      )}
+
       {!source && !stage && (
         <Card
           className={cn(

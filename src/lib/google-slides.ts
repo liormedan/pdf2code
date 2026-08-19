@@ -139,6 +139,16 @@ async function exportAsPdf(fileId: string, token: string): Promise<Uint8Array> {
         "TOO_LARGE",
       );
     }
+    // Under drive.file the app can only see files this person handed it, one at a time.
+    // A 404 therefore means the grant is gone rather than the deck — it was moved to a
+    // different account, deleted, or the app's access was revoked — and the way back is
+    // to choose it again, not to retry.
+    if (response.status === 404 || response.status === 403) {
+      throw new SlidesError(
+        "Google will not hand this deck over any more. Choose it again to continue.",
+        "NOT_GRANTED",
+      );
+    }
     throw new SlidesError("Google could not export this presentation.", `HTTP_${response.status}`);
   }
 
@@ -164,4 +174,28 @@ export async function pickPresentation(): Promise<{ name: string; bytes: Uint8Ar
 
   if (!bytes.length) throw new SlidesError("The exported presentation was empty.", "EMPTY");
   return { name: `${picked.name}.pdf`, bytes, fileId: picked.id };
+}
+
+/**
+ * Fetch a deck we have already been given, without showing the picker.
+ *
+ * This is what re-running a saved project means. Nothing about the deck was stored — only
+ * its Drive id — so it is asked for again from the place it actually lives, and the
+ * result is as current as the deck is. No other source can do this: a PDF or a PowerPoint
+ * file exists only on the machine it came from, and has to be handed over a second time.
+ *
+ * Consent still applies. The access token is short-lived, so a project opened a week
+ * later will show Google's dialog again before anything is fetched.
+ */
+export async function exportPresentation(fileId: string): Promise<Uint8Array> {
+  const config = slidesConfig();
+  if (!config) throw new SlidesError("Google Slides is not configured on this deployment.", "NOT_CONFIGURED");
+
+  await Promise.all([loadScript(GSI_SRC), loadScript(GAPI_SRC)]);
+
+  const token = await requestToken(config.clientId);
+  const bytes = await exportAsPdf(fileId, token);
+
+  if (!bytes.length) throw new SlidesError("The exported presentation was empty.", "EMPTY");
+  return bytes;
 }

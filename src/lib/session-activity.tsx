@@ -19,8 +19,13 @@ export interface ActivityEntry {
   name: string;
   /** Where the document came from. Decides what re-running it can even mean. */
   kind: SourceKind;
+  /** Set only for a Slides deck — the one source that can be fetched again unaided. */
+  driveFileId?: string;
+  /** What was picked last time, for recognising the file if it has to be picked again. */
+  sourceSize?: number;
   pages: number;
   formats: OutputFormat[];
+  background: boolean;
   bytes: number;
 }
 
@@ -64,8 +69,11 @@ const asEntry = (p: Project): ActivityEntry => ({
   at: p.lastConvertedAt,
   name: p.name,
   kind: p.kind,
+  driveFileId: p.driveFileId,
+  sourceSize: p.sourceSize,
   pages: p.pages,
   formats: p.formats,
+  background: p.background,
   bytes: p.outputBytes,
 });
 
@@ -97,8 +105,11 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       at: Date.now(),
       name: draft.name,
       kind: draft.kind,
+      driveFileId: draft.driveFileId,
+      sourceSize: draft.sourceSize,
       pages: draft.pages,
       formats: draft.formats,
+      background: draft.background,
       bytes: draft.outputBytes,
     };
     setEntries((current) => [optimistic, ...current]);
