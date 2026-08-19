@@ -3,6 +3,7 @@ import { ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LOCALES } from "@/src/i18n/config.ts";
 import LocaleChoice from "./LocaleChoice";
+import FileNames from "./FileNames";
 import ThemeToggle from "@/components/theme-toggle";
 
 export default async function SettingsPage() {
@@ -30,6 +31,12 @@ export default async function SettingsPage() {
             <p className="max-w-[56ch] text-xs text-muted-foreground">{t("languageHint")}</p>
           </div>
           <LocaleChoice locales={LOCALES} current={locale} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="py-5">
+          <FileNames />
         </CardContent>
       </Card>
 

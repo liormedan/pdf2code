@@ -10,12 +10,15 @@ import {
   type ReactNode,
 } from "react";
 import type { OutputFormat } from "@/src/converter/types.ts";
+import type { SourceKind } from "./pricing.ts";
 import type { Project, ProjectDraft } from "./projects.ts";
 
 export interface ActivityEntry {
   id: string;
   at: number;
   name: string;
+  /** Where the document came from. Decides what re-running it can even mean. */
+  kind: SourceKind;
   pages: number;
   formats: OutputFormat[];
   bytes: number;
@@ -30,6 +33,9 @@ export interface ActivityTotals {
 interface ActivityContextValue {
   entries: ActivityEntry[];
   record: (draft: ProjectDraft) => void;
+  rename: (id: string, name: string) => Promise<void>;
+  archive: (id: string) => Promise<void>;
+  remove: (id: string) => Promise<void>;
   clear: () => Promise<void>;
   totals: ActivityTotals;
   /** True until the first load finishes, so a screen can tell empty from not-yet-known. */
@@ -57,6 +63,7 @@ const asEntry = (p: Project): ActivityEntry => ({
   id: p.id,
   at: p.lastConvertedAt,
   name: p.name,
+  kind: p.kind,
   pages: p.pages,
   formats: p.formats,
   bytes: p.outputBytes,
@@ -89,6 +96,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       id: `pending-${crypto.randomUUID()}`,
       at: Date.now(),
       name: draft.name,
+      kind: draft.kind,
       pages: draft.pages,
       formats: draft.formats,
       bytes: draft.outputBytes,
@@ -112,6 +120,49 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     })();
   }, [load]);
 
+  /**
+   * Apply a change locally first, then confirm it with the server.
+   *
+   * Every one of these is a direct manipulation of a row the person is looking at, so a
+   * round trip before anything moves reads as a broken button. A failure puts the list
+   * back the way the server has it rather than leaving a lie on screen.
+   */
+  const mutate = useCallback(async (
+    optimistic: (current: ActivityEntry[]) => ActivityEntry[],
+    request: () => Promise<Response>,
+  ) => {
+    setEntries(optimistic);
+    try {
+      const response = await request();
+      if (!response.ok) throw new Error(String(response.status));
+    } catch {
+      await load();
+    }
+  }, [load]);
+
+  const rename = useCallback((id: string, name: string) => mutate(
+    (current) => current.map((e) => (e.id === id ? { ...e, name } : e)),
+    () => fetch(`/api/projects/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    }),
+  ), [mutate]);
+
+  const archive = useCallback((id: string) => mutate(
+    (current) => current.filter((e) => e.id !== id),
+    () => fetch(`/api/projects/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archived: true }),
+    }),
+  ), [mutate]);
+
+  const remove = useCallback((id: string) => mutate(
+    (current) => current.filter((e) => e.id !== id),
+    () => fetch(`/api/projects/${id}`, { method: "DELETE" }),
+  ), [mutate]);
+
   const clear = useCallback(async () => {
     const response = await fetch("/api/projects", { method: "DELETE" });
     if (response.ok) setEntries([]);
@@ -127,8 +178,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ entries, record, clear, totals, loading }),
-    [entries, record, clear, totals, loading],
+    () => ({ entries, record, rename, archive, remove, clear, totals, loading }),
+    [entries, record, rename, archive, remove, clear, totals, loading],
   );
 
   return <ActivityContext.Provider value={value}>{children}</ActivityContext.Provider>;

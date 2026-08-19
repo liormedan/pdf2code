@@ -126,6 +126,16 @@
     "size": "Size",
     "when": "When",
     "loading": "Loading your history…",
+    "actions": "Actions",
+    "rename": "Rename",
+    "archive": "Archive",
+    "remove": "Delete",
+    "filter": {
+      "all": "All",
+      "pdf": "PDF",
+      "slides": "Slides",
+      "pptx": "PowerPoint"
+    },
     "clear": "Delete all",
     "clearConfirm": "Delete every record? This cannot be undone.",
     "clearYes": "Delete",
@@ -140,6 +150,10 @@
     "languageHint": "The interface language. Your documents are converted in whatever language they are written in.",
     "defaults": "Conversion defaults",
     "defaultsHint": "Pre-selected the next time you convert something.",
+    "keepFileNames": "Remember document names",
+    "keepFileNamesOn": "Your history shows each document by name. A name can say as much as the document — turn this off and they are stored as “Document” instead.",
+    "keepFileNamesOff": "New conversions are stored without a name. Your documents were never stored either way.",
+    "namesForgotten": "{count, plural, one {# stored name was forgotten.} other {# stored names were forgotten.}}",
     "storage": "Data",
     "storageHint": "Your documents are never uploaded or stored — a PDF is converted entirely in this browser. We keep your account: your email and name, and a count of what you have converted. History lives in this tab only and is gone when you refresh.",
     "reset": "Reset preferences"
