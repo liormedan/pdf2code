@@ -110,7 +110,11 @@
     "previousPage": "Previous page",
     "nextPage": "Next page",
     "pageOf": "Page {page} of {total}",
-    "truncated": "Showing the first {shown}k characters of {total}k. The download contains the whole file.",
+    "truncated": "Showing the first {shown}k characters of {total}k — this file is large enough that laying all of it out takes a moment.",
+    "showAll": "Show the whole file",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
     "renderFailed": "Could not render the original page."
   },
   "activity": {

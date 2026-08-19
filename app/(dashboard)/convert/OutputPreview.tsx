@@ -2,10 +2,9 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toHtml } from "@/src/converter/html.ts";
 import { loadPdfjs, openPdf } from "@/src/lib/pdf-client.ts";
@@ -21,7 +20,16 @@ interface SheetProps {
 }
 
 const MODES: Mode[] = ["compare", "output", "code"];
-const CODE_LIMIT = 80_000;
+
+/**
+ * How much of a file is laid out before the viewer asks first.
+ *
+ * Not a cap on what you can see — the rest is one button away, and Copy always takes
+ * the whole file regardless of what is on screen. It exists because page backgrounds
+ * are inlined as data URIs, so a graphics-heavy document produces a single HTML file
+ * of many megabytes, and laying that out as text would lock the tab up for minutes.
+ */
+const CODE_LIMIT = 200_000;
 
 /**
  * A viewer for the conversion result.
@@ -57,7 +65,12 @@ export default function OutputPreview({ result, original }: { result: Conversion
   });
 
   const source = result.files[activeFile] ?? "";
-  const truncated = source.length > CODE_LIMIT;
+  const [expanded, setExpanded] = useState(false);
+  const clipped = source.length > CODE_LIMIT && !expanded;
+
+  // Switching files starts over: what you chose to expand says nothing about the next
+  // file, which may be a hundred times the size.
+  useEffect(() => setExpanded(false), [activeFile]);
 
   return (
     <div className="overflow-hidden rounded-xl border border-divider bg-muted">
@@ -79,6 +92,8 @@ export default function OutputPreview({ result, original }: { result: Conversion
                 result.backgrounds?.[index] ? t("withGraphics") : t("textOnly")
               }`}
         </span>
+
+        {mode === "code" && <CopyButton text={source} />}
       </div>
 
       {mode === "code" ? (
@@ -101,19 +116,33 @@ export default function OutputPreview({ result, original }: { result: Conversion
               </button>
             ))}
           </div>
-          <ScrollArea className="max-h-[56vh]">
-            <pre tabIndex={0} className="p-4 font-mono text-xs leading-relaxed text-muted-foreground">
-              <code>{truncated ? source.slice(0, CODE_LIMIT) : source}</code>
-              {truncated && (
-                <span className="mt-4 block text-warning italic">
+          {/* A plain scroll container, not the ScrollArea primitive: that one sizes its
+              viewport with height:100%, which resolves to nothing against a parent that
+              only has a max-height — so the content was clipped with no way to scroll
+              to the rest of it. max-height plus overflow needs no such resolution, and
+              it keeps native keyboard scrolling and find-in-page working. */}
+          <div
+            tabIndex={0}
+            className="max-h-[60vh] overflow-auto focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <pre className="w-max min-w-full p-4 font-mono text-xs leading-relaxed text-muted-foreground">
+              <code>{clipped ? source.slice(0, CODE_LIMIT) : source}</code>
+            </pre>
+
+            {clipped && (
+              <div className="flex flex-wrap items-center gap-3 border-t border-divider bg-card px-4 py-3">
+                <span className="text-xs text-warning">
                   {t("truncated", {
                     shown: Math.round(CODE_LIMIT / 1000),
                     total: Math.round(source.length / 1000),
                   })}
                 </span>
-              )}
-            </pre>
-          </ScrollArea>
+                <Button variant="outline" size="sm" className="ms-auto" onClick={() => setExpanded(true)}>
+                  {t("showAll")}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className={cn(mode === "compare" && "grid md:grid-cols-2")}>
@@ -170,6 +199,47 @@ export default function OutputPreview({ result, original }: { result: Conversion
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Copy the whole file, never the part that happens to be laid out.
+ *
+ * The clipboard is the reason the viewer can clip long files at all: what is on screen
+ * is a rendering decision, and this is not affected by it.
+ */
+function CopyButton({ text }: { text: string }) {
+  const t = useTranslations("preview");
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+
+  useEffect(() => {
+    if (state === "idle") return;
+    const id = setTimeout(() => setState("idle"), 2000);
+    return () => clearTimeout(id);
+  }, [state]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setState("copied");
+    } catch {
+      // Denied permission, or an insecure origin where the API does not exist at all.
+      setState("failed");
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={copy}
+      disabled={!text}
+      aria-live="polite"
+      className={cn("gap-1.5", state === "failed" && "border-destructive text-destructive")}
+    >
+      {state === "copied" ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      {t(state === "copied" ? "copied" : state === "failed" ? "copyFailed" : "copy")}
+    </Button>
   );
 }
 
