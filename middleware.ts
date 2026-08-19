@@ -9,7 +9,14 @@ import { SESSION_COOKIE, readSession } from "@/src/lib/auth.ts";
  * amount of exclusion there spares it. Worse, that is the kind of expression that looks
  * right and fails silently. The gate is easier to trust when it is written as words.
  */
-const PUBLIC_PATHS = new Set(["/", "/login"]);
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/login",
+  // The webpage asks anonymous readers which output to build next, so the endpoint that
+  // records the answer has to be reachable without an account. It stores only which of a
+  // closed list was chosen — see src/lib/outputs.ts.
+  "/api/interest",
+]);
 
 export async function middleware(request: NextRequest) {
   if (PUBLIC_PATHS.has(request.nextUrl.pathname)) return NextResponse.next();

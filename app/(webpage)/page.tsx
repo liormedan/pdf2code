@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { SESSION_COOKIE, readSession } from "@/src/lib/auth.ts";
 import { FREE } from "@/src/lib/plans.ts";
+import { PLANNED, SHIPPED } from "@/src/lib/outputs.ts";
 
 /**
  * The webpage: what the address shows someone who has never been here.
@@ -21,8 +22,9 @@ import { FREE } from "@/src/lib/plans.ts";
  * do, and "never leaves your browser" is stated for the PDF route, which is the only
  * route this page describes. When that stops being true the sentence changes first.
  */
-export default async function Webpage() {
+export default async function Webpage({ searchParams }: { searchParams: Promise<{ noted?: string; interest?: string }> }) {
   const t = await getTranslations("webpage");
+  const { noted, interest } = await searchParams;
 
   const store = await cookies();
   const signedIn = (await readSession(store.get(SESSION_COOKIE)?.value, process.env.SESSION_SECRET)) !== null;
@@ -57,6 +59,15 @@ export default async function Webpage() {
           </div>
         </section>
 
+        <section className="space-y-6">
+          <h2 className="text-xl font-semibold tracking-tight">{t("useCasesTitle")}</h2>
+          <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((n) => (
+              <Point key={n} title={t(`case${n}Title`)} body={t(`case${n}Body`)} />
+            ))}
+          </div>
+        </section>
+
         {/* The two layers, first and largest: it is the one claim a converter that
             exports an image cannot make, so it carries the page. */}
         <section className="space-y-6">
@@ -72,10 +83,58 @@ export default async function Webpage() {
           </div>
         </section>
 
+        <section className="space-y-6">
+          <div className="space-y-2.5">
+            <h2 className="text-xl font-semibold tracking-tight">{t("outputsTitle")}</h2>
+            <p className="max-w-[58ch] text-sm leading-relaxed text-muted-foreground">{t("outputsLead")}</p>
+          </div>
+
+          {noted && (
+            <p className="rounded-lg border border-primary/40 bg-accent/40 px-4 py-3 text-sm">
+              {t(signedIn ? "noted" : "notedSignIn")}
+            </p>
+          )}
+          {interest === "failed" && (
+            <p className="rounded-lg border border-destructive/40 px-4 py-3 text-sm text-destructive">
+              {t("interestFailed")}
+            </p>
+          )}
+
+          <div className="space-y-4">
+            <Group label={t("outputsAvailable")}>
+              {SHIPPED.map((o) => (
+                <div key={o.id} className="rounded-xl border bg-card p-4">
+                  <h3 className="text-sm font-semibold">{t(nameKey(o.id))}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t(bodyKey(o.id))}</p>
+                </div>
+              ))}
+            </Group>
+
+            <Group label={t("outputsPlanned")}>
+              {PLANNED.map((o) => (
+                <div key={o.id} className="flex flex-col rounded-xl border border-dashed p-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground">{t(nameKey(o.id))}</h3>
+                  <p className="mt-1 mb-3 text-xs leading-relaxed text-muted-foreground">{t(bodyKey(o.id))}</p>
+                  {/* A form, not a button with a handler: this page ships no client
+                      JavaScript, and it should still work with scripting off. */}
+                  <form action="/api/interest" method="post" className="mt-auto">
+                    <input type="hidden" name="target" value={o.id} />
+                    <button
+                      type="submit"
+                      className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    >
+                      {t("notify")}
+                    </button>
+                  </form>
+                </div>
+              ))}
+            </Group>
+          </div>
+        </section>
+
         <section className="grid gap-8 sm:grid-cols-2">
           <Point title={t("privacyTitle")} body={t("privacyBody")} />
           <Point title={t("rtlTitle")} body={t("rtlBody")} />
-          <Point title={t("outputTitle")} body={t("outputBody")} />
           <Point
             title={t("limitsTitle")}
             body={[t("limit1"), t("limit2"), t("limit3")].join(" ")}
@@ -128,6 +187,21 @@ function LayerCard({ title, body, figure, accent = false }: { title: string; bod
         <h3 className="text-sm font-semibold">{title}</h3>
         <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
       </div>
+    </div>
+  );
+}
+
+/** Message keys are derived from the catalogue, so adding an output touches one list. */
+const nameKey = (id: string) => `out${id[0]!.toUpperCase()}${id.slice(1)}`;
+const bodyKey = (id: string) => `${nameKey(id)}Body`;
+
+function Group({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2.5">
+      <h3 className="font-mono text-[10.5px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+        {label}
+      </h3>
+      <div className="grid gap-3 sm:grid-cols-3">{children}</div>
     </div>
   );
 }
