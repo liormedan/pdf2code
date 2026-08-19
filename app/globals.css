@@ -67,48 +67,59 @@
   --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 
+/* Dusk, not night.
+   A dark theme that stops well short of black: the ground is a warm graphite around
+   19% lightness rather than the near-black most dark modes reach for. Enough contrast
+   to rest the eyes, not so much that the interface reads as a void with text floating
+   in it — and the paper warmth of the light theme survives as an olive cast in the
+   greys, so the two themes are recognisably the same product.
+
+   The surfaces step *up* from the ground as they come forward — page, then card, then
+   sunken panel — which is how depth reads when light comes from above. */
 .dark {
-  --background: #131210;
-  --foreground: #f2eee5;
+  --background: #24272a;
+  --foreground: #e9e7e0;
 
-  --card: #1b1a17;
-  --card-foreground: #f2eee5;
-  --popover: #1b1a17;
-  --popover-foreground: #f2eee5;
+  --card: #2b2f32;
+  --card-foreground: #e9e7e0;
+  --popover: #2b2f32;
+  --popover-foreground: #e9e7e0;
 
-  --primary: #4bbfa4;
-  --primary-foreground: #08211c;
-  --primary-hover: #6fd4ba;
+  --primary: #5cc3a8;
+  --primary-foreground: #07211b;
+  --primary-hover: #7ad5bd;
 
-  --secondary: #232120;
-  --secondary-foreground: #f2eee5;
+  --secondary: #343840;
+  --secondary-foreground: #e9e7e0;
 
-  --muted: #232120;
-  --muted-foreground: #9d9585;
+  --muted: #343840;
+  /* Small mono labels again: this has to clear 4.5:1 on the page, on a card, on the
+     sunken panel and in the sidebar, which are four different grounds. */
+  --muted-foreground: #a9a89f;
 
-  --accent: #102b26;
-  --accent-foreground: #4bbfa4;
+  --accent: #23403a;
+  --accent-foreground: #6fd0b6;
 
-  --destructive: #ec7a60;
-  --destructive-foreground: #1a0d0a;
-  --destructive-muted: #2c1a15;
+  --destructive: #f0907a;
+  --destructive-foreground: #2a0f09;
+  --destructive-muted: #3d2822;
 
-  --warning: #d9a441;
-  --warning-muted: #2a2116;
+  --warning: #e0b160;
+  --warning-muted: #3a3122;
 
-  --border: #6d6960;
-  --divider: #38352f;
-  --input: #2b2926;
-  --ring: #4bbfa4;
+  --border: #85898c;
+  --divider: #3b4045;
+  --input: #31353a;
+  --ring: #5cc3a8;
 
-  --sidebar: #191714;
-  --sidebar-foreground: #f2eee5;
-  --sidebar-primary: #4bbfa4;
-  --sidebar-primary-foreground: #08211c;
-  --sidebar-accent: #102b26;
-  --sidebar-accent-foreground: #4bbfa4;
-  --sidebar-border: #38352f;
-  --sidebar-ring: #4bbfa4;
+  --sidebar: #1f2225;
+  --sidebar-foreground: #e9e7e0;
+  --sidebar-primary: #5cc3a8;
+  --sidebar-primary-foreground: #07211b;
+  --sidebar-accent: #23403a;
+  --sidebar-accent-foreground: #6fd0b6;
+  --sidebar-border: #3b4045;
+  --sidebar-ring: #5cc3a8;
 }
 
 @theme inline {
