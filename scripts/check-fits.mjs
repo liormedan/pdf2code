@@ -50,6 +50,26 @@ check("no fixed rem type scale left in the shell",
   !/text-(3xl|4xl|2xl)\b/.test(html.split("<footer")[0] ?? ""),
   "a fixed heading size cannot shrink on a short window");
 
+// The deck. Five panels ship in the markup and one is shown by a `:has()` rule, so the
+// things that can quietly break are: a panel with no way to reach it, a tab pointing at a
+// panel that is not there, and the fallback disappearing — which on a browser without
+// `:has()` would leave a page with no visible content at all.
+// Counted outside the stylesheet: the rules that do the switching name every panel and
+// every tab several times each, so counting the raw page finds 11 panels and 20 tabs on a
+// page that has five of each.
+const markup = html.replace(/<style[\s\S]*?<\/style>/g, "");
+const panels = [...new Set([...markup.matchAll(/data-panel="([a-z]+)"/g)].map((m) => m[1]))];
+const tabs = [...new Set([...markup.matchAll(/data-tab="([a-z]+)"/g)].map((m) => m[1]))];
+check("every panel has a tab, and every tab a panel",
+  panels.length > 0 && panels.length === tabs.length && panels.every((p) => tabs.includes(p)),
+  `${panels.length} panels, ${tabs.length} tabs`);
+check("the switching rules are present", /#deck:has\(#tab-[a-z]+:checked\)/.test(html));
+check("a browser without :has() still sees a panel",
+  /@supports not selector\(:has\(\*\)\)/.test(html),
+  "otherwise the page renders empty on older browsers");
+check("switching costs no JavaScript", /type="radio"[^>]*name="deck"/.test(html),
+  "radios and CSS, not a client component");
+
 // The page a stranger waits for must stay light. Script contents are excluded because
 // against a dev server they are mostly the HMR client, which is absent in production —
 // counting it made this fail on a page that had not grown at all.

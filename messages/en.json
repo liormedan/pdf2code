@@ -79,7 +79,16 @@
     "aboutLead": "What it does, what it cannot do yet, and what is coming — in full.",
     "fitPrivacy": "Runs in your browser. The file is never uploaded.",
     "fitRtl": "Hebrew and Arabic export with the right language and direction.",
-    "fitFidelity": "The page looks identical; the text stays real text."
+    "fitFidelity": "The page looks identical; the text stays real text.",
+    "tabWhat": "What it is",
+    "tabFilm": "The film",
+    "tabWhy": "What you get",
+    "tabWho": "Who it's for",
+    "tabHow": "How",
+    "whyTitle": "What you get",
+    "deckNav": "Page sections",
+    "ctaShort": "Start free",
+    "aboutLink": "Full detail"
   },
   "nav": {
     "overview": "Overview",
