@@ -6,7 +6,7 @@
   "webpage": {
     "brand": "PDF to Code",
     "navSignIn": "Sign in",
-    "headline": "Turn a PDF into a page you can actually edit",
+    "headline": "Turn a PDF into code you control",
     "subhead": "A standalone HTML page or a drop-in React component — converted in your browser, so the file is never uploaded anywhere.",
     "figureBefore": "PDF",
     "figureBeforeNote": "the words are part of the picture",
