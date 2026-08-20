@@ -21,6 +21,11 @@ const PUBLIC_PATHS = new Set([
   // The tab icon. Next serves it from a route, so the gate would otherwise redirect it
   // and every visitor would get a blank favicon.
   "/icon.svg",
+  // The explainer on the webpage, and the frame the player shows before it is pressed.
+  // Files in public/ are not exempt from the matcher — both were answering 307 to the
+  // sign-in page, which a <video> element reports as nothing at all.
+  "/explainer.mp4",
+  "/explainer.jpg",
 ]);
 
 export async function middleware(request: NextRequest) {

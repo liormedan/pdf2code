@@ -65,6 +65,29 @@ export default async function Webpage({ searchParams }: { searchParams: Promise<
             and the page was explaining it entirely in prose. */}
         <BeforeAfter t={t} />
 
+        {/* The explainer sits after the still proof and before the use cases: the figure
+            above answers "what does it do" in no bytes at all, and a reader who wants more
+            than that is exactly the reader who will press play.
+
+            preload="none" is the whole reason this can be here. The file is 4.4 MB and this
+            is the one page a stranger waits for; nothing is fetched until the play button is
+            pressed, so the poster — 71 KB — is the only cost the page carries. No client
+            JavaScript either: a plain <video> element does all of it. */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold tracking-tight">{t("videoTitle")}</h2>
+          <p className="max-w-[58ch] text-sm leading-relaxed text-muted-foreground">{t("videoLead")}</p>
+          <video
+            controls
+            preload="none"
+            playsInline
+            poster="/explainer.jpg"
+            className="w-full rounded-xl border bg-black"
+          >
+            <source src="/explainer.mp4" type="video/mp4" />
+            {t("videoFallback")}
+          </video>
+        </section>
+
         <section className="space-y-6">
           <h2 className="text-xl font-semibold tracking-tight">{t("useCasesTitle")}</h2>
           <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">

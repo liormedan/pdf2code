@@ -69,7 +69,10 @@
     "closingTitle": "Convert your first document",
     "closingBody": "It takes about as long as opening the file.",
     "footerNote": "In development. Sign-ups are open.",
-    "goodToKnowTitle": "Worth knowing"
+    "goodToKnowTitle": "Worth knowing",
+    "videoTitle": "See it work",
+    "videoLead": "A minute and a half, narrated in Hebrew. A real document, the code it becomes, and what you can do with it.",
+    "videoFallback": "This browser cannot play the video."
   },
   "nav": {
     "overview": "Overview",
