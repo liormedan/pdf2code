@@ -45,6 +45,7 @@
     ".next",
     ".next-build",
     "out",
-    "bakeoff"
+    "bakeoff",
+    "video"
   ]
 }

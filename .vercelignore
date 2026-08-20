@@ -5,3 +5,7 @@ bakeoff
 docs
 out
 .next-build
+
+# The explainer film. Its own project, its own node_modules, and nothing in it is
+# served — the finished video ships as public/explainer.mp4, which is committed.
+video

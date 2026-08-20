@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>דוח רבעוני</title>
+<style>
+  /* Printed to PDF by headless Chrome, so this is a page description rather than a web
+     page: fixed A4, no responsive anything, and colour that survives print. */
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    width: 210mm; height: 297mm;
+    font-family: "Segoe UI", "Arial", sans-serif;
+    color: #17150f;
+    background: #ffffff;
+    padding: 18mm 16mm 14mm;
+    display: flex; flex-direction: column;
+  }
+
+  header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 2px solid #0d6b5b; padding-bottom: 5mm; }
+  .brand { display: flex; align-items: center; gap: 3mm; }
+  .brand-name { font-size: 13pt; font-weight: 700; letter-spacing: -0.2pt; }
+  .brand-sub { font-size: 7.5pt; color: #6b6658; margin-top: 0.6mm; }
+  .doc-meta { text-align: left; font-size: 8pt; color: #6b6658; line-height: 1.6; }
+
+  h1 { font-size: 22pt; font-weight: 700; letter-spacing: -0.6pt; margin-top: 8mm; }
+  .lede { font-size: 10pt; color: #4a4638; margin-top: 2.5mm; max-width: 130mm; line-height: 1.65; }
+
+  .kpis { display: flex; gap: 4mm; margin-top: 8mm; }
+  .kpi { flex: 1; border: 1px solid #ddd8cc; border-radius: 2.4mm; padding: 4mm 4.5mm; background: #faf8f3; }
+  .kpi-label { font-size: 7.5pt; color: #6b6658; }
+  .kpi-value { font-size: 19pt; font-weight: 700; margin-top: 1.4mm; letter-spacing: -0.5pt; }
+  .kpi-delta { font-size: 8pt; font-weight: 600; color: #0d6b5b; margin-top: 1mm; }
+  .kpi-delta.down { color: #b3341f; }
+
+  h2 { font-size: 11.5pt; font-weight: 700; margin-top: 9mm; margin-bottom: 3.5mm; }
+  .chart-wrap { border: 1px solid #ddd8cc; border-radius: 2.4mm; padding: 5mm; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  thead th { text-align: right; font-size: 7.5pt; color: #6b6658; font-weight: 600; padding-bottom: 2mm; border-bottom: 1px solid #949080; }
+  tbody td { padding: 2.6mm 0; border-bottom: 1px solid #eae6dc; }
+  tbody tr:last-child td { border-bottom: none; font-weight: 700; }
+  td.num, th.num { text-align: left; font-variant-numeric: tabular-nums; }
+
+  .note { font-size: 9pt; line-height: 1.75; color: #4a4638; margin-top: 7mm; max-width: 150mm; }
+  footer { margin-top: auto; padding-top: 5mm; border-top: 1px solid #ddd8cc; display: flex; justify-content: space-between; font-size: 7.5pt; color: #6b6658; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="2" width="14" height="17" rx="2.5" fill="#0d6b5b" opacity="0.25"/>
+      <rect x="7" y="5" width="14" height="17" rx="2.5" fill="#ffffff" stroke="#0d6b5b" stroke-width="1.6"/>
+      <path d="M10.5 10.5h7M10.5 13.5h7M10.5 16.5h4" stroke="#0d6b5b" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="brand-name">אורים מערכות בע״מ</div>
+      <div class="brand-sub">חברה לדוגמה · אין לה קיום</div>
+    </div>
+  </div>
+  <div class="doc-meta">
+    דוח לרבעון השלישי<br>
+    הופק ב־14 באוקטובר · עמוד 1 מתוך 4
+  </div>
+</header>
+
+<h1>סיכום פעילות רבעוני</h1>
+<p class="lede">
+  הרבעון נסגר מעל התחזית שהוצגה בתחילתו, בעיקר בזכות התחדשות של חוזי שירות ותיקים.
+  שלושת האתרים פעלו ברצף מלא.
+</p>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="kpi-label">הכנסות</div>
+    <div class="kpi-value">12.4M ₪</div>
+    <div class="kpi-delta">12%+ לעומת אשתקד</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">לקוחות פעילים</div>
+    <div class="kpi-value">1,840</div>
+    <div class="kpi-delta">7%+ ברבעון</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">עלות גיוס</div>
+    <div class="kpi-value">312 ₪</div>
+    <div class="kpi-delta down">9%− ביעילות</div>
+  </div>
+</div>
+
+<h2>הכנסות לפי רבעון</h2>
+<div class="chart-wrap">
+  <!-- Vector, on purpose. It is what the raster layer of the converted page has to carry. -->
+  <svg width="100%" viewBox="0 0 620 150" preserveAspectRatio="none" aria-hidden="true">
+    <line x1="0" y1="120" x2="620" y2="120" stroke="#949080" stroke-width="1"/>
+    <line x1="0" y1="80" x2="620" y2="80" stroke="#eae6dc" stroke-width="1"/>
+    <line x1="0" y1="40" x2="620" y2="40" stroke="#eae6dc" stroke-width="1"/>
+    <rect x="40"  y="76" width="62" height="44" fill="#0d6b5b" opacity="0.35"/>
+    <rect x="152" y="64" width="62" height="56" fill="#0d6b5b" opacity="0.45"/>
+    <rect x="264" y="70" width="62" height="50" fill="#0d6b5b" opacity="0.55"/>
+    <rect x="376" y="48" width="62" height="72" fill="#0d6b5b" opacity="0.7"/>
+    <rect x="488" y="26" width="62" height="94" fill="#0d6b5b"/>
+    <polyline points="71,70 183,58 295,64 407,42 519,20" fill="none" stroke="#b3341f" stroke-width="2.2" stroke-linejoin="round"/>
+    <circle cx="519" cy="20" r="4.2" fill="#b3341f"/>
+  </svg>
+</div>
+
+<h2>פילוח לפי אתר</h2>
+<table>
+  <thead>
+    <tr>
+      <th>אתר</th>
+      <th class="num">הכנסות</th>
+      <th class="num">שיעור מהסך</th>
+      <th class="num">שינוי</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>צפון</td><td class="num">5,210,000</td><td class="num">42%</td><td class="num">14%+</td></tr>
+    <tr><td>מרכז</td><td class="num">4,480,000</td><td class="num">36%</td><td class="num">11%+</td></tr>
+    <tr><td>דרום</td><td class="num">2,710,000</td><td class="num">22%</td><td class="num">6%+</td></tr>
+    <tr><td>סך הכול</td><td class="num">12,400,000</td><td class="num">100%</td><td class="num">12%+</td></tr>
+  </tbody>
+</table>
+
+<p class="note">
+  ההכנסות עלו ב־12% לעומת התקופה המקבילה אשתקד. מצבת כוח האדם נותרה יציבה בשלושת האתרים,
+  ועלות הגיוס ירדה בעקבות מעבר לערוצים ישירים. ההנהלה צופה המשך מגמה ברבעון הבא, בכפוף
+  לחידוש שני חוזים מהותיים שמועד פקיעתם בינואר.
+</p>
+
+<footer>
+  <span>אורים מערכות בע״מ · מסמך לדוגמה</span>
+  <span>1 / 4</span>
+</footer>
+
+</body>
+</html>

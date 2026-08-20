@@ -1,0 +1,23 @@
+{
+  "name": "pdf2code-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Explainer video for pdf2code. Picture is the real product; nothing here is a mockup.",
+  "dependencies": {
+    "@remotion/cli": "4.0.417",
+    "remotion": "4.0.417",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "typescript": "5.7.2"
+  },
+  "scripts": {
+    "studio": "node ./node_modules/@remotion/cli/remotion-cli.js studio --port 3311",
+    "render": "node ./node_modules/@remotion/cli/remotion-cli.js render",
+    "still": "node ./node_modules/@remotion/cli/remotion-cli.js still",
+    "check": "node ./node_modules/typescript/bin/tsc --noEmit -p .",
+    "setup": "node setup.mjs"
+  }
+}
