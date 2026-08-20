@@ -19,6 +19,19 @@ export async function POST(request: Request): Promise<Response> {
     store.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
   }
 
-  // Back where they were, which is the only page that offers this.
-  return Response.redirect(new URL("/", request.url), 303);
+  // Back where they were. The switch appears on more than one page now, and sending
+  // everyone to the root meant changing language also navigated you away from what you
+  // were reading. Only the path of a same-origin referer is used — a referer is
+  // attacker-controllable, so it picks where on this site to land, never which site.
+  let path = "/";
+  const referer = request.headers.get("referer");
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      if (url.origin === new URL(request.url).origin) path = url.pathname;
+    } catch {
+      // Unparseable referer: the root is a safe destination.
+    }
+  }
+  return Response.redirect(new URL(path, request.url), 303);
 }

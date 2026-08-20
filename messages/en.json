@@ -72,7 +72,14 @@
     "goodToKnowTitle": "Worth knowing",
     "videoTitle": "See it work",
     "videoLead": "A minute and a half, narrated in Hebrew. A real document, the code it becomes, and what you can do with it.",
-    "videoFallback": "This browser cannot play the video."
+    "videoFallback": "This browser cannot play the video.",
+    "navAbout": "How it works",
+    "seeHow": "See how it works",
+    "aboutTitle": "How PDF to Code works",
+    "aboutLead": "What it does, what it cannot do yet, and what is coming — in full.",
+    "fitPrivacy": "Runs in your browser. The file is never uploaded.",
+    "fitRtl": "Hebrew and Arabic export with the right language and direction.",
+    "fitFidelity": "The page looks identical; the text stays real text."
   },
   "nav": {
     "overview": "Overview",

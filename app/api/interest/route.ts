@@ -18,8 +18,27 @@ import { isPlannedOutput } from "@/src/lib/outputs.ts";
 
 export const runtime = "nodejs";
 
-const back = (request: Request, query: string) =>
-  Response.redirect(new URL(`/${query}`, request.url), 303);
+/**
+ * Return to the page the form was on, rather than to a hardcoded path.
+ *
+ * The button now lives on /about and used to live on /, and pinning the destination
+ * meant pressing it silently moved you somewhere else. Only the path of a same-origin
+ * referer is taken — a referer is attacker-controllable, so it decides where on this
+ * site to land and never which site.
+ */
+function back(request: Request, query: string): Response {
+  let path = "/";
+  const referer = request.headers.get("referer");
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      if (url.origin === new URL(request.url).origin) path = url.pathname;
+    } catch {
+      // Unparseable referer: fall back to the root rather than trusting it.
+    }
+  }
+  return Response.redirect(new URL(`${path}${query}`, request.url), 303);
+}
 
 export async function POST(request: Request): Promise<Response> {
   const form = await request.formData().catch(() => null);

@@ -11,6 +11,10 @@ import { SESSION_COOKIE, readSession } from "@/src/lib/auth.ts";
  */
 const PUBLIC_PATHS = new Set([
   "/",
+  // The long form of the webpage. "/" is one screen and cannot hold the film, the use
+  // cases or the roadmap, so they live here — and a stranger deciding whether to sign up
+  // is exactly who needs to read them.
+  "/about",
   "/login",
   // The webpage asks anonymous readers which output to build next, so the endpoint that
   // records the answer has to be reachable without an account. It stores only which of a
