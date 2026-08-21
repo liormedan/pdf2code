@@ -22,7 +22,8 @@
     "contrast": "node scripts/check-contrast.mjs",
     "typecheck": "tsc --noEmit",
     "images": "tsx scripts/analyze-images.mjs",
-    "fits": "node scripts/check-fits.mjs"
+    "fits": "node scripts/check-fits.mjs",
+    "vercel": "node scripts/vercel.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
