@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  lang and dir are placeholders only.
+
+  Both are rewritten at startup by the i18n provider from the stored locale, and the
+  direction is *derived* from the language subtag rather than configured — the same rule
+  the web app follows. What matters here is that the document starts with something
+  valid, so the first paint is never undirected.
+-->
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF to Code</title>
+    <!-- Applies the stored theme before the body paints. A file, not an inline block,
+         because the CSP sets script-src 'self' — see public/theme-boot.js. -->
+    <script src="/theme-boot.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

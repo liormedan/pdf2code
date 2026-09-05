@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The minimum the window needs. Nothing here reaches the filesystem, the shell or the network — file access arrives in sprint 5 as named commands on the Rust side, not as a blanket permission handed to the WebView.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

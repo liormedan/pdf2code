@@ -1,0 +1,29 @@
+[package]
+name = "pdf2code-desktop"
+version = "0.1.0"
+description = "PDF to Code — the installed application"
+edition = "2021"
+rust-version = "1.77"
+publish = false
+
+# The staticlib/cdylib pair is what lets the same crate be linked into a mobile shell
+# later without restructuring. `rlib` is what src/main.rs links against on desktop.
+[lib]
+name = "pdf2code_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# A window that ships is a window built with optimisations and without a debug console.
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

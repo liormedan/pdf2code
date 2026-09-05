@@ -4,16 +4,34 @@
     {
       "name": "app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
     },
     {
       "name": "bakeoff",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "bakeoff"],
+      "runtimeArgs": [
+        "run",
+        "bakeoff"
+      ],
       "port": 4321,
       "autoPort": true
+    },
+    {
+      "name": "desktop",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "desktop/app",
+        "run",
+        "dev"
+      ],
+      "port": 1420,
+      "autoPort": false
     }
   ]
 }
