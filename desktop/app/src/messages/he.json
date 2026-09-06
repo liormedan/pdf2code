@@ -344,6 +344,10 @@
     "projectsReRun": "להמיר שוב",
     "projectsForget": "הסרה מהרשימה",
     "projectsMissing": "קובץ המקור לא נמצא במקומו",
-    "projectsChanged": "קובץ המקור השתנה מאז ההמרה"
+    "projectsChanged": "קובץ המקור השתנה מאז ההמרה",
+    "sourcesRefused": "{count} קבצים לא נוספו — רק PDF נתמך.",
+    "sourcesFirstRun": "גררו לכאן קבצי PDF, או הוסיפו אותם. ההמרה רצה על המחשב הזה בלבד.",
+    "engineDownHelp": "המנוע לא עלה, ולכן אי אפשר להמיר. סגירה ופתיחה מחדש של האפליקציה פותרת את רוב המקרים.",
+    "itemFailed": "נכשל: {message}"
   }
 }

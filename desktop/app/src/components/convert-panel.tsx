@@ -135,6 +135,14 @@ export default function ConvertPanel({
         </div>
       </div>
 
+      {/* A disabled button with no explanation is a dead end. The status bar says the
+          engine is down; this says what that means for the thing you were about to do. */}
+      {status.state !== "up" ? (
+        <p className="rounded-lg border border-warning/40 bg-warning-muted px-3 py-2 text-xs text-warning">
+          {t("engineDownHelp")}
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-2">
         <Button
           size="sm"

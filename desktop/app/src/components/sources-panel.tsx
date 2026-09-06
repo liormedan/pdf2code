@@ -30,6 +30,9 @@ export default function SourcesPanel({
 }) {
   const t = useTranslations("desktop");
   const [over, setOver] = useState(false);
+  // How many files the last drop refused. Cleared as soon as anything else happens,
+  // because it describes one action rather than a state of the queue.
+  const [refused, setRefused] = useState(0);
 
   useEffect(() => {
     if (!isDesktop()) return;
@@ -51,10 +54,13 @@ export default function SourcesPanel({
         const described = await Promise.all(
           event.payload.paths.map((path) => describeDocument(path)),
         );
-        // Anything that was not a PDF comes back null and is dropped silently. Saying
-        // "we ignored four of these" would be better; it needs a place to say it, and
-        // that place is the empty-state work still open in this sprint.
-        onAdd(described.filter((d): d is PickedDocument => d !== null));
+        const accepted = described.filter((d): d is PickedDocument => d !== null);
+
+        // Anything that was not a readable PDF comes back null. Saying so matters:
+        // dropping eleven files and seeing nine appear, with no explanation, reads as
+        // the app losing two of them.
+        setRefused(described.length - accepted.length);
+        onAdd(accepted);
       })
       .then((stop) => {
         if (gone) stop();
@@ -68,6 +74,7 @@ export default function SourcesPanel({
   }, [onAdd]);
 
   const choose = useCallback(async () => {
+    setRefused(0);
     onAdd(await pickDocuments());
   }, [onAdd]);
 
@@ -92,17 +99,24 @@ export default function SourcesPanel({
         ) : null}
       </div>
 
+      {refused > 0 ? (
+        <p className="text-[11px] text-warning">{t("sourcesRefused", { count: refused })}</p>
+      ) : null}
+
       {items.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-6 text-center">
           <p className="text-sm text-muted-foreground">{t("sourcesEmpty")}</p>
           <p className="text-xs text-muted-foreground/80">{t("sourcesHint")}</p>
+          {/* Shown only when there is nothing at all, which is the one moment a
+              sentence about what this does is welcome rather than in the way. */}
+          <p className="mt-2 text-[11px] text-muted-foreground/70">{t("sourcesFirstRun")}</p>
         </div>
       ) : (
         <ul className="min-h-0 flex-1 space-y-1 overflow-auto">
           {items.map((item) => (
             <li
               key={item.key}
-              className="flex items-center gap-2 rounded-lg border border-divider px-2.5 py-1.5"
+              className="flex items-start gap-2 rounded-lg border border-divider px-2.5 py-1.5"
             >
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs">{item.document.name}</span>
@@ -110,6 +124,13 @@ export default function SourcesPanel({
                   {kb(item.document.size)} · {t(`state${cap(item.state)}`)}
                   {item.took !== null ? ` · ${item.took.toFixed(1)}s` : ""}
                 </span>
+                {/* A failure that only says "failed" sends somebody to a log they do
+                    not have. The engine's reason is short, and it is the only clue. */}
+                {item.error ? (
+                  <span className="block text-[11px] text-destructive">
+                    {t("itemFailed", { message: item.error })}
+                  </span>
+                ) : null}
               </span>
               {item.state === "waiting" && !busy ? (
                 <Button
