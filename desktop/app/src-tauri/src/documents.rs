@@ -51,6 +51,49 @@ pub fn pick_document(app: AppHandle) -> Option<Picked> {
     })
 }
 
+/// The largest preview we will hand the window.
+///
+/// A converted page carries its raster as a data: URI, so a long document's index.html
+/// is tens of megabytes — and pushing that through the IPC boundary to render a preview
+/// nobody asked to scroll is the same mistake as sending conversion output through the
+/// pipe. Above this, the window shows the path instead.
+const PREVIEW_LIMIT: u64 = 8 * 1024 * 1024;
+
+/// Read one file from a conversion's output, for previewing.
+///
+/// **This is a filesystem read reachable from the WebView, so its scope is the whole
+/// point.** The path is canonicalised and then checked to be inside the app's own
+/// conversions directory; anything else is refused, including a path that only looks
+/// like it belongs there. Canonicalising first is what makes `..` in the middle of an
+/// otherwise innocent path a refusal rather than an escape.
+#[tauri::command]
+pub fn read_output(app: AppHandle, path: String) -> Result<String, String> {
+    let root = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("no app data directory: {e}"))?
+        .join("conversions");
+
+    // Both sides canonicalised: the root may itself be reached through a symlink or a
+    // short path on Windows, and comparing a canonical child to a non-canonical parent
+    // fails for reasons that have nothing to do with safety.
+    let root = root.canonicalize().map_err(|e| format!("no conversions directory: {e}"))?;
+    let file = PathBuf::from(&path)
+        .canonicalize()
+        .map_err(|e| format!("no such file: {e}"))?;
+
+    if !file.starts_with(&root) {
+        return Err("refused: outside the conversions directory".into());
+    }
+
+    let size = std::fs::metadata(&file).map(|m| m.len()).unwrap_or(0);
+    if size > PREVIEW_LIMIT {
+        return Err(format!("too large to preview ({} MB)", size / 1024 / 1024));
+    }
+
+    std::fs::read_to_string(&file).map_err(|e| format!("could not read: {e}"))
+}
+
 /// Where a conversion's output goes.
 ///
 /// Under the app's data directory, one folder per run, named after the document and

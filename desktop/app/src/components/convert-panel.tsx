@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FileText, Loader2, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import OutputPreview from "@/components/output-preview";
 import { useTranslations } from "@/i18n/provider";
 import {
   engineCall,
@@ -194,6 +195,10 @@ export default function ConvertPanel({ status }: { status: EngineStatus }) {
           ))}
         </div>
       ) : null}
+
+      {result?.files.includes("index.html") ? (
+        <OutputPreview dir={result.out} file="index.html" />
+      ) : null}
     </div>
   );
 }
@@ -207,6 +212,8 @@ function wording(t: (key: string, params?: Record<string, string | number>) => s
       return t("convertTruncated", w.params);
     case "GRAPHICS_DROPPED":
       return t("convertGraphics", w.params);
+    case "UNMAPPED_GLYPHS":
+      return t("convertUnmapped", w.params);
     default:
       // A code we have no wording for is still worth showing, in the engine's English.
       return w.message;

@@ -42,6 +42,7 @@ pub fn run() {
             sidecar::engine_cancel,
             documents::pick_document,
             documents::output_dir,
+            documents::read_output,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

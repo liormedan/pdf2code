@@ -321,6 +321,11 @@
     "convertScanned": "למסמך הזה אין שכבת טקסט — הוא סריקה. התמונות נשמרות, אבל הטקסט לא יהיה ניתן לחיפוש בלי OCR.",
     "convertTruncated": "הומרו {limit} העמודים הראשונים מתוך {total}.",
     "convertGraphics": "ב-{count} עמודים יש גרפיקה שפלט טקסט בלבד אינו משחזר.",
-    "convertNothing": "עדיין לא נבחר קובץ."
+    "convertNothing": "עדיין לא נבחר קובץ.",
+    "previewTitle": "תצוגה מקדימה של הפלט",
+    "previewLoading": "טוען תצוגה מקדימה…",
+    "previewUnavailable": "אין תצוגה מקדימה — {reason}",
+    "previewSandboxed": "מוצג בתוך ארגז חול: בלי סקריפטים, בלי גישה לאפליקציה.",
+    "convertUnmapped": "{count} תווים לא ניתנו לקריאה מהפונטים של המסמך והושמטו. שאר הטקסט לא הושפע."
   }
 }

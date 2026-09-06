@@ -321,6 +321,11 @@
     "convertScanned": "This document has no text layer — it is a scan. The images are kept, but the text will not be searchable without OCR.",
     "convertTruncated": "Converted the first {limit} of {total} pages.",
     "convertGraphics": "{count} pages contain graphics that text-only output cannot reproduce.",
-    "convertNothing": "No file chosen yet."
+    "convertNothing": "No file chosen yet.",
+    "previewTitle": "Output preview",
+    "previewLoading": "Loading the preview…",
+    "previewUnavailable": "No preview — {reason}",
+    "previewSandboxed": "Shown in a sandbox: no scripts, no access to the app.",
+    "convertUnmapped": "{count} characters could not be read from the document fonts and were left out. The rest of the text is unaffected."
   }
 }

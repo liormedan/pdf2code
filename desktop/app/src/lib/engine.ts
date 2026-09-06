@@ -116,6 +116,18 @@ export function outputDir(source: string): Promise<string> {
   return invoke<string>("output_dir", { source });
 }
 
+/**
+ * Read one file from a conversion's output, for previewing.
+ *
+ * Rejects for a path outside the conversions directory, and for a file too large to be
+ * worth pushing through the IPC boundary. Both refusals happen on the Rust side — the
+ * window asks, it does not decide.
+ */
+export function readOutput(path: string): Promise<string> {
+  if (!isDesktop()) return unavailable<string>();
+  return invoke<string>("read_output", { path });
+}
+
 /** What `probe` reports about a document before anything is converted. */
 export interface Probe {
   pages: number;
@@ -127,7 +139,7 @@ export interface Probe {
 
 /** A warning carries a code and its parameters, never a sentence — the window words it. */
 export interface Warning {
-  code: "SCANNED" | "GRAPHICS_DROPPED" | "TRUNCATED";
+  code: "SCANNED" | "GRAPHICS_DROPPED" | "TRUNCATED" | "UNMAPPED_GLYPHS";
   params: Record<string, string | number>;
   message: string;
 }
