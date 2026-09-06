@@ -198,9 +198,127 @@ def op_convert(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     }
 
 
+def op_edit(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """Rotate, reorder, delete, extract, split or merge — all of them, from one plan.
+
+    See pages.py: a plan is a list saying which page of which file goes where and how it
+    is turned, and every one of those six features is a shape that list can take.
+    """
+    from pages import apply_plan, parse_plan  # noqa: PLC0415 — see op_probe
+
+    plan = args.get("plan")
+    out = args.get("out")
+    if not isinstance(plan, list):
+        raise ValueError("edit needs a plan")
+    if not isinstance(out, str) or not out:
+        raise ValueError("edit needs an output path")
+
+    ctx.checkpoint()
+    parsed = parse_plan(plan)
+    ctx.progress(page=1, pages=2, phase="generate")
+    result = apply_plan(parsed, out, overwrite=bool(args.get("overwrite", False)))
+    ctx.progress(page=2, pages=2, phase="generate")
+    return result
+
+
+def op_thumbnails(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """Small page images, for a page view. Written to disk; paths come back."""
+    from pages import thumbnails  # noqa: PLC0415
+
+    path = args.get("path")
+    out = args.get("out")
+    if not isinstance(path, str) or not isinstance(out, str):
+        raise ValueError("thumbnails needs a path and an output directory")
+
+    ctx.checkpoint()
+    made = thumbnails(
+        path,
+        out,
+        width=int(args.get("width", 180)),
+        pages=args.get("pages"),
+    )
+    return {"thumbnails": made}
+
+
+def op_export_images(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    from pages import export_images  # noqa: PLC0415
+
+    path = args.get("path")
+    out = args.get("out")
+    if not isinstance(path, str) or not isinstance(out, str):
+        raise ValueError("export needs a path and an output directory")
+
+    ctx.checkpoint()
+    made = export_images(
+        path,
+        out,
+        pages=args.get("pages"),
+        scale=float(args.get("scale", 2.0)),
+        format=str(args.get("format", "png")),
+    )
+    return {"images": made}
+
+
+def op_compress(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    from pages import compress  # noqa: PLC0415
+
+    path = args.get("path")
+    out = args.get("out")
+    if not isinstance(path, str) or not isinstance(out, str):
+        raise ValueError("compress needs a path and an output path")
+
+    ctx.checkpoint()
+    return compress(path, out, overwrite=bool(args.get("overwrite", False)))
+
+
+def op_page_text(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """The text of some pages, in reading order.
+
+    This is what search and copy are built on, and it goes through the same extraction
+    the converter uses — which means the Hebrew comes back the right way round. Copying
+    text out of a Hebrew PDF and getting it reversed is situation 5 in
+    business/situations.md; getting it right here is the same win in a smaller place.
+    """
+    from extract import extract_page  # noqa: PLC0415
+
+    path = args.get("path")
+    if not isinstance(path, str) or not path:
+        raise ValueError("text needs a path")
+
+    numbers = args.get("pages")
+    if not isinstance(numbers, list) or not numbers:
+        raise ValueError("text needs a list of page numbers")
+
+    out: list[dict[str, Any]] = []
+    total = len(numbers)
+    for index, number in enumerate(numbers, start=1):
+        ctx.checkpoint()
+        model = extract_page(path, int(number))
+        # Lines rather than runs: a run is a rendering detail, and nobody searches for
+        # half a sentence because the font changed in the middle of it.
+        lines: dict[float, list[str]] = {}
+        for run in model.runs:
+            lines.setdefault(round(run.y, 1), []).append(run.text)
+        out.append(
+            {
+                "page": int(number),
+                "lines": ["".join(parts) for _, parts in sorted(lines.items())],
+                "rtl": any(run.rtl for run in model.runs),
+            }
+        )
+        ctx.progress(page=index, pages=total, phase="extract")
+
+    return {"pages": out}
+
+
 OPS: dict[str, Callable[[dict[str, Any], Context], dict[str, Any]]] = {
     "echo": op_echo,
     "sleep": op_sleep,
     "probe": op_probe,
     "convert": op_convert,
+    "edit": op_edit,
+    "thumbnails": op_thumbnails,
+    "exportImages": op_export_images,
+    "compress": op_compress,
+    "text": op_page_text,
 }

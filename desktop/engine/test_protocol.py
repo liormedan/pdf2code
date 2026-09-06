@@ -100,7 +100,12 @@ def main() -> int:
     # --- it announces itself before it is asked anything ------------------------
     hello = engine.read()
     check("announces ready before any request", hello.get("type") == "ready", str(hello.get("ops")))
-    check("declares the ops it has", set(hello.get("ops", [])) == {"echo", "sleep", "probe", "convert"})
+    check(
+        "declares the ops it has",
+        set(hello.get("ops", []))
+        == {"echo", "sleep", "probe", "convert", "edit", "thumbnails", "exportImages", "compress", "text"},
+        str(sorted(hello.get("ops", []))),
+    )
 
     # --- the whole chain, at its smallest ---------------------------------------
     engine.send({"id": "a1", "op": "echo", "args": {"value": "שלום"}})
