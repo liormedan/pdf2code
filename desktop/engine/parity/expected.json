@@ -1,0 +1,550 @@
+{
+  "fonts": [
+    {
+      "input": [
+        "MUFUZY+Alef-Regular",
+        null
+      ],
+      "family": "'Alef', sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Alef-Regular"
+    },
+    {
+      "input": [
+        "MUFUZY+Alef-Bold",
+        null
+      ],
+      "family": "'Alef', sans-serif",
+      "weight": 700,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Alef-Bold"
+    },
+    {
+      "input": [
+        "MUFUZY+Arial-BoldMT",
+        null
+      ],
+      "family": "'Arial', sans-serif",
+      "weight": 700,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Arial-BoldMT"
+    },
+    {
+      "input": [
+        "NimbusRomNo9L-ReguItal",
+        null
+      ],
+      "family": "'Times New Roman', serif",
+      "weight": 400,
+      "style": "italic",
+      "generic": "serif",
+      "name": "NimbusRomNo9L-ReguItal"
+    },
+    {
+      "input": [
+        "NimbusRomNo9L-MediItal",
+        null
+      ],
+      "family": "'Times New Roman', serif",
+      "weight": 700,
+      "style": "italic",
+      "generic": "serif",
+      "name": "NimbusRomNo9L-MediItal"
+    },
+    {
+      "input": [
+        "CMTT10",
+        null
+      ],
+      "family": "'CMU Typewriter Text', monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "CMTT10"
+    },
+    {
+      "input": [
+        "CMR10",
+        null
+      ],
+      "family": "'CMU Serif', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "CMR10"
+    },
+    {
+      "input": [
+        "CMBX12",
+        null
+      ],
+      "family": "'CMU Serif', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "CMBX12"
+    },
+    {
+      "input": [
+        "SFTT1000",
+        null
+      ],
+      "family": "'CMU Typewriter Text', monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "SFTT1000"
+    },
+    {
+      "input": [
+        "Capitalis",
+        null
+      ],
+      "family": "'Capitalis', sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Capitalis"
+    },
+    {
+      "input": [
+        "MediumCondensed",
+        null
+      ],
+      "family": "'MediumCondensed', sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "MediumCondensed"
+    },
+    {
+      "input": [
+        "Medium Condensed",
+        null
+      ],
+      "family": "'Medium Condensed', sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Medium Condensed"
+    },
+    {
+      "input": [
+        "Helvetica-Oblique",
+        null
+      ],
+      "family": "'Helvetica', sans-serif",
+      "weight": 400,
+      "style": "italic",
+      "generic": "sans-serif",
+      "name": "Helvetica-Oblique"
+    },
+    {
+      "input": [
+        "ABCDEF+Courier",
+        null
+      ],
+      "family": "'Courier New', monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "Courier"
+    },
+    {
+      "input": [
+        "David",
+        null
+      ],
+      "family": "'David', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "David"
+    },
+    {
+      "input": [
+        "Narkisim",
+        null
+      ],
+      "family": "'Narkisim', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Narkisim"
+    },
+    {
+      "input": [
+        "FrankRuehl",
+        null
+      ],
+      "family": "'FrankRuehl', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "FrankRuehl"
+    },
+    {
+      "input": [
+        "SegoeUI-Light",
+        null
+      ],
+      "family": "'Segoe UI', sans-serif",
+      "weight": 300,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "SegoeUI-Light"
+    },
+    {
+      "input": [
+        "Something-BD",
+        null
+      ],
+      "family": "'Something-BD', sans-serif",
+      "weight": 700,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Something-BD"
+    },
+    {
+      "input": [
+        "Something_bd",
+        null
+      ],
+      "family": "'Something_bd', sans-serif",
+      "weight": 700,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Something_bd"
+    },
+    {
+      "input": [
+        "SourceCodePro",
+        null
+      ],
+      "family": "'SourceCodePro', monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "SourceCodePro"
+    },
+    {
+      "input": [
+        "Source Code Pro",
+        null
+      ],
+      "family": "'Source Code Pro', monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "Source Code Pro"
+    },
+    {
+      "input": [
+        "Inconsolata",
+        null
+      ],
+      "family": "'Inconsolata', monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "Inconsolata"
+    },
+    {
+      "input": [
+        "ExtraLightThing",
+        null
+      ],
+      "family": "'ExtraLightThing', sans-serif",
+      "weight": 300,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "ExtraLightThing"
+    },
+    {
+      "input": [
+        "Book Antiqua",
+        null
+      ],
+      "family": "'Book Antiqua', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Book Antiqua"
+    },
+    {
+      "input": [
+        "Font'With\"Quotes\\Inside",
+        null
+      ],
+      "family": "'FontWithQuotesInside', sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Font'With\"Quotes\\Inside"
+    },
+    {
+      "input": [
+        "",
+        "monospace"
+      ],
+      "family": "monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": ""
+    },
+    {
+      "input": [
+        "",
+        null
+      ],
+      "family": "sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": ""
+    },
+    {
+      "input": [
+        null,
+        "serif"
+      ],
+      "family": "serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": ""
+    },
+    {
+      "input": [
+        "Georgia-BoldItalic",
+        null
+      ],
+      "family": "'Georgia', serif",
+      "weight": 700,
+      "style": "italic",
+      "generic": "serif",
+      "name": "Georgia-BoldItalic"
+    },
+    {
+      "input": [
+        "TimesNewRomanPS-BoldMT",
+        null
+      ],
+      "family": "'Times New Roman', serif",
+      "weight": 700,
+      "style": "normal",
+      "generic": "serif",
+      "name": "TimesNewRomanPS-BoldMT"
+    },
+    {
+      "input": [
+        "Calibri",
+        null
+      ],
+      "family": "'Calibri', sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Calibri"
+    },
+    {
+      "input": [
+        "Verdana-Slant",
+        null
+      ],
+      "family": "'Verdana', sans-serif",
+      "weight": 400,
+      "style": "italic",
+      "generic": "sans-serif",
+      "name": "Verdana-Slant"
+    },
+    {
+      "input": [
+        "Tahoma",
+        null
+      ],
+      "family": "'Tahoma', sans-serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "sans-serif",
+      "name": "Tahoma"
+    },
+    {
+      "input": [
+        "Garamond",
+        null
+      ],
+      "family": "'Garamond', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Garamond"
+    },
+    {
+      "input": [
+        "Cambria",
+        null
+      ],
+      "family": "'Cambria', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Cambria"
+    },
+    {
+      "input": [
+        "Constantia",
+        null
+      ],
+      "family": "'Constantia', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Constantia"
+    },
+    {
+      "input": [
+        "Didot",
+        null
+      ],
+      "family": "'Didot', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Didot"
+    },
+    {
+      "input": [
+        "Baskerville",
+        null
+      ],
+      "family": "'Baskerville', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Baskerville"
+    },
+    {
+      "input": [
+        "Minion Pro",
+        null
+      ],
+      "family": "'Minion Pro', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Minion Pro"
+    },
+    {
+      "input": [
+        "Caslon",
+        null
+      ],
+      "family": "'Caslon', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Caslon"
+    },
+    {
+      "input": [
+        "Palatino",
+        null
+      ],
+      "family": "'Palatino', serif",
+      "weight": 400,
+      "style": "normal",
+      "generic": "serif",
+      "name": "Palatino"
+    },
+    {
+      "input": [
+        "Menlo-Regular",
+        null
+      ],
+      "family": "'Menlo-Regular', monospace",
+      "weight": 400,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "Menlo-Regular"
+    },
+    {
+      "input": [
+        "ConsolasBlack",
+        null
+      ],
+      "family": "'ConsolasBlack', monospace",
+      "weight": 700,
+      "style": "normal",
+      "generic": "monospace",
+      "name": "ConsolasBlack"
+    }
+  ],
+  "languages": [
+    {
+      "input": "שלום עולם זהו מסמך בעברית שיש בו מספיק אותיות",
+      "lang": "he",
+      "dir": "rtl"
+    },
+    {
+      "input": "שלום",
+      "lang": "en",
+      "dir": "ltr"
+    },
+    {
+      "input": "مرحبا بالعالم هذه وثيقة عربية بها ما يكفي من الحروف",
+      "lang": "ar",
+      "dir": "rtl"
+    },
+    {
+      "input": "Γειά σου κόσμε αυτό είναι ένα ελληνικό έγγραφο",
+      "lang": "el",
+      "dir": "ltr"
+    },
+    {
+      "input": "Привет мир это документ на русском языке",
+      "lang": "ru",
+      "dir": "ltr"
+    },
+    {
+      "input": "こんにちは世界これは日本語のドキュメントです",
+      "lang": "ja",
+      "dir": "ltr"
+    },
+    {
+      "input": "안녕하세요 세계 이것은 한국어 문서입니다",
+      "lang": "ko",
+      "dir": "ltr"
+    },
+    {
+      "input": "你好世界这是一份中文文档内容足够多了对吧",
+      "lang": "zh",
+      "dir": "ltr"
+    },
+    {
+      "input": "Hello world, this is an ordinary English document.",
+      "lang": "en",
+      "dir": "ltr"
+    },
+    {
+      "input": "",
+      "lang": "en",
+      "dir": "ltr"
+    },
+    {
+      "input": "Hello שלום world מסמך מעורב עם הרבה עברית בתוכו כאן",
+      "lang": "he",
+      "dir": "rtl"
+    },
+    {
+      "input": "Report 2026 — page 1 of 12",
+      "lang": "en",
+      "dir": "ltr"
+    }
+  ]
+}

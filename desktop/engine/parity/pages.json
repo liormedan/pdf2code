@@ -1,0 +1,1120 @@
+{
+  "08-hebrew-doc.pdf": {
+    "info": {
+      "pages": 35,
+      "title": "עותק של פרויקט בן־יהודה כתשתית למחקר",
+      "producer": "",
+      "scanned": false,
+      "hasRTL": true,
+      "lang": "he",
+      "dir": "rtl"
+    },
+    "page": {
+      "number": 1,
+      "width": 960,
+      "height": 540,
+      "stats": {
+        "vector": 5,
+        "images": 1,
+        "total": 195
+      },
+      "fonts": {
+        "g_d0_f1": {
+          "family": "'Calibri', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Calibri",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.25
+        },
+        "g_d0_f2": {
+          "family": "'Arial', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "ArialMT",
+          "vertical": false,
+          "ascent": 0.9052734375,
+          "descent": -0.2119140625
+        },
+        "g_d0_f3": {
+          "family": "'Arial', sans-serif",
+          "weight": 700,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Arial-BoldMT",
+          "vertical": false,
+          "ascent": 0.9052734375,
+          "descent": -0.2119140625
+        },
+        "g_d0_f5": {
+          "family": "'Alef', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Alef-Regular",
+          "vertical": false,
+          "ascent": 1.00927734375,
+          "descent": -0.3525390625
+        },
+        "g_d0_f6": {
+          "family": "'Alef', sans-serif",
+          "weight": 700,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Alef-Bold",
+          "vertical": false,
+          "ascent": 1.00927734375,
+          "descent": -0.3525390625
+        }
+      },
+      "runs": [
+        {
+          "text": "benyehuda.org",
+          "x": 149.4,
+          "y": 58.36,
+          "width": 195.33,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f1",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 344.73,
+          "y": 58.36,
+          "width": 57.98,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f1",
+          "rtl": false
+        },
+        {
+          "text": "למחקר",
+          "x": 388.22,
+          "y": 58.36,
+          "width": 87.01,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f2",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 475.23,
+          "y": 58.36,
+          "width": 9.73,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f2",
+          "rtl": false
+        },
+        {
+          "text": "כתשתית",
+          "x": 482.52,
+          "y": 58.36,
+          "width": 106.43,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f2",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 588.95,
+          "y": 58.36,
+          "width": 9.76,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f2",
+          "rtl": false
+        },
+        {
+          "text": "בן־יהודה",
+          "x": 596.28,
+          "y": 58.36,
+          "width": 115.65,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f3",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 711.92,
+          "y": 58.36,
+          "width": 9.85,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f3",
+          "rtl": false
+        },
+        {
+          "text": "פרויקט",
+          "x": 719.31,
+          "y": 58.36,
+          "width": 91.17,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d0_f3",
+          "rtl": true
+        },
+        {
+          "text": "אסף ברטוב, עורך מייסד",
+          "x": 316.63,
+          "y": 497.51,
+          "width": 256.91,
+          "size": 27,
+          "angle": 0,
+          "font": "g_d0_f5",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 573.54,
+          "y": 497.51,
+          "width": 10.5,
+          "size": 27,
+          "angle": 0,
+          "font": "g_d0_f5",
+          "rtl": false
+        },
+        {
+          "text": "מרצה:",
+          "x": 581.41,
+          "y": 497.51,
+          "width": 71.09,
+          "size": 27,
+          "angle": 0,
+          "font": "g_d0_f6",
+          "rtl": true
+        }
+      ]
+    }
+  },
+  "07-academic-tables.pdf": {
+    "info": {
+      "pages": 15,
+      "title": "",
+      "producer": "pdfTeX-1.40.25",
+      "scanned": false,
+      "hasRTL": false,
+      "lang": "en",
+      "dir": "ltr"
+    },
+    "page": {
+      "number": 1,
+      "width": 612,
+      "height": 792,
+      "stats": {
+        "vector": 3,
+        "images": 0,
+        "total": 247
+      },
+      "fonts": {
+        "g_d1_f1": {
+          "family": "'Times New Roman', serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "serif",
+          "name": "NimbusRomNo9L-Regu",
+          "vertical": false,
+          "ascent": 0.678,
+          "descent": -0.216
+        },
+        "g_d1_f2": {
+          "family": "'Times New Roman', serif",
+          "weight": 700,
+          "style": "normal",
+          "generic": "serif",
+          "name": "NimbusRomNo9L-Medi",
+          "vertical": false,
+          "ascent": 0.69,
+          "descent": -0.209
+        },
+        "g_d1_f3": {
+          "family": "'CMSY7', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "CMSY7",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.194
+        },
+        "g_d1_f4": {
+          "family": "'CMU Typewriter Text', monospace",
+          "weight": 400,
+          "style": "normal",
+          "generic": "monospace",
+          "name": "SFTT1000",
+          "vertical": false,
+          "ascent": 0.611,
+          "descent": -0.222
+        },
+        "g_d1_f5": {
+          "family": "'CMSY6', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "CMSY6",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.194
+        },
+        "g_d1_f6": {
+          "family": "'Times New Roman', serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "serif",
+          "name": "Times-Roman",
+          "vertical": false,
+          "ascent": null,
+          "descent": null
+        }
+      },
+      "runs": [
+        {
+          "text": "Provided proper attribution is provided, Google hereby grants permission to",
+          "x": 124.67,
+          "y": 70.01,
+          "width": 362.67,
+          "size": 11.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "reproduce the tables and figures in this paper solely for use in journalistic or",
+          "x": 124.31,
+          "y": 83.95,
+          "width": 363.58,
+          "size": 11.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "scholarly works.",
+          "x": 267.59,
+          "y": 97.9,
+          "width": 78.9,
+          "size": 11.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "Attention Is All You Need",
+          "x": 211.49,
+          "y": 144.83,
+          "width": 188.41,
+          "size": 17.22,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "Ashish Vaswani",
+          "x": 132.91,
+          "y": 232.73,
+          "width": 66.9,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 199.81,
+          "y": 232.11,
+          "width": 4.08,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "Google Brain",
+          "x": 139.38,
+          "y": 243.64,
+          "width": 53.96,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "avaswani@google.com",
+          "x": 116.68,
+          "y": 254.55,
+          "width": 99.36,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Noam Shazeer",
+          "x": 239.06,
+          "y": 232.73,
+          "width": 61.7,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 300.76,
+          "y": 232.11,
+          "width": 4.08,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "Google Brain",
+          "x": 242.93,
+          "y": 243.64,
+          "width": 53.96,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "noam@google.com",
+          "x": 230.69,
+          "y": 254.55,
+          "width": 78.44,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Niki Parmar",
+          "x": 338.69,
+          "y": 232.73,
+          "width": 53.86,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 392.55,
+          "y": 232.11,
+          "width": 4.08,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "Google Research",
+          "x": 331.45,
+          "y": 243.64,
+          "width": 68.33,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "nikip@google.com",
+          "x": 323.79,
+          "y": 254.55,
+          "width": 83.67,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Jakob Uszkoreit",
+          "x": 424.3,
+          "y": 232.73,
+          "width": 68.83,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 493.13,
+          "y": 232.11,
+          "width": 4.08,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "Google Research",
+          "x": 424.55,
+          "y": 243.64,
+          "width": 68.33,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "usz@google.com",
+          "x": 422.11,
+          "y": 254.55,
+          "width": 73.21,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Llion Jones",
+          "x": 144.29,
+          "y": 282.73,
+          "width": 48.85,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 193.14,
+          "y": 282.1,
+          "width": 4.08,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "Google Research",
+          "x": 134.55,
+          "y": 293.64,
+          "width": 68.33,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "llion@google.com",
+          "x": 126.88,
+          "y": 304.55,
+          "width": 83.67,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Aidan N. Gomez",
+          "x": 248.76,
+          "y": 282.73,
+          "width": 70.57,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗ †",
+          "x": 319.33,
+          "y": 282.1,
+          "width": 10.96,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "University of Toronto",
+          "x": 244.57,
+          "y": 293.64,
+          "width": 86.25,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "aidan@cs.toronto.edu",
+          "x": 235.41,
+          "y": 304.55,
+          "width": 104.59,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Łukasz Kaiser",
+          "x": 394.12,
+          "y": 282.73,
+          "width": 61.72,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 455.84,
+          "y": 282.1,
+          "width": 4.08,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "Google Brain",
+          "x": 398,
+          "y": 293.64,
+          "width": 53.96,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "lukaszkaiser@google.com",
+          "x": 364.85,
+          "y": 304.55,
+          "width": 120.27,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Illia Polosukhin",
+          "x": 268.81,
+          "y": 332.73,
+          "width": 67.08,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗ ‡",
+          "x": 335.88,
+          "y": 332.1,
+          "width": 10.96,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d1_f3",
+          "rtl": false
+        },
+        {
+          "text": "illia.polosukhin@gmail.com",
+          "x": 238.02,
+          "y": 343.64,
+          "width": 135.95,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f4",
+          "rtl": false
+        },
+        {
+          "text": "Abstract",
+          "x": 283.76,
+          "y": 382.83,
+          "width": 44.49,
+          "size": 11.96,
+          "angle": 0,
+          "font": "g_d1_f2",
+          "rtl": false
+        },
+        {
+          "text": "The dominant sequence transduction models are based on complex recurrent or",
+          "x": 143.56,
+          "y": 411,
+          "width": 324.74,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "convolutional neural networks that include an encoder and a decoder. The best",
+          "x": 143.87,
+          "y": 421.91,
+          "width": 324.26,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "performing models also connect the encoder and decoder through an attention",
+          "x": 143.87,
+          "y": 432.82,
+          "width": 324.26,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "mechanism. We propose a new simple network architecture, the Transformer,",
+          "x": 143.87,
+          "y": 443.73,
+          "width": 325.51,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "based solely on attention mechanisms, dispensing with recurrence and convolutions",
+          "x": 143.87,
+          "y": 454.64,
+          "width": 324.27,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "entirely.",
+          "x": 143.87,
+          "y": 465.55,
+          "width": 32.93,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 176.8,
+          "y": 465.55,
+          "width": 6.01,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "Experiments on two machine translation tasks show these models to",
+          "x": 182.93,
+          "y": 465.55,
+          "width": 285.2,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "be superior in quality while being more parallelizable and requiring significantly",
+          "x": 143.87,
+          "y": 476.46,
+          "width": 324.62,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-",
+          "x": 143.87,
+          "y": 487.37,
+          "width": 325.92,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "to-German translation task, improving over the existing best results, including",
+          "x": 143.87,
+          "y": 498.28,
+          "width": 324.26,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "ensembles, by over 2 BLEU. On the WMT 2014 English-to-French translation task,",
+          "x": 143.87,
+          "y": 509.18,
+          "width": 325.51,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "our model establishes a new single-model state-of-the-art BLEU score of 41.8 after",
+          "x": 143.87,
+          "y": 520.09,
+          "width": 324.44,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "training for 3.5 days on eight GPUs, a small fraction of the training costs of the",
+          "x": 143.87,
+          "y": 531,
+          "width": 324.26,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "best models from the literature. We show that the Transformer generalizes well to",
+          "x": 143.87,
+          "y": 541.91,
+          "width": 324.27,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "other tasks by applying it successfully to English constituency parsing both with",
+          "x": 143.87,
+          "y": 552.82,
+          "width": 324.27,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "large and limited training data.",
+          "x": 143.87,
+          "y": 563.73,
+          "width": 122.4,
+          "size": 9.96,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 119.82,
+          "y": 596.07,
+          "width": 3.82,
+          "size": 5.98,
+          "angle": 0,
+          "font": "g_d1_f5",
+          "rtl": false
+        },
+        {
+          "text": "Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started",
+          "x": 124.14,
+          "y": 596.89,
+          "width": 379.86,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "the effort to evaluate this idea. Ashish, with Illia, designed and implemented the first Transformer models and",
+          "x": 108,
+          "y": 606.85,
+          "width": 396,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "has been crucially involved in every aspect of this work. Noam proposed scaled dot-product attention, multi-head",
+          "x": 108,
+          "y": 616.81,
+          "width": 396,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "attention and the parameter-free position representation and became the other person involved in nearly every",
+          "x": 108,
+          "y": 626.78,
+          "width": 396.31,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "detail. Niki designed, implemented, tuned and evaluated countless model variants in our original codebase and",
+          "x": 108,
+          "y": 636.74,
+          "width": 396,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "tensor2tensor. Llion also experimented with novel model variants, was responsible for our initial codebase, and",
+          "x": 108,
+          "y": 646.7,
+          "width": 396,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "efficient inference and visualizations. Lukasz and Aidan spent countless long days designing various parts of and",
+          "x": 108,
+          "y": 656.66,
+          "width": 396,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "implementing tensor2tensor, replacing our earlier codebase, greatly improving results and massively accelerating",
+          "x": 108,
+          "y": 666.63,
+          "width": 396,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "our research.",
+          "x": 108,
+          "y": 676.59,
+          "width": 46.3,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "†",
+          "x": 120.21,
+          "y": 686.72,
+          "width": 3.43,
+          "size": 5.98,
+          "angle": 0,
+          "font": "g_d1_f5",
+          "rtl": false
+        },
+        {
+          "text": "Work performed while at Google Brain.",
+          "x": 124.14,
+          "y": 687.54,
+          "width": 143.21,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "‡",
+          "x": 120.21,
+          "y": 697.67,
+          "width": 3.43,
+          "size": 5.98,
+          "angle": 0,
+          "font": "g_d1_f5",
+          "rtl": false
+        },
+        {
+          "text": "Work performed while at Google Research.",
+          "x": 124.14,
+          "y": 698.49,
+          "width": 156.15,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "31st Conference on Neural Information Processing Systems (NIPS 2017), Long Beach, CA, USA.",
+          "x": 108,
+          "y": 730.91,
+          "width": 352.14,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d1_f1",
+          "rtl": false
+        },
+        {
+          "text": "arXiv:1706.03762v7 [cs.CL] 2 Aug 2023",
+          "x": 32,
+          "y": 535,
+          "width": 341.08,
+          "size": 20,
+          "angle": -1.5708,
+          "font": "g_d1_f6",
+          "rtl": false
+        }
+      ]
+    }
+  },
+  "09-hostile-text.pdf": {
+    "info": {
+      "pages": 1,
+      "title": "",
+      "producer": "",
+      "scanned": false,
+      "hasRTL": false,
+      "lang": "en",
+      "dir": "ltr"
+    },
+    "page": {
+      "number": 1,
+      "width": 612,
+      "height": 792,
+      "stats": {
+        "vector": 0,
+        "images": 0,
+        "total": 24
+      },
+      "fonts": {
+        "g_d2_f1": {
+          "family": "'Helvetica', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Helvetica",
+          "vertical": false,
+          "ascent": 0.9052734375,
+          "descent": -0.2119140625
+        }
+      },
+      "runs": [
+        {
+          "text": "<script>window.__pwned = true;</script>",
+          "x": 56,
+          "y": 42,
+          "width": 254.84,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "<img src=x onerror=\"window.__pwned2=true\">",
+          "x": 56,
+          "y": 59,
+          "width": 291.23,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "</span><script>alert(1)</script><span>",
+          "x": 56,
+          "y": 76,
+          "width": 245.13,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "\" onmouseover=\"window.__pwned3=true\" x=\"",
+          "x": 56,
+          "y": 93,
+          "width": 283.29,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "’ onfocus=’window.__pwned4=true’ y=’",
+          "x": 56,
+          "y": 110,
+          "width": 240.06,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "&lt;already escaped&gt; &amp; &quot;entities&quot;",
+          "x": 56,
+          "y": 127,
+          "width": 321.4,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "</style></head><body><h1>injected</h1>",
+          "x": 56,
+          "y": 144,
+          "width": 263.09,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "javascript:alert(document.domain)",
+          "x": 56,
+          "y": 161,
+          "width": 210.84,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "{{ template }} ${literal} ‘backtick‘",
+          "x": 56,
+          "y": 178,
+          "width": 195.33,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        }
+      ]
+    }
+  },
+  "04-scanned-ccitt.pdf": {
+    "info": {
+      "pages": 1,
+      "title": "",
+      "producer": "",
+      "scanned": true,
+      "hasRTL": false,
+      "lang": "en",
+      "dir": "ltr"
+    },
+    "page": {
+      "number": 1,
+      "width": 595.28,
+      "height": 841.89,
+      "stats": {
+        "vector": 1,
+        "images": 6,
+        "total": 33
+      },
+      "fonts": {},
+      "runs": []
+    }
+  }
+}
