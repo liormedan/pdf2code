@@ -20,6 +20,17 @@ tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Debug info is what `link.exe` ran out of memory generating — LNK1102, on a machine
+# with a nearly exhausted commit limit. It is also the cheapest thing to give up: we
+# are not stepping through serde, and there are roughly four hundred of those.
+[profile.dev]
+# Enough for a backtrace with line numbers, at a fraction of the PDB.
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+# Dependencies carry none at all.
+debug = false
+
 # A window that ships is a window built with optimisations and without a debug console.
 [profile.release]
 codegen-units = 1
