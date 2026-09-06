@@ -32,12 +32,25 @@ def check(name: str, ok: bool, detail: str = "") -> None:
         FAILURES.append(name)
 
 
+HEBREW_FIXTURE = HERE.parent.parent / "fixtures" / "08-hebrew-doc.pdf"
+
+# By default the checks run the source. Passing the frozen binary runs the same checks
+# against what actually ships:
+#
+#     .venv/Scripts/python.exe test_protocol.py ../app/src-tauri/binaries/pdf2code-engine-<triple>.exe
+#
+# That is not a nicety. A frozen build passes every check above without PDFium's native
+# library or pdfminer's CMap data being present, because nothing above touches them —
+# which is exactly why `probe` exists and why it is checked last.
+FROZEN = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else None
+
+
 class Sidecar:
     """The engine as the Rust side will drive it: one process, two pipes."""
 
     def __init__(self) -> None:
         self.proc = subprocess.Popen(
-            [sys.executable, "main.py"],
+            [str(FROZEN)] if FROZEN else [sys.executable, "main.py"],
             cwd=HERE,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -81,13 +94,13 @@ class Sidecar:
 
 
 def main() -> int:
-    print("sidecar contract")
+    print(f"sidecar contract — {'frozen: ' + FROZEN.name if FROZEN else 'from source'}")
     engine = Sidecar()
 
     # --- it announces itself before it is asked anything ------------------------
     hello = engine.read()
     check("announces ready before any request", hello.get("type") == "ready", str(hello.get("ops")))
-    check("declares the ops it has", set(hello.get("ops", [])) == {"echo", "sleep"})
+    check("declares the ops it has", set(hello.get("ops", [])) == {"echo", "sleep", "probe"})
 
     # --- the whole chain, at its smallest ---------------------------------------
     engine.send({"id": "a1", "op": "echo", "args": {"value": "שלום"}})
@@ -150,6 +163,29 @@ def main() -> int:
     engine.send({"id": "f6", "op": "echo", "args": {"value": 1}})
     reply, _ = engine.read_until("f6", ("result", "error"))
     check("an unparseable line does not derail the stream", reply.get("echo") == 1)
+
+    # --- the PDF stack is actually present ---------------------------------------
+    # Everything above this line is pure Python and would pass in a frozen build that
+    # shipped without PDFium's native library or pdfminer's CMap data. This is the
+    # check that would not.
+    if HEBREW_FIXTURE.exists():
+        engine.send({"id": "g7", "op": "probe", "args": {"path": str(HEBREW_FIXTURE)}})
+        reply, progress = engine.read_until("g7", ("result", "error"))
+        check("probe opens a document", reply.get("type") == "result", str(reply)[:120])
+        check("PDFium reports the page count", reply.get("pages") == 35, str(reply.get("pages")))
+        check("pdfminer returns text", (reply.get("chars") or 0) > 0, f"{reply.get('chars')} chars")
+        check("Hebrew is read as Hebrew", (reply.get("rtl") or 0) > 0, f"{reply.get('rtl')} rtl chars")
+        # The subset prefix is what fonts.ts strips, and its presence is what proves the
+        # Python path receives the same input the TypeScript one did.
+        fonts = reply.get("fonts") or []
+        check(
+            "embedded font names survive, subset prefix and all",
+            any("+" in f and "Alef" in f for f in fonts),
+            ", ".join(fonts[:3]),
+        )
+        check("probe reports progress", len(progress) >= 1, f"{len(progress)} events")
+    else:
+        print(f"  skip  probe — fixture missing at {HEBREW_FIXTURE}")
 
     # --- it does not outlive its parent ------------------------------------------
     engine.close()

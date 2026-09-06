@@ -205,10 +205,15 @@ fn engine_command(app: &AppHandle) -> Result<(PathBuf, Vec<String>, Option<PathB
         return Ok((python, vec!["main.py".into()], Some(root)));
     }
 
+    // Shipped under bundle.resources rather than as an externalBin, because the frozen
+    // engine is a directory: an executable plus an `_internal` tree of native
+    // libraries, and externalBin carries a single file. See desktop/engine/build.py.
     let dir = app
         .path()
         .resource_dir()
-        .map_err(|e| format!("resource dir: {e}"))?;
+        .map_err(|e| format!("resource dir: {e}"))?
+        .join("binaries");
+
     let exe = dir.join(if cfg!(windows) {
         "pdf2code-engine.exe"
     } else {
@@ -216,12 +221,12 @@ fn engine_command(app: &AppHandle) -> Result<(PathBuf, Vec<String>, Option<PathB
     });
 
     if !exe.exists() {
-        // Expected until the PyInstaller step lands. Saying so plainly beats a
-        // spawn error nobody can read.
-        return Err(format!("engine binary not bundled yet ({})", exe.display()));
+        return Err(format!("engine binary missing from the bundle ({})", exe.display()));
     }
 
-    Ok((exe, vec![], None))
+    // Run it from its own directory so it finds `_internal` beside itself, whatever
+    // the working directory of the app happens to be.
+    Ok((exe, vec![], Some(dir)))
 }
 
 fn spawn_reader(

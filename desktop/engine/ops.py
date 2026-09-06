@@ -67,7 +67,74 @@ def op_sleep(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     return {"slept": steps * every, "steps": steps}
 
 
+def op_probe(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """Open a document and report what is in it, without converting anything.
+
+    Two jobs, and the second is the reason this exists so early.
+
+    The product one: the interface needs a page count and a "does this even open"
+    answer before it offers to convert, and it needs both without paying for a
+    conversion.
+
+    The packaging one: `echo` and `sleep` are pure Python, so a frozen build passes
+    every contract check even when PDFium's native library was left out of the bundle
+    and pdfminer's CMap data went missing. Those are the two failures that only appear
+    in an installed app, and this is the operation that makes them appear in a test
+    instead. It is deliberately the first thing run against a freshly frozen binary.
+    """
+    # Imported here, not at module load: the sidecar should announce itself and answer
+    # `echo` even if something is wrong with the PDF stack, so that the failure is
+    # reportable rather than a process that dies before it can say anything.
+    import pypdfium2 as pdfium
+    from pdfminer.high_level import extract_pages
+    from pdfminer.layout import LTChar, LTTextContainer
+
+    path = args.get("path")
+    if not isinstance(path, str) or not path:
+        raise ValueError("probe needs a path")
+
+    ctx.checkpoint()
+
+    document = pdfium.PdfDocument(path)
+    pages = len(document)
+
+    ctx.progress(page=1, pages=2, phase="extract")
+    ctx.checkpoint()
+
+    # One page is enough to prove the text stack works, and keeps this cheap on a
+    # document with hundreds.
+    chars = 0
+    rtl = 0
+    fonts: set[str] = set()
+    for layout in extract_pages(path, maxpages=1):
+        for element in layout:
+            if not isinstance(element, LTTextContainer):
+                continue
+            for line in element:
+                for char in getattr(line, "_objs", []):
+                    if not isinstance(char, LTChar):
+                        continue
+                    chars += 1
+                    fonts.add(char.fontname)
+                    if "֐" <= char.get_text() <= "׿":
+                        rtl += 1
+
+    ctx.progress(page=2, pages=2, phase="extract")
+
+    return {
+        "pages": pages,
+        "chars": chars,
+        "rtl": rtl,
+        # Sorted so the answer is stable enough to assert on.
+        "fonts": sorted(fonts),
+        # No text layer on the sampled page: the same signal DocumentInfo.scanned
+        # carries in src/converter/types.ts.
+        "scanned": chars == 0,
+    }
+
+
 OPS: dict[str, Callable[[dict[str, Any], Context], dict[str, Any]]] = {
     "echo": op_echo,
     "sleep": op_sleep,
+    "probe": op_probe,
 }
