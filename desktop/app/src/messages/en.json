@@ -326,6 +326,24 @@
     "previewLoading": "Loading the preview…",
     "previewUnavailable": "No preview — {reason}",
     "previewSandboxed": "Shown in a sandbox: no scripts, no access to the app.",
-    "convertUnmapped": "{count} characters could not be read from the document fonts and were left out. The rest of the text is unaffected."
+    "convertUnmapped": "{count} characters could not be read from the document fonts and were left out. The rest of the text is unaffected.",
+    "sourcesAdd": "Add files",
+    "sourcesClear": "Clear finished",
+    "sourcesRemove": "Remove",
+    "stateWaiting": "Waiting",
+    "stateRunning": "Converting",
+    "stateDone": "Done",
+    "stateFailed": "Failed",
+    "stateCancelled": "Cancelled",
+    "convertRunMany": "Convert {count} files",
+    "convertGraphicsOption": "Keep graphics",
+    "convertOutputFolder": "Output folder",
+    "convertOutputDefault": "the app data directory",
+    "convertOutputReset": "Use the default",
+    "projectsRefresh": "Refresh",
+    "projectsReRun": "Convert again",
+    "projectsForget": "Remove from the list",
+    "projectsMissing": "The source file is no longer where it was",
+    "projectsChanged": "The source file has changed since it was converted"
   }
 }

@@ -26,6 +26,9 @@ tokio = { version = "1", features = ["sync"] }
 # The native file picker. Used only from Rust: the window calls our own command and
 # never touches the plugin, so no dialog permission is granted to the WebView.
 tauri-plugin-dialog = "2"
+# The project store. Bundled rather than linked against whatever the machine has:
+# an installed application cannot depend on a library that may not be there.
+rusqlite = { version = "0.40", features = ["bundled"] }
 
 # Debug info is what `link.exe` ran out of memory generating — LNK1102, on a machine
 # with a nearly exhausted commit limit. It is also the cheapest thing to give up: we

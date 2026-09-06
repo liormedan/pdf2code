@@ -326,6 +326,24 @@
     "previewLoading": "טוען תצוגה מקדימה…",
     "previewUnavailable": "אין תצוגה מקדימה — {reason}",
     "previewSandboxed": "מוצג בתוך ארגז חול: בלי סקריפטים, בלי גישה לאפליקציה.",
-    "convertUnmapped": "{count} תווים לא ניתנו לקריאה מהפונטים של המסמך והושמטו. שאר הטקסט לא הושפע."
+    "convertUnmapped": "{count} תווים לא ניתנו לקריאה מהפונטים של המסמך והושמטו. שאר הטקסט לא הושפע.",
+    "sourcesAdd": "הוספת קבצים",
+    "sourcesClear": "ניקוי שהסתיימו",
+    "sourcesRemove": "הסרה",
+    "stateWaiting": "ממתין",
+    "stateRunning": "ממיר",
+    "stateDone": "הסתיים",
+    "stateFailed": "נכשל",
+    "stateCancelled": "בוטל",
+    "convertRunMany": "להמיר {count} קבצים",
+    "convertGraphicsOption": "לשמור גרפיקה",
+    "convertOutputFolder": "תיקיית יעד",
+    "convertOutputDefault": "תיקיית הנתונים של האפליקציה",
+    "convertOutputReset": "חזרה לברירת מחדל",
+    "projectsRefresh": "רענון",
+    "projectsReRun": "להמיר שוב",
+    "projectsForget": "הסרה מהרשימה",
+    "projectsMissing": "קובץ המקור לא נמצא במקומו",
+    "projectsChanged": "קובץ המקור השתנה מאז ההמרה"
   }
 }

@@ -1,30 +1,47 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FileText, FolderClock, Settings2, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import ThemeToggle from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
 import ConvertPanel from "@/components/convert-panel";
+import SourcesPanel from "@/components/sources-panel";
+import ProjectsPanel from "@/components/projects-panel";
 import { useTranslations } from "@/i18n/provider";
-import { engineStatus, isDesktop, onStatus, type EngineStatus } from "@/lib/engine";
+import { engineStatus, isDesktop, onStatus, type EngineStatus, type PickedDocument } from "@/lib/engine";
+import { useConversions, type ConversionSettings } from "@/lib/use-conversions";
 
 /**
  * The window.
  *
  * Not a port of the web app's shell. That one was a sidebar and a topbar around a router
  * — a dashboard with pages. This has no router and no pages: one window, three regions
- * that are all visible at once, because the work here is a pipeline (pick files, set
- * options, look at what came out) rather than a set of destinations.
+ * all visible at once, because the work is a pipeline rather than a set of destinations.
+ * Documents come in on the right, settings and progress in the middle, history on the
+ * left — or mirrored, since the direction follows the language.
  *
- * Three columns from `lg` up and a single stack below it. A desktop window can be
- * dragged narrow, and three 200px columns are worse than one readable one.
- *
- * Two of the three regions are still empty states, and the status bar reports what the
- * engine is actually doing rather than what we would like it to be doing.
+ * The queue lives here because all three regions read it. Sources shows what is waiting,
+ * the middle shows what is running, and projects is written by it as each one finishes.
  */
 export default function AppShell() {
   const t = useTranslations("desktop");
   const tApp = useTranslations("app");
   const status = useEngineStatus();
+
+  const [settings, setSettings] = useState<ConversionSettings>({
+    formats: ["html"],
+    background: true,
+  });
+
+  // Bumped when a conversion is recorded, so the history reloads without polling.
+  const [recorded, setRecorded] = useState(0);
+  const onRecorded = useCallback(() => setRecorded((n) => n + 1), []);
+
+  const queue = useConversions(settings, onRecorded);
+
+  const reRun = useCallback(
+    (document: PickedDocument) => queue.add([document]),
+    [queue],
+  );
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -38,17 +55,41 @@ export default function AppShell() {
 
       <main className="grid min-h-0 flex-1 gap-4 overflow-auto p-5 lg:grid-cols-[1fr_1fr_1fr]">
         <Region icon={FileText} title={t("sources")}>
-          <Empty line={t("sourcesEmpty")} note={t("sourcesHint")} />
+          {isDesktop() ? (
+            <SourcesPanel
+              items={queue.items}
+              onAdd={queue.add}
+              onRemove={queue.remove}
+              onClearFinished={queue.clearFinished}
+              busy={queue.running}
+            />
+          ) : (
+            <Empty line={t("engineNotInApp")} />
+          )}
         </Region>
 
         <Region icon={Settings2} title={t("convert")}>
-          {/* Conversion lives here. In a browser there is no engine to talk to, and
-              the panel says that rather than offering a button that cannot work. */}
-          {isDesktop() ? <ConvertPanel status={status} /> : <Empty line={t("engineNotInApp")} />}
+          {isDesktop() ? (
+            <ConvertPanel
+              status={status}
+              settings={settings}
+              onSettings={setSettings}
+              items={queue.items}
+              running={queue.running}
+              onRun={() => void queue.run()}
+              onCancel={queue.cancel}
+            />
+          ) : (
+            <Empty line={t("engineNotInApp")} />
+          )}
         </Region>
 
         <Region icon={FolderClock} title={t("projects")}>
-          <Empty line={t("projectsEmpty")} />
+          {isDesktop() ? (
+            <ProjectsPanel reloadKey={recorded} onReRun={reRun} busy={queue.running} />
+          ) : (
+            <Empty line={t("projectsEmpty")} />
+          )}
         </Region>
       </main>
 
@@ -74,8 +115,8 @@ export default function AppShell() {
  * The engine's state, asked for once and then followed.
  *
  * Both halves are needed. The event alone would miss an engine that came up before this
- * component mounted — which is the normal case, since Rust starts it during setup — and
- * the query alone would never notice it dying afterwards.
+ * component mounted — the normal case, since Rust starts it during setup — and the query
+ * alone would never notice it dying afterwards.
  */
 function useEngineStatus(): EngineStatus {
   const [status, setStatus] = useState<EngineStatus>({ state: "down", reason: "starting" });

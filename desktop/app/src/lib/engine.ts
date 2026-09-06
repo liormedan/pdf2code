@@ -111,6 +111,44 @@ export async function pickDocument(): Promise<PickedDocument | null> {
   return (await invoke<PickedDocument | null>("pick_document")) ?? null;
 }
 
+/** The same picker, several files at once. Empty when the person cancels. */
+export async function pickDocuments(): Promise<PickedDocument[]> {
+  if (!isDesktop()) return [];
+  return (await invoke<PickedDocument[]>("pick_documents")) ?? [];
+}
+
+/**
+ * Describe a path the window already has — dropped on the window, or read back from a
+ * saved project. Resolves to null for anything that is not a readable PDF, which is how
+ * a drag and drop carrying a spreadsheet gets refused before the engine sees it.
+ */
+export async function describeDocument(path: string): Promise<PickedDocument | null> {
+  if (!isDesktop()) return null;
+  return (await invoke<PickedDocument | null>("describe_document", { path })) ?? null;
+}
+
+/**
+ * Where output goes, if a folder was chosen.
+ *
+ * The preference lives on the Rust side rather than here. If the window held it, it
+ * would have to pass a path into `outputDir`, and a command that creates a directory
+ * wherever the front end says is a write primitive nobody asked for.
+ */
+export async function outputRoot(): Promise<string | null> {
+  if (!isDesktop()) return null;
+  return (await invoke<string | null>("output_root")) ?? null;
+}
+
+export async function pickOutputRoot(): Promise<string | null> {
+  if (!isDesktop()) return null;
+  return (await invoke<string | null>("pick_output_root")) ?? null;
+}
+
+export function clearOutputRoot(): Promise<void> {
+  if (!isDesktop()) return Promise.resolve();
+  return invoke("clear_output_root");
+}
+
 export function outputDir(source: string): Promise<string> {
   if (!isDesktop()) return unavailable<string>();
   return invoke<string>("output_dir", { source });

@@ -5,6 +5,7 @@
 //! whether that is allowed, which is the boundary desktop/architecture.md §1 describes.
 
 mod documents;
+mod projects;
 mod sidecar;
 
 use tauri::Manager;
@@ -32,6 +33,10 @@ pub fn run() {
             let engine = sidecar::Engine::new();
             engine.start(app.handle());
             app.manage(engine);
+
+            // The project store. Opened once at startup so a failure is visible now
+            // rather than on the first conversion somebody wanted to keep.
+            app.manage(projects::Store(std::sync::Mutex::new(projects::open(app.handle())?)));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -43,6 +48,15 @@ pub fn run() {
             documents::pick_document,
             documents::output_dir,
             documents::read_output,
+            documents::describe_document,
+            documents::pick_documents,
+            documents::pick_output_root,
+            documents::clear_output_root,
+            documents::output_root,
+            projects::record_project,
+            projects::list_projects,
+            projects::forget_project,
+            projects::source_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

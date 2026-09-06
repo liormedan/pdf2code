@@ -27,6 +27,109 @@ pub struct Picked {
     pub size: u64,
 }
 
+/// Describe a path the window already has — from a drag and drop, or from a saved
+/// project being re-run.
+///
+/// The window can name a path but cannot learn anything about it, which is the same
+/// boundary the picker enforces from the other direction.
+#[tauri::command]
+pub fn describe_document(path: String) -> Option<Picked> {
+    let path = PathBuf::from(&path);
+    let size = std::fs::metadata(&path).ok()?.len();
+
+    // Only PDFs. A drag and drop can carry anything, and refusing here means the engine
+    // is never handed a file it was not built to open.
+    if !path.extension().is_some_and(|e| e.eq_ignore_ascii_case("pdf")) {
+        return None;
+    }
+
+    Some(Picked {
+        name: path.file_name().map(|n| n.to_string_lossy().into_owned())?,
+        path: path.to_string_lossy().into_owned(),
+        size,
+    })
+}
+
+/// Choose several documents at once.
+#[tauri::command]
+pub fn pick_documents(app: AppHandle) -> Vec<Picked> {
+    let Some(paths) = app
+        .dialog()
+        .file()
+        .add_filter("PDF", &["pdf"])
+        .blocking_pick_files()
+    else {
+        return Vec::new();
+    };
+
+    paths
+        .into_iter()
+        .filter_map(|p| {
+            let path: PathBuf = p.into_path().ok()?;
+            let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+            Some(Picked {
+                name: path.file_name().map(|n| n.to_string_lossy().into_owned())?,
+                path: path.to_string_lossy().into_owned(),
+                size,
+            })
+        })
+        .collect()
+}
+
+/// Choose where output should go from now on.
+///
+/// The chosen folder is remembered **here**, not in the window. If the window held the
+/// preference it would have to pass a path into `output_dir`, and a command that
+/// creates a directory at any path the front end names is a write primitive — one the
+/// person never asked for. This way the only path that can become an output root is one
+/// somebody picked in a native dialog.
+#[tauri::command]
+pub fn pick_output_root(app: AppHandle) -> Option<String> {
+    let folder = app.dialog().file().blocking_pick_folder()?;
+    let path: PathBuf = folder.into_path().ok()?;
+    let chosen = path.to_string_lossy().into_owned();
+    let _ = write_output_root(&app, Some(&chosen));
+    Some(chosen)
+}
+
+/// Go back to keeping output under the app's own data directory.
+#[tauri::command]
+pub fn clear_output_root(app: AppHandle) -> Result<(), String> {
+    write_output_root(&app, None)
+}
+
+/// The folder output goes into, if one was chosen.
+#[tauri::command]
+pub fn output_root(app: AppHandle) -> Option<String> {
+    read_output_root(&app)
+}
+
+fn settings_file(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("no app data directory: {e}"))?;
+    std::fs::create_dir_all(&dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+    Ok(dir.join("settings.json"))
+}
+
+fn read_output_root(app: &AppHandle) -> Option<String> {
+    let text = std::fs::read_to_string(settings_file(app).ok()?).ok()?;
+    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    let root = value.get("outputRoot")?.as_str()?.to_string();
+    // A folder that has since been deleted or unplugged is not a root any more.
+    PathBuf::from(&root).is_dir().then_some(root)
+}
+
+fn write_output_root(app: &AppHandle, root: Option<&str>) -> Result<(), String> {
+    let file = settings_file(app)?;
+    let body = match root {
+        Some(path) => serde_json::json!({ "outputRoot": path }),
+        None => serde_json::json!({}),
+    };
+    std::fs::write(&file, body.to_string()).map_err(|e| format!("could not save settings: {e}"))
+}
+
 #[tauri::command]
 pub fn pick_document(app: AppHandle) -> Option<Picked> {
     // Blocking on purpose: a modal file dialog is modal, and the window has nothing
@@ -68,22 +171,31 @@ const PREVIEW_LIMIT: u64 = 8 * 1024 * 1024;
 /// otherwise innocent path a refusal rather than an escape.
 #[tauri::command]
 pub fn read_output(app: AppHandle, path: String) -> Result<String, String> {
-    let root = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("no app data directory: {e}"))?
-        .join("conversions");
+    // Every directory output is allowed to land in — the app's own, and the folder the
+    // person chose if they chose one. Both, because a preview has to keep working for
+    // conversions made before the setting changed.
+    let mut roots = Vec::new();
+    if let Ok(dir) = app.path().app_data_dir() {
+        roots.push(dir.join("conversions"));
+    }
+    if let Some(chosen) = read_output_root(&app) {
+        roots.push(PathBuf::from(chosen));
+    }
 
-    // Both sides canonicalised: the root may itself be reached through a symlink or a
+    // Both sides canonicalised: a root may itself be reached through a symlink or a
     // short path on Windows, and comparing a canonical child to a non-canonical parent
     // fails for reasons that have nothing to do with safety.
-    let root = root.canonicalize().map_err(|e| format!("no conversions directory: {e}"))?;
     let file = PathBuf::from(&path)
         .canonicalize()
         .map_err(|e| format!("no such file: {e}"))?;
 
-    if !file.starts_with(&root) {
-        return Err("refused: outside the conversions directory".into());
+    let allowed = roots
+        .iter()
+        .filter_map(|r| r.canonicalize().ok())
+        .any(|r| file.starts_with(&r));
+
+    if !allowed {
+        return Err("refused: outside the output directories".into());
     }
 
     let size = std::fs::metadata(&file).map(|m| m.len()).unwrap_or(0);
@@ -101,11 +213,15 @@ pub fn read_output(app: AppHandle, path: String) -> Result<String, String> {
 /// first. Sprint 5 replaces this with a folder the person chooses.
 #[tauri::command]
 pub fn output_dir(app: AppHandle, source: String) -> Result<String, String> {
-    let base = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("no app data directory: {e}"))?
-        .join("conversions");
+    // The chosen folder if there is one, and the app's own directory otherwise.
+    let base = match read_output_root(&app) {
+        Some(root) => PathBuf::from(root),
+        None => app
+            .path()
+            .app_data_dir()
+            .map_err(|e| format!("no app data directory: {e}"))?
+            .join("conversions"),
+    };
 
     let stem = PathBuf::from(&source)
         .file_stem()
