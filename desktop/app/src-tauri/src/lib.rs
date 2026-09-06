@@ -4,6 +4,7 @@
 //! sprint 5 — the filesystem. The front end names what it wants and this side decides
 //! whether that is allowed, which is the boundary desktop/architecture.md §1 describes.
 
+mod documents;
 mod sidecar;
 
 use tauri::Manager;
@@ -20,6 +21,10 @@ fn app_version() -> &'static str {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Registered so `documents::pick_document` can open a native dialog. The window
+        // is given none of this plugin's permissions — it calls our command, and the
+        // decision about which file may be read stays on this side.
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Started here rather than lazily on first use: the status bar should be
             // truthful from the first frame, and an engine that cannot start is
@@ -35,6 +40,8 @@ pub fn run() {
             sidecar::engine_job_id,
             sidecar::engine_call,
             sidecar::engine_cancel,
+            documents::pick_document,
+            documents::output_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

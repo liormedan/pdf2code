@@ -305,6 +305,22 @@
     "engineDone": "הסתיים ב-{seconds} שניות",
     "engineCancelled": "בוטל",
     "engineFailed": "נכשל — {message}",
-    "engineNotInApp": "רץ בדפדפן ולא באפליקציה, ולכן אין מנוע לדבר איתו."
+    "engineNotInApp": "רץ בדפדפן ולא באפליקציה, ולכן אין מנוע לדבר איתו.",
+    "convertPick": "בחירת קובץ PDF",
+    "convertPicked": "{name} · {pages} עמודים",
+    "convertProbing": "בודק את הקובץ…",
+    "convertRun": "להמיר",
+    "convertPhaseExtract": "קורא טקסט",
+    "convertPhaseRender": "מרנדר עמוד",
+    "convertPhaseGenerate": "מייצר פלט",
+    "convertProgress": "{phase} — {page} מתוך {pages}",
+    "convertDone": "הסתיים ב-{seconds} שניות · {files} קבצים",
+    "convertOut": "הפלט נשמר ב:",
+    "convertCancelled": "ההמרה בוטלה",
+    "convertFailed": "נכשל — {message}",
+    "convertScanned": "למסמך הזה אין שכבת טקסט — הוא סריקה. התמונות נשמרות, אבל הטקסט לא יהיה ניתן לחיפוש בלי OCR.",
+    "convertTruncated": "הומרו {limit} העמודים הראשונים מתוך {total}.",
+    "convertGraphics": "ב-{count} עמודים יש גרפיקה שפלט טקסט בלבד אינו משחזר.",
+    "convertNothing": "עדיין לא נבחר קובץ."
   }
 }

@@ -23,6 +23,9 @@ serde_json = "1"
 # has to wake the async command that is awaiting it. Tauri already builds on tokio, so
 # this adds a name rather than a dependency.
 tokio = { version = "1", features = ["sync"] }
+# The native file picker. Used only from Rust: the window calls our own command and
+# never touches the plugin, so no dialog permission is granted to the WebView.
+tauri-plugin-dialog = "2"
 
 # Debug info is what `link.exe` ran out of memory generating — LNK1102, on a machine
 # with a nearly exhausted commit limit. It is also the cheapest thing to give up: we

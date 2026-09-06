@@ -94,6 +94,60 @@ export function onProgress(handler: (p: Progress) => void): Promise<UnlistenFn> 
   return listen<Progress>("engine://progress", (event) => handler(event.payload));
 }
 
+// ---------------------------------------------------------------------------
+// Documents. Both of these are decisions the Rust side makes — which file may be
+// read, and where output is allowed to land — so the window asks rather than acts.
+// ---------------------------------------------------------------------------
+
+export interface PickedDocument {
+  path: string;
+  name: string;
+  size: number;
+}
+
+/** Opens the native picker. Resolves to null when the person cancels. */
+export async function pickDocument(): Promise<PickedDocument | null> {
+  if (!isDesktop()) return null;
+  return (await invoke<PickedDocument | null>("pick_document")) ?? null;
+}
+
+export function outputDir(source: string): Promise<string> {
+  if (!isDesktop()) return unavailable<string>();
+  return invoke<string>("output_dir", { source });
+}
+
+/** What `probe` reports about a document before anything is converted. */
+export interface Probe {
+  pages: number;
+  chars: number;
+  rtl: number;
+  fonts: string[];
+  scanned: boolean;
+}
+
+/** A warning carries a code and its parameters, never a sentence — the window words it. */
+export interface Warning {
+  code: "SCANNED" | "GRAPHICS_DROPPED" | "TRUNCATED";
+  params: Record<string, string | number>;
+  message: string;
+}
+
+export interface ConversionResult {
+  out: string;
+  /** Names, not contents. The output is on disk; see architecture.md §2. */
+  files: string[];
+  info: {
+    pages: number;
+    converted: number;
+    title: string;
+    scanned: boolean;
+    hasRTL: boolean;
+    lang: string;
+    dir: "ltr" | "rtl";
+  };
+  warnings: Warning[];
+}
+
 /** Fires when the engine announces itself, and again if it stops. */
 export function onStatus(handler: (s: EngineStatus) => void): Promise<UnlistenFn> {
   if (!isDesktop()) return Promise.resolve(NOOP);

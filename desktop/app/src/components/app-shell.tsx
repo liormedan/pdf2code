@@ -3,7 +3,7 @@ import { FileText, FolderClock, Settings2, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import ThemeToggle from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
-import EnginePanel from "@/components/engine-panel";
+import ConvertPanel from "@/components/convert-panel";
 import { useTranslations } from "@/i18n/provider";
 import { engineStatus, isDesktop, onStatus, type EngineStatus } from "@/lib/engine";
 
@@ -42,9 +42,9 @@ export default function AppShell() {
         </Region>
 
         <Region icon={Settings2} title={t("convert")}>
-          {/* The middle region is where conversion will live. Until it does, it holds
-              the probe that proves the path to the engine is real — and says so. */}
-          {isDesktop() ? <EnginePanel status={status} /> : <Empty line={t("engineNotInApp")} />}
+          {/* Conversion lives here. In a browser there is no engine to talk to, and
+              the panel says that rather than offering a button that cannot work. */}
+          {isDesktop() ? <ConvertPanel status={status} /> : <Empty line={t("engineNotInApp")} />}
         </Region>
 
         <Region icon={FolderClock} title={t("projects")}>
