@@ -1,0 +1,101 @@
+/**
+ * The engine, as the window sees it.
+ *
+ * Four calls and one subscription. Notably absent: any way to spawn, kill, or read the
+ * engine's output directly — the front end names a job and listens for progress, and
+ * everything else happens on the Rust side. That is the boundary from
+ * desktop/architecture.md §1, expressed as an API rather than as a rule someone has to
+ * remember.
+ */
+
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+
+/** ConversionProgress["phase"] from src/converter/types.ts. Copied, not invented. */
+export type Phase = "extract" | "render" | "generate";
+
+export interface Progress {
+  id: string;
+  page: number;
+  pages: number;
+  phase: Phase;
+}
+
+export type EngineStatus =
+  | { state: "down"; reason: string }
+  | { state: "up"; protocol: number; python: string; ops: string[] };
+
+/** What the engine returns when a job ends badly. `CANCELLED` is not bad news. */
+export interface EngineError {
+  type: "error";
+  code: string;
+  message: string;
+}
+
+/**
+ * Whether we are inside the app rather than a plain browser tab.
+ *
+ * `npm run dev` serves this to a browser, where there is no Tauri and every `invoke`
+ * rejects. The shell uses this to say "not running in the app" instead of showing an
+ * engine failure that is really just a development convenience.
+ */
+export function isDesktop(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+/**
+ * Outside the app there is nothing to call, and every entry point below says so in the
+ * shape its caller expects rather than letting Tauri's own internals throw.
+ *
+ * This is not defensive padding: `npm run dev` serving to a browser is a documented
+ * workflow in the README, and the first version of this file guarded only some of the
+ * calls — which produced a shell that rendered correctly while two unhandled rejections
+ * piled up in the console from `listen`.
+ */
+const OFFLINE: EngineStatus = { state: "down", reason: "not running in the app" };
+
+function unavailable<T>(): Promise<T> {
+  return Promise.reject(new Error("engine is only available inside the app"));
+}
+
+export async function engineStatus(): Promise<EngineStatus> {
+  if (!isDesktop()) return OFFLINE;
+  return invoke<EngineStatus>("engine_status");
+}
+
+/** An id minted by the Rust side, needed *before* the call so the job can be cancelled. */
+export function newJobId(): Promise<string> {
+  if (!isDesktop()) return unavailable<string>();
+  return invoke<string>("engine_job_id");
+}
+
+/**
+ * Run one job and wait for it to end.
+ *
+ * Rejects on `error`, including `CANCELLED` — the caller decides that a cancellation
+ * is not a failure, because only the caller knows whether it asked for one.
+ */
+export function engineCall<T = unknown>(id: string, op: string, args: unknown = {}): Promise<T> {
+  if (!isDesktop()) return unavailable<T>();
+  return invoke<T>("engine_call", { id, op, args });
+}
+
+export function engineCancel(id: string): Promise<void> {
+  if (!isDesktop()) return unavailable<void>();
+  return invoke("engine_cancel", { id });
+}
+
+/** Unsubscribing from a subscription that was never made. */
+const NOOP: UnlistenFn = () => {};
+
+/** Progress for every job. Filter by id — one window can run more than one. */
+export function onProgress(handler: (p: Progress) => void): Promise<UnlistenFn> {
+  if (!isDesktop()) return Promise.resolve(NOOP);
+  return listen<Progress>("engine://progress", (event) => handler(event.payload));
+}
+
+/** Fires when the engine announces itself, and again if it stops. */
+export function onStatus(handler: (s: EngineStatus) => void): Promise<UnlistenFn> {
+  if (!isDesktop()) return Promise.resolve(NOOP);
+  return listen<EngineStatus>("engine://status", (event) => handler(event.payload));
+}

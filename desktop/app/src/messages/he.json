@@ -294,6 +294,17 @@
     "engineTitle": "מנוע ההמרה",
     "engineNotConnected": "לא מחובר",
     "engineNote": "הקליפה בלבד — המנוע מתחבר בספרינט 2.",
-    "local": "הכול מקומי. שום קובץ לא עוזב את המחשב הזה."
+    "local": "הכול מקומי. שום קובץ לא עוזב את המחשב הזה.",
+    "engineUp": "המנוע מחובר",
+    "engineDownReason": "לא מחובר — {reason}",
+    "engineProbeTitle": "בדיקת המנוע",
+    "engineProbeLead": "עדיין אין המרה. מה שנבדק כאן הוא הצינור עצמו: בקשה, התקדמות וביטול.",
+    "engineRun": "הרצת בדיקה",
+    "engineCancel": "ביטול",
+    "engineRunning": "רץ — {page} מתוך {pages}",
+    "engineDone": "הסתיים ב-{seconds} שניות",
+    "engineCancelled": "בוטל",
+    "engineFailed": "נכשל — {message}",
+    "engineNotInApp": "רץ בדפדפן ולא באפליקציה, ולכן אין מנוע לדבר איתו."
   }
 }

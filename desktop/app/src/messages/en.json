@@ -294,6 +294,17 @@
     "engineTitle": "Conversion engine",
     "engineNotConnected": "Not connected",
     "engineNote": "The shell only — the engine arrives in sprint 2.",
-    "local": "Everything is local. No file leaves this machine."
+    "local": "Everything is local. No file leaves this machine.",
+    "engineUp": "Engine connected",
+    "engineDownReason": "Not connected — {reason}",
+    "engineProbeTitle": "Engine probe",
+    "engineProbeLead": "Nothing converts yet. What is under test here is the pipe itself: a request, its progress, and a cancel.",
+    "engineRun": "Run a test job",
+    "engineCancel": "Cancel",
+    "engineRunning": "Running — {page} of {pages}",
+    "engineDone": "Finished in {seconds}s",
+    "engineCancelled": "Cancelled",
+    "engineFailed": "Failed — {message}",
+    "engineNotInApp": "Running in a browser rather than the app, so there is no engine to talk to."
   }
 }

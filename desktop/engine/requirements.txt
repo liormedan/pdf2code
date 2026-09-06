@@ -1,0 +1,15 @@
+# The engine's dependencies, pinned to what was verified on 6.9.2026.
+#
+# The choice between these and PyMuPDF is recorded in desktop/decisions.md and it was
+# made on licensing: PyMuPDF does both jobs in one dependency, faster, under AGPL-3.0
+# or a paid Artifex licence. These two are permissive, and the split happens to fall
+# exactly along the two-layer architecture — one library per layer.
+#
+# Verified against fixtures/08-hebrew-doc.pdf: pypdfium2 rendered page 1, and
+# pdfminer.six returned 46 Hebrew characters carrying the embedded font names with
+# their subset prefixes intact (MUFUZY+Alef-Regular) — which is the exact input
+# src/converter/fonts.ts is written to consume.
+
+pypdfium2==5.13.0      # raster layer — PDFium, Apache-2.0 / BSD-3
+pdfminer.six==20260107 # text layer — MIT; character boxes and embedded font names
+pillow==12.3.0         # JPEG vs PNG per RasterHint — MIT-CMU

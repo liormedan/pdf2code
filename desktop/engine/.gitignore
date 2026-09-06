@@ -1,0 +1,5 @@
+# The engine venv is a local build artifact, not the source of truth.
+# requirements.txt is.
+.venv/
+__pycache__/
+*.pyc
