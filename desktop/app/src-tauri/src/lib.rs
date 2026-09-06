@@ -7,6 +7,7 @@
 mod deliver;
 mod documents;
 mod projects;
+mod settings;
 mod sidecar;
 mod workbench;
 
@@ -46,6 +47,17 @@ pub fn run() {
             // Last run's page thumbnails. They are a rendering of somebody's document,
             // so they are cleared at launch rather than left to accumulate.
             workbench::clear_scratch(app.handle());
+
+            // The window opens where it was left. Restored here rather than declared in
+            // tauri.conf.json, because a remembered size is a fact about this machine and
+            // the config is a fact about the product.
+            if let (Some(window), Some(box_)) = (
+                app.get_webview_window("main"),
+                settings::load(app.handle()).window,
+            ) {
+                let _ = window.set_size(tauri::PhysicalSize::new(box_.width, box_.height));
+                let _ = window.set_position(tauri::PhysicalPosition::new(box_.x, box_.y));
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -66,6 +78,10 @@ pub fn run() {
             projects::list_projects,
             projects::forget_project,
             projects::source_state,
+            settings::get_settings,
+            settings::save_defaults,
+            settings::mark_intro_seen,
+            settings::credits,
             workbench::pick_save_path,
             workbench::pick_export_dir,
             workbench::workbench_dir,
@@ -74,6 +90,31 @@ pub fn run() {
             deliver::open_path,
             deliver::reveal_path,
         ])
+        // Saved when the window closes rather than on every drag: one write instead of
+        // hundreds, and the only moment the answer is final.
+        //
+        // **Inner size, outer position.** `set_size` restores the inner size and
+        // `set_position` the outer one, so those are the two to store. The first version
+        // saved `outer_size`, and the file said 1216x839 for a window configured at
+        // 1200x800 — the title bar and the borders. Restoring that as an inner size grows
+        // the window by the frame on every close and open, a few pixels at a time. That is
+        // the kind of thing somebody eventually reports as "it keeps getting bigger" and
+        // nobody reproduces in one sitting.
+        .on_window_event(|window, event| {
+            if !matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+                return;
+            }
+            let Ok(size) = window.inner_size() else { return };
+            let Ok(position) = window.outer_position() else { return };
+            let _ = settings::update(window.app_handle(), |s| {
+                s.window = Some(settings::WindowBox {
+                    x: position.x,
+                    y: position.y,
+                    width: size.width,
+                    height: size.height,
+                });
+            });
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

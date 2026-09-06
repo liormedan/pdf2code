@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FileText, FolderClock, Settings2, ShieldCheck, Wrench } from "lucide-react";
+import { FileText, FolderClock, Settings, Settings2, ShieldCheck, Wrench } from "lucide-react";
 import { Logo } from "@/components/logo";
 import ThemeToggle from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
@@ -7,10 +7,13 @@ import ConvertPanel from "@/components/convert-panel";
 import SourcesPanel from "@/components/sources-panel";
 import ProjectsPanel from "@/components/projects-panel";
 import WorkbenchPanel from "@/components/workbench-panel";
+import SettingsPanel from "@/components/settings-panel";
+import IntroCard from "@/components/intro-card";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "@/i18n/provider";
 import { engineStatus, isDesktop, onStatus, type EngineStatus, type PickedDocument } from "@/lib/engine";
 import { useConversions, type ConversionSettings } from "@/lib/use-conversions";
+import { getSettings } from "@/lib/settings";
 
 /**
  * The window.
@@ -35,12 +38,29 @@ export default function AppShell() {
   const tApp = useTranslations("app");
   const status = useEngineStatus();
 
-  const [mode, setMode] = useState<"convert" | "workbench">("convert");
+  const [mode, setMode] = useState<"convert" | "workbench" | "settings">("convert");
+  // Null until the Rust side answers, so the first-run card cannot flash on a machine
+  // that dismissed it a year ago.
+  const [showIntro, setShowIntro] = useState(false);
 
   const [settings, setSettings] = useState<ConversionSettings>({
     formats: ["html"],
     background: true,
   });
+
+  // The remembered defaults. Read once: checkboxes that reset on every launch were the
+  // most-felt of the three settings that had nowhere to live.
+  useEffect(() => {
+    let live = true;
+    void getSettings().then((stored) => {
+      if (!live) return;
+      setSettings({ formats: stored.formats, background: stored.background });
+      setShowIntro(!stored.seenIntro);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   // Bumped when a conversion is recorded, so the history reloads without polling.
   const [recorded, setRecorded] = useState(0);
@@ -77,20 +97,38 @@ export default function AppShell() {
               <Wrench className="size-4" />
               {t("modeWorkbench")}
             </Button>
+            <Button
+              size="icon"
+              variant={mode === "settings" ? "secondary" : "ghost"}
+              aria-pressed={mode === "settings"}
+              aria-label={t("modeSettings")}
+              title={t("modeSettings")}
+              onClick={() => setMode("settings")}
+            >
+              <Settings className="size-4" />
+            </Button>
           </nav>
           <LanguageSwitcher />
           <ThemeToggle />
         </div>
       </header>
 
-      {mode === "workbench" ? (
+      {mode === "settings" ? (
+        <main className="min-h-0 flex-1 p-5">
+          <Region icon={Settings} title={t("settings")}>
+            <SettingsPanel settings={settings} onSettings={setSettings} />
+          </Region>
+        </main>
+      ) : mode === "workbench" ? (
         <main className="min-h-0 flex-1 p-5">
           <Region icon={Wrench} title={t("workbench")}>
             {isDesktop() ? <WorkbenchPanel status={status} /> : <Empty line={t("engineNotInApp")} />}
           </Region>
         </main>
       ) : (
-      <main className="grid min-h-0 flex-1 gap-4 overflow-auto p-5 lg:grid-cols-[1fr_1fr_1fr]">
+      <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-5">
+      {showIntro && isDesktop() ? <IntroCard onDone={() => setShowIntro(false)} /> : null}
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_1fr_1fr]">
         <Region icon={FileText} title={t("sources")}>
           {isDesktop() ? (
             <SourcesPanel
@@ -128,6 +166,7 @@ export default function AppShell() {
             <Empty line={t("projectsEmpty")} />
           )}
         </Region>
+      </div>
       </main>
       )}
 

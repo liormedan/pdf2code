@@ -104,30 +104,19 @@ pub fn output_root(app: AppHandle) -> Option<String> {
     read_output_root(&app)
 }
 
-fn settings_file(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("no app data directory: {e}"))?;
-    std::fs::create_dir_all(&dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
-    Ok(dir.join("settings.json"))
-}
-
+/// The chosen output folder, or none.
+///
+/// Through `settings.rs` rather than reading the file here. Two modules writing the same
+/// document is two modules erasing each other's fields, and this one used to write
+/// `{"outputRoot": …}` whole — which was harmless while it was the only setting.
 fn read_output_root(app: &AppHandle) -> Option<String> {
-    let text = std::fs::read_to_string(settings_file(app).ok()?).ok()?;
-    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
-    let root = value.get("outputRoot")?.as_str()?.to_string();
-    // A folder that has since been deleted or unplugged is not a root any more.
-    PathBuf::from(&root).is_dir().then_some(root)
+    crate::settings::load(app).output_root
 }
 
 fn write_output_root(app: &AppHandle, root: Option<&str>) -> Result<(), String> {
-    let file = settings_file(app)?;
-    let body = match root {
-        Some(path) => serde_json::json!({ "outputRoot": path }),
-        None => serde_json::json!({}),
-    };
-    std::fs::write(&file, body.to_string()).map_err(|e| format!("could not save settings: {e}"))
+    crate::settings::update(app, |settings| {
+        settings.output_root = root.map(str::to_owned);
+    })
 }
 
 #[tauri::command]

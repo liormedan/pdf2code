@@ -1,0 +1,228 @@
+import { useCallback, useEffect, useState } from "react";
+import { FolderOpen, Info, Palette, Sliders, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import ThemeToggle from "@/components/theme-toggle";
+import LanguageSwitcher from "@/components/language-switcher";
+import { useTranslations } from "@/i18n/provider";
+import { clearOutputRoot, outputRoot, pickOutputRoot } from "@/lib/engine";
+import { appVersion, getCredits, saveDefaults, type Credit } from "@/lib/settings";
+import { forgetProject, listProjects } from "@/lib/projects";
+import type { ConversionSettings } from "@/lib/use-conversions";
+
+/**
+ * Everything the app remembers, in one place.
+ *
+ * It exists because those settings were in three places: the language in the header, the
+ * output folder in the conversion panel, and the conversion defaults in checkboxes that
+ * reset on every launch. Somebody who set them up once had to set two of them up again
+ * the next morning.
+ *
+ * A mode rather than a modal, matching the workbench. There is still no router, and a
+ * dialog would have meant a focus trap, an overlay and an escape key to get three
+ * controls on screen.
+ */
+export default function SettingsPanel({
+  settings,
+  onSettings,
+}: {
+  settings: ConversionSettings;
+  onSettings: (next: ConversionSettings) => void;
+}) {
+  const t = useTranslations("desktop");
+  const [root, setRoot] = useState<string | null>(null);
+  const [credits, setCredits] = useState<Credit[]>([]);
+  const [version, setVersion] = useState("");
+  const [history, setHistory] = useState(0);
+  const [cleared, setCleared] = useState(false);
+
+  useEffect(() => {
+    void outputRoot().then(setRoot);
+    void getCredits().then(setCredits);
+    void appVersion().then(setVersion);
+    void listProjects().then((rows) => setHistory(rows.length));
+  }, []);
+
+  // Written through on every change rather than behind a Save button. There is nothing
+  // here to get half-right, and a Save button on four controls is a button that only
+  // exists to be forgotten.
+  const change = useCallback(
+    (next: ConversionSettings) => {
+      onSettings(next);
+      void saveDefaults(next.formats, next.background);
+    },
+    [onSettings],
+  );
+
+  const toggleFormat = useCallback(
+    (format: "html" | "react", on: boolean) => {
+      const next = on
+        ? [...new Set([...settings.formats, format])]
+        : settings.formats.filter((f) => f !== format);
+      // Never nothing: a conversion that produces no files is a button that looks like it
+      // worked and leaves an empty folder behind.
+      change({ ...settings, formats: next.length ? next : [format] });
+    },
+    [settings, change],
+  );
+
+  const clearHistory = useCallback(async () => {
+    const rows = await listProjects();
+    // The rows go; the output on disk stays. Deleting somebody's files because they
+    // tidied a list is a surprise, and an irreversible one.
+    await Promise.all(rows.map((row) => forgetProject(row.id)));
+    setHistory(0);
+    setCleared(true);
+  }, []);
+
+  return (
+    <div className="min-h-0 flex-1 space-y-5 overflow-auto p-5">
+      <Section icon={Palette} title={t("settingsAppearance")}>
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t("settingsLanguage")}</span>
+            <LanguageSwitcher />
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t("settingsTheme")}</span>
+            <ThemeToggle />
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground/80">{t("settingsAppearanceNote")}</p>
+      </Section>
+
+      <Separator />
+
+      <Section icon={Sliders} title={t("settingsDefaults")}>
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="flex items-center gap-2">
+            <Checkbox
+              id="default-html"
+              checked={settings.formats.includes("html")}
+              onCheckedChange={(on) => toggleFormat("html", on === true)}
+            />
+            <Label htmlFor="default-html" className="text-xs">
+              HTML
+            </Label>
+          </span>
+          <span className="flex items-center gap-2">
+            <Checkbox
+              id="default-react"
+              checked={settings.formats.includes("react")}
+              onCheckedChange={(on) => toggleFormat("react", on === true)}
+            />
+            <Label htmlFor="default-react" className="text-xs">
+              React
+            </Label>
+          </span>
+          <span className="flex items-center gap-2">
+            <Checkbox
+              id="default-graphics"
+              checked={settings.background}
+              onCheckedChange={(on) => change({ ...settings, background: on === true })}
+            />
+            <Label htmlFor="default-graphics" className="text-xs">
+              {t("convertGraphicsOption")}
+            </Label>
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground/80">{t("settingsDefaultsNote")}</p>
+      </Section>
+
+      <Separator />
+
+      <Section icon={FolderOpen} title={t("settingsOutput")}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void pickOutputRoot().then((chosen) => chosen && setRoot(chosen))}
+          >
+            <FolderOpen className="size-4" />
+            {t("convertOutputFolder")}
+          </Button>
+          {root ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void clearOutputRoot().then(() => setRoot(null))}
+            >
+              {t("convertOutputReset")}
+            </Button>
+          ) : null}
+        </div>
+        <p className="font-mono text-[11px] break-all text-muted-foreground">
+          {root ?? t("convertOutputDefault")}
+        </p>
+      </Section>
+
+      <Separator />
+
+      <Section icon={Trash2} title={t("settingsHistory")}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={() => void clearHistory()} disabled={history === 0}>
+            <Trash2 className="size-4" />
+            {t("settingsClearHistory")}
+          </Button>
+          <span className="text-[11px] text-muted-foreground">
+            {cleared ? t("settingsHistoryCleared") : t("settingsHistoryCount", { count: history })}
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground/80">{t("settingsHistoryNote")}</p>
+      </Section>
+
+      <Separator />
+
+      <Section icon={Info} title={t("settingsAbout")}>
+        <p className="text-xs text-muted-foreground">
+          {t("settingsVersion", { version: version || "—" })}
+        </p>
+        <p className="text-[11px] text-muted-foreground/80">{t("settingsCreditsNote")}</p>
+        {credits.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <tbody>
+                {credits.map((credit) => (
+                  <tr key={credit.name} className="border-t border-divider">
+                    <td className="py-1 pe-3 whitespace-nowrap">{credit.name}</td>
+                    <td className="tabular py-1 pe-3 whitespace-nowrap text-muted-foreground">
+                      {credit.version}
+                    </td>
+                    <td className="py-1 pe-3 whitespace-nowrap text-muted-foreground">
+                      {credit.license}
+                    </td>
+                    <td className="py-1 text-muted-foreground/80">{t(`creditRole${cap(credit.role)}`)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </Section>
+    </div>
+  );
+}
+
+function Section({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof Info;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-2">
+      <h3 className="flex items-center gap-2 text-sm font-semibold">
+        <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
