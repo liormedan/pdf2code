@@ -28,7 +28,7 @@ PageKind = Literal["photographic", "lineArt", "text"]
 
 Phase = Literal["extract", "render", "generate"]
 
-WarningCode = Literal["SCANNED", "GRAPHICS_DROPPED", "TRUNCATED"]
+WarningCode = Literal["SCANNED", "GRAPHICS_DROPPED", "TRUNCATED", "UNMAPPED_GLYPHS"]
 
 
 @dataclass(slots=True)
@@ -71,11 +71,21 @@ class FontDescription:
 
 @dataclass(slots=True)
 class PageStats:
-    """How much of a page is painted rather than typed — decides whether it needs a raster."""
+    """How much of a page is painted rather than typed — decides whether it needs a raster.
+
+    `annotations` and `unmapped` are additions rather than translations. pdf.js counted
+    annotation appearance streams among its painting operators, so a page whose only
+    graphics are highlights and link boxes registered as painted there and as bare text
+    here; counting them restores that decision. `unmapped` records glyphs pdfminer could
+    not resolve to characters, which is a fidelity loss the reader should be told about
+    rather than one that disappears quietly.
+    """
 
     vector: int
     images: int
     total: int
+    annotations: int = 0
+    unmapped: int = 0
 
 
 @dataclass(slots=True)

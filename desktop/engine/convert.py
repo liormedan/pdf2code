@@ -72,7 +72,10 @@ def classify_page(page: PageModel) -> RasterHint:
     rather than assumed — what has to agree is the `kind` each page is given, not the
     numbers behind it.
     """
-    vector = page.stats.vector
+    # Annotations paint too. pdf.js counted their appearance streams among its
+    # operators, so a page whose only graphics are highlights or link boxes registered
+    # as painted there — and skipping the raster here would drop them from the output.
+    vector = page.stats.vector + page.stats.annotations
     images = page.stats.images
     text = len(page.runs)
 
@@ -224,6 +227,20 @@ def _warnings(
                 message=(
                     f"{dropped} page{'' if dropped == 1 else 's'} contain graphics that "
                     'text-only output cannot reproduce. Turn on "Keep graphics" to keep them.'
+                ),
+            )
+        )
+
+    unmapped = sum(page.stats.unmapped for page in pages)
+    if unmapped:
+        warnings.append(
+            ConversionWarning(
+                code="UNMAPPED_GLYPHS",
+                params={"count": unmapped},
+                message=(
+                    f"{unmapped} character{'' if unmapped == 1 else 's'} could not be read "
+                    "from the document's fonts and were left out. The rest of the text is "
+                    "unaffected."
                 ),
             )
         )

@@ -1,195 +1,1843 @@
 {
-  "08-hebrew-doc.pdf": {
+  "04-scanned-ccitt.pdf": {
     "info": {
-      "pages": 35,
-      "title": "עותק של פרויקט בן־יהודה כתשתית למחקר",
+      "pages": 1,
+      "title": "",
       "producer": "",
-      "scanned": false,
-      "hasRTL": true,
-      "lang": "he",
-      "dir": "rtl"
+      "scanned": true,
+      "hasRTL": false,
+      "lang": "en",
+      "dir": "ltr"
     },
     "page": {
       "number": 1,
-      "width": 960,
-      "height": 540,
+      "width": 595.28,
+      "height": 841.89,
       "stats": {
-        "vector": 5,
-        "images": 1,
-        "total": 195
+        "vector": 1,
+        "images": 6,
+        "total": 33
+      },
+      "fonts": {},
+      "runs": []
+    }
+  },
+  "05-image-heavy.pdf": {
+    "info": {
+      "pages": 1,
+      "title": "",
+      "producer": "cairo 1.18.0 (https://cairographics.org)",
+      "scanned": true,
+      "hasRTL": false,
+      "lang": "en",
+      "dir": "ltr"
+    },
+    "page": {
+      "number": 1,
+      "width": 612,
+      "height": 792,
+      "stats": {
+        "vector": 2,
+        "images": 5,
+        "total": 122
       },
       "fonts": {
-        "g_d0_f1": {
-          "family": "'Calibri', sans-serif",
+        "g_d1_f1": {
+          "family": "'LiberationSans', sans-serif",
           "weight": 400,
           "style": "normal",
           "generic": "sans-serif",
-          "name": "Calibri",
-          "vertical": false,
-          "ascent": 0.75,
-          "descent": -0.25
-        },
-        "g_d0_f2": {
-          "family": "'Arial', sans-serif",
-          "weight": 400,
-          "style": "normal",
-          "generic": "sans-serif",
-          "name": "ArialMT",
+          "name": "LiberationSans",
           "vertical": false,
           "ascent": 0.9052734375,
           "descent": -0.2119140625
-        },
-        "g_d0_f3": {
-          "family": "'Arial', sans-serif",
-          "weight": 700,
-          "style": "normal",
-          "generic": "sans-serif",
-          "name": "Arial-BoldMT",
-          "vertical": false,
-          "ascent": 0.9052734375,
-          "descent": -0.2119140625
-        },
-        "g_d0_f5": {
-          "family": "'Alef', sans-serif",
-          "weight": 400,
-          "style": "normal",
-          "generic": "sans-serif",
-          "name": "Alef-Regular",
-          "vertical": false,
-          "ascent": 1.00927734375,
-          "descent": -0.3525390625
-        },
-        "g_d0_f6": {
-          "family": "'Alef', sans-serif",
-          "weight": 700,
-          "style": "normal",
-          "generic": "sans-serif",
-          "name": "Alef-Bold",
-          "vertical": false,
-          "ascent": 1.00927734375,
-          "descent": -0.3525390625
         }
       },
       "runs": [
         {
-          "text": "benyehuda.org",
-          "x": 149.4,
-          "y": 58.36,
-          "width": 195.33,
-          "size": 32,
+          "text": "Hello, test test.",
+          "x": 72,
+          "y": 70.05,
+          "width": 199.03,
+          "size": 30.09,
           "angle": 0,
-          "font": "g_d0_f1",
+          "font": "g_d1_f1",
+          "rtl": false
+        }
+      ]
+    }
+  },
+  "06-annotations.pdf": {
+    "info": {
+      "pages": 14,
+      "title": "",
+      "producer": "macOS Version 14.4.1 (Build 23E224) Quartz PDFContext, AppendMode 1.1",
+      "scanned": false,
+      "hasRTL": false,
+      "lang": "en",
+      "dir": "ltr"
+    },
+    "page": {
+      "number": 1,
+      "width": 612,
+      "height": 792,
+      "stats": {
+        "vector": 8,
+        "images": 1,
+        "total": 467
+      },
+      "fonts": {
+        "g_d2_f1": {
+          "family": "'Times New Roman', serif",
+          "weight": 700,
+          "style": "normal",
+          "generic": "serif",
+          "name": "NimbusRomNo9L-Medi",
+          "vertical": false,
+          "ascent": 0.69,
+          "descent": -0.209
+        },
+        "g_d2_f2": {
+          "family": "'Times New Roman', serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "serif",
+          "name": "NimbusRomNo9L-Regu",
+          "vertical": false,
+          "ascent": 0.678,
+          "descent": -0.216
+        },
+        "g_d2_f3": {
+          "family": "'CMSY8', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "CMSY8",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.194
+        },
+        "g_d2_f4": {
+          "family": "'CMU Serif', serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "serif",
+          "name": "CMR8",
+          "vertical": false,
+          "ascent": 0.694,
+          "descent": -0.194
+        },
+        "g_d2_f5": {
+          "family": "'CMSY6', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "CMSY6",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.194
+        },
+        "g_d2_f6": {
+          "family": "'CMSY9', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "CMSY9",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.194
+        },
+        "g_d2_f7": {
+          "family": "'CMU Typewriter Text', monospace",
+          "weight": 400,
+          "style": "normal",
+          "generic": "monospace",
+          "name": "CMTT9",
+          "vertical": false,
+          "ascent": 0.611,
+          "descent": -0.222
+        },
+        "g_d2_f8": {
+          "family": "'CMU Serif', serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "serif",
+          "name": "CMR6",
+          "vertical": false,
+          "ascent": 0.694,
+          "descent": -0.194
+        },
+        "g_d2_f9": {
+          "family": "'Times New Roman', serif",
+          "weight": 700,
+          "style": "italic",
+          "generic": "serif",
+          "name": "NimbusRomNo9L-MediItal",
+          "vertical": false,
+          "ascent": 0.688,
+          "descent": -0.209
+        },
+        "g_d2_f10": {
+          "family": "'Times New Roman', serif",
+          "weight": 400,
+          "style": "italic",
+          "generic": "serif",
+          "name": "NimbusRomNo9L-ReguItal",
+          "vertical": false,
+          "ascent": 0.668,
+          "descent": -0.193
+        },
+        "g_d2_f11": {
+          "family": "'Times New Roman', serif",
+          "weight": 400,
+          "style": "italic",
+          "generic": "serif",
+          "name": "NimbusRomNo9L-Regu-Slant_167",
+          "vertical": false,
+          "ascent": 0.678,
+          "descent": -0.216
+        },
+        "g_d2_f12": {
+          "family": "'CMSY7', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "CMSY7",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.194
+        }
+      },
+      "runs": [
+        {
+          "text": "Trace-based Just-in-Time Type Specialization for Dynamic",
+          "x": 80.52,
+          "y": 73.4,
+          "width": 449.09,
+          "size": 17.93,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "Languages",
+          "x": 263.71,
+          "y": 93.32,
+          "width": 82.71,
+          "size": 17.93,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "Andreas Gal",
+          "x": 120.32,
+          "y": 136.16,
+          "width": 55.08,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 175.4,
+          "y": 135.19,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": "+",
+          "x": 180.13,
+          "y": 135.19,
+          "width": 6.58,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f4",
+          "rtl": false
+        },
+        {
+          "text": ", Brendan Eich",
+          "x": 187.22,
+          "y": 136.16,
+          "width": 65.44,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 252.65,
+          "y": 135.19,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ", Mike Shaver",
+          "x": 257.39,
+          "y": 136.16,
+          "width": 61.29,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 318.68,
+          "y": 135.19,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ", David Anderson",
+          "x": 323.41,
+          "y": 136.16,
+          "width": 77.39,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 400.8,
+          "y": 135.19,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ", David Mandelin",
+          "x": 405.53,
+          "y": 136.16,
+          "width": 76.79,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 482.32,
+          "y": 135.19,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ",",
+          "x": 487.06,
+          "y": 136.16,
+          "width": 2.74,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Mohammad R. Haghighat",
+          "x": 93.54,
+          "y": 149.11,
+          "width": 114.15,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "$",
+          "x": 207.69,
+          "y": 148.14,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f4",
+          "rtl": false
+        },
+        {
+          "text": ", Blake Kaplan",
+          "x": 212.42,
+          "y": 149.11,
+          "width": 65.33,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 277.75,
+          "y": 148.14,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ", Graydon Hoare",
+          "x": 282.48,
+          "y": 149.11,
+          "width": 73.34,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 355.82,
+          "y": 148.14,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ", Boris Zbarsky",
+          "x": 360.55,
+          "y": 149.11,
+          "width": 67.72,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 428.26,
+          "y": 148.14,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ", Jason Orendorff",
+          "x": 432.99,
+          "y": 149.11,
+          "width": 76.11,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 509.1,
+          "y": 148.14,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ",",
+          "x": 513.84,
+          "y": 149.11,
+          "width": 2.74,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Jesse Ruderman",
+          "x": 68.27,
+          "y": 162.06,
+          "width": 70.92,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 139.19,
+          "y": 161.09,
+          "width": 4.23,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f3",
+          "rtl": false
+        },
+        {
+          "text": ", Edwin Smith",
+          "x": 143.92,
+          "y": 162.06,
+          "width": 63.02,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "#",
+          "x": 206.95,
+          "y": 161.09,
+          "width": 7.05,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f4",
+          "rtl": false
+        },
+        {
+          "text": ", Rick Reitmaier",
+          "x": 214.5,
+          "y": 162.06,
+          "width": 72.14,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "#",
+          "x": 286.64,
+          "y": 161.09,
+          "width": 7.05,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f4",
+          "rtl": false
+        },
+        {
+          "text": ", Michael Bebenita",
+          "x": 294.2,
+          "y": 162.06,
+          "width": 83.09,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "+",
+          "x": 377.29,
+          "y": 161.09,
+          "width": 6.58,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f4",
+          "rtl": false
+        },
+        {
+          "text": ", Mason Chang",
+          "x": 384.37,
+          "y": 162.06,
+          "width": 66.66,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "+#",
+          "x": 451.03,
+          "y": 161.09,
+          "width": 14.14,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f4",
+          "rtl": false
+        },
+        {
+          "text": ", Michael Franz",
+          "x": 465.67,
+          "y": 162.06,
+          "width": 69.08,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "+",
+          "x": 534.76,
+          "y": 161.09,
+          "width": 6.58,
+          "size": 7.97,
+          "angle": 0,
+          "font": "g_d2_f4",
+          "rtl": false
+        },
+        {
+          "text": "Mozilla Corporation",
+          "x": 266.17,
+          "y": 179,
+          "width": 73.47,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "∗",
+          "x": 339.63,
+          "y": 178.18,
+          "width": 3.82,
+          "size": 5.98,
+          "angle": 0,
+          "font": "g_d2_f5",
+          "rtl": false
+        },
+        {
+          "text": "{",
+          "x": 90.98,
+          "y": 188.96,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "gal,brendan,shaver,danderson,dmandelin,mrbkap,graydon,bz,jorendorff,jruderman",
+          "x": 95.58,
+          "y": 188.96,
+          "width": 362.46,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "}",
+          "x": 458.05,
+          "y": 188.96,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "@mozilla.com",
+          "x": 462.65,
+          "y": 188.96,
+          "width": 56.49,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "Adobe Corporation",
+          "x": 267.08,
+          "y": 205.14,
+          "width": 69.48,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "#",
+          "x": 336.56,
+          "y": 204.32,
+          "width": 5.98,
+          "size": 5.98,
+          "angle": 0,
+          "font": "g_d2_f8",
+          "rtl": false
+        },
+        {
+          "text": "{",
+          "x": 236.9,
+          "y": 215.11,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "edwsmith,rreitmai",
+          "x": 241.51,
+          "y": 215.11,
+          "width": 80.03,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "}",
+          "x": 321.53,
+          "y": 215.11,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "@adobe.com",
+          "x": 326.14,
+          "y": 215.11,
+          "width": 47.07,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "Intel Corporation",
+          "x": 271.98,
+          "y": 231.62,
+          "width": 62.01,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "$",
+          "x": 333.99,
+          "y": 230.8,
+          "width": 3.65,
+          "size": 5.98,
+          "angle": 0,
+          "font": "g_d2_f8",
+          "rtl": false
+        },
+        {
+          "text": "{",
+          "x": 229.84,
+          "y": 241.58,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "mohammad.r.haghighat",
+          "x": 234.45,
+          "y": 241.58,
+          "width": 94.15,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "}",
+          "x": 328.6,
+          "y": 241.58,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "@intel.com",
+          "x": 333.2,
+          "y": 241.58,
+          "width": 47.07,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "University of California, Irvine",
+          "x": 246.16,
+          "y": 257.43,
+          "width": 111.7,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "+",
+          "x": 357.87,
+          "y": 256.61,
+          "width": 5.59,
+          "size": 5.98,
+          "angle": 0,
+          "font": "g_d2_f8",
+          "rtl": false
+        },
+        {
+          "text": "{",
+          "x": 232.2,
+          "y": 267.39,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "mbebenit,changm,franz",
+          "x": 236.8,
+          "y": 267.39,
+          "width": 98.85,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "}",
+          "x": 335.66,
+          "y": 267.39,
+          "width": 4.61,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f6",
+          "rtl": false
+        },
+        {
+          "text": "@uci.edu",
+          "x": 340.26,
+          "y": 267.39,
+          "width": 37.66,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f7",
+          "rtl": false
+        },
+        {
+          "text": "Abstract",
+          "x": 54,
+          "y": 333.14,
+          "width": 40.78,
+          "size": 10.96,
+          "angle": 0,
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "Dynamic languages such as JavaScript are more difficult to com-",
+          "x": 54,
+          "y": 349.08,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "pile than statically typed ones. Since no concrete type information",
+          "x": 54,
+          "y": 359.05,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "is available, traditional compilers need to emit generic code that can",
+          "x": 54,
+          "y": 369.01,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "handle all possible type combinations at runtime. We present an al-",
+          "x": 54,
+          "y": 378.97,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "ternative compilation technique for dynamically-typed languages",
+          "x": 54,
+          "y": 388.93,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "that identifies frequently executed loop traces at run-time and then",
+          "x": 54,
+          "y": 398.9,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "generates machine code on the fly that is specialized for the ac-",
+          "x": 54,
+          "y": 408.86,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "tual dynamic types occurring on each path through the loop. Our",
+          "x": 54,
+          "y": 418.82,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "method provides cheap inter-procedural type specialization, and an",
+          "x": 54,
+          "y": 428.78,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "elegant and efficient way of incrementally compiling lazily discov-",
+          "x": 54,
+          "y": 438.75,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "ered alternative paths through nested loops. We have implemented",
+          "x": 54,
+          "y": 448.71,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "a dynamic compiler for JavaScript based on our technique and we",
+          "x": 54,
+          "y": 458.67,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "have measured speedups of 10x and more for certain benchmark",
+          "x": 54,
+          "y": 468.63,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "programs.",
+          "x": 54,
+          "y": 478.6,
+          "width": 36.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Categories and Subject Descriptors",
+          "x": 54,
+          "y": 494.2,
+          "width": 133.58,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f9",
           "rtl": false
         },
         {
           "text": " ",
-          "x": 344.73,
-          "y": 58.36,
-          "width": 57.98,
-          "size": 32,
+          "x": 187.58,
+          "y": 494.2,
+          "width": 8.97,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f1",
+          "font": "g_d2_f9",
           "rtl": false
         },
         {
-          "text": "למחקר",
-          "x": 388.22,
-          "y": 58.36,
-          "width": 87.01,
-          "size": 32,
+          "text": "D.3.4 [",
+          "x": 196.55,
+          "y": 494.2,
+          "width": 26.42,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f2",
-          "rtl": true
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Programming Lan-",
+          "x": 222.97,
+          "y": 494.2,
+          "width": 70.14,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": "guages",
+          "x": 54,
+          "y": 504.16,
+          "width": 25.22,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": "]: Processors —",
+          "x": 79.22,
+          "y": 504.16,
+          "width": 57.28,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
         },
         {
           "text": " ",
-          "x": 475.23,
-          "y": 58.36,
-          "width": 9.73,
-          "size": 32,
+          "x": 136.5,
+          "y": 504.16,
+          "width": 2.24,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f2",
+          "font": "g_d2_f2",
           "rtl": false
         },
         {
-          "text": "כתשתית",
-          "x": 482.52,
-          "y": 58.36,
-          "width": 106.43,
-          "size": 32,
+          "text": "Incremental compilers, code generation",
+          "x": 138.74,
+          "y": 504.16,
+          "width": 142.79,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f2",
-          "rtl": true
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": ".",
+          "x": 281.53,
+          "y": 504.16,
+          "width": 2.24,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "General Terms",
+          "x": 54,
+          "y": 519.77,
+          "width": 55.41,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f9",
+          "rtl": false
         },
         {
           "text": " ",
-          "x": 588.95,
-          "y": 58.36,
-          "width": 9.76,
-          "size": 32,
+          "x": 109.41,
+          "y": 519.77,
+          "width": 8.96,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f2",
+          "font": "g_d2_f9",
           "rtl": false
         },
         {
-          "text": "בן־יהודה",
-          "x": 596.28,
-          "y": 58.36,
-          "width": 115.65,
-          "size": 32,
+          "text": "Design, Experimentation, Measurement, Perfor-",
+          "x": 118.38,
+          "y": 519.77,
+          "width": 174.73,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f3",
-          "rtl": true
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "mance.",
+          "x": 54,
+          "y": 529.73,
+          "width": 25.64,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Keywords",
+          "x": 54,
+          "y": 545.33,
+          "width": 35.51,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f9",
+          "rtl": false
         },
         {
           "text": " ",
-          "x": 711.92,
-          "y": 58.36,
-          "width": 9.85,
-          "size": 32,
+          "x": 89.51,
+          "y": 545.33,
+          "width": 8.97,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f3",
+          "font": "g_d2_f9",
           "rtl": false
         },
         {
-          "text": "פרויקט",
-          "x": 719.31,
-          "y": 58.36,
-          "width": 91.17,
-          "size": 32,
+          "text": "JavaScript, just-in-time compilation, trace trees.",
+          "x": 98.47,
+          "y": 545.33,
+          "width": 171.68,
+          "size": 8.97,
           "angle": 0,
-          "font": "g_d0_f3",
-          "rtl": true
+          "font": "g_d2_f2",
+          "rtl": false
         },
         {
-          "text": "אסף ברטוב, עורך מייסד",
-          "x": 316.63,
-          "y": 497.51,
-          "width": 256.91,
-          "size": 27,
+          "text": "1.",
+          "x": 54,
+          "y": 565.92,
+          "width": 8.22,
+          "size": 10.96,
           "angle": 0,
-          "font": "g_d0_f5",
-          "rtl": true
+          "font": "g_d2_f1",
+          "rtl": false
         },
         {
           "text": " ",
-          "x": 573.54,
-          "y": 497.51,
-          "width": 10.5,
-          "size": 27,
+          "x": 62.22,
+          "y": 565.92,
+          "width": 10.96,
+          "size": 10.96,
           "angle": 0,
-          "font": "g_d0_f5",
+          "font": "g_d2_f1",
           "rtl": false
         },
         {
-          "text": "מרצה:",
-          "x": 581.41,
-          "y": 497.51,
-          "width": 71.09,
-          "size": 27,
+          "text": "Introduction",
+          "x": 73.18,
+          "y": 565.92,
+          "width": 59.47,
+          "size": 10.96,
           "angle": 0,
-          "font": "g_d0_f6",
-          "rtl": true
+          "font": "g_d2_f1",
+          "rtl": false
+        },
+        {
+          "text": "Dynamic languages",
+          "x": 54,
+          "y": 581.86,
+          "width": 71.04,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 125.04,
+          "y": 581.86,
+          "width": 1.98,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": "such as JavaScript, Python, and Ruby, are pop-",
+          "x": 127.02,
+          "y": 581.86,
+          "width": 166.08,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "ular since they are expressive, accessible to non-experts, and make",
+          "x": 54,
+          "y": 591.82,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "deployment as easy as distributing a source file. They are used for",
+          "x": 54,
+          "y": 601.79,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "small scripts as well as for complex applications. JavaScript, for",
+          "x": 54,
+          "y": 611.75,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "example, is the de facto standard for client-side web programming",
+          "x": 54,
+          "y": 621.71,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Permission to make digital or hard copies of all or part of this work for personal or",
+          "x": 54,
+          "y": 665.26,
+          "width": 239.1,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "classroom use is granted without fee provided that copies are not made or distributed",
+          "x": 54,
+          "y": 673.23,
+          "width": 239.1,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "for profit or commercial advantage and that copies bear this notice and the full citation",
+          "x": 54,
+          "y": 681.2,
+          "width": 239.1,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "on the first page. To copy otherwise, to republish, to post on servers or to redistribute",
+          "x": 54,
+          "y": 689.17,
+          "width": 239.1,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "to lists, requires prior specific permission and/or a fee.",
+          "x": 54,
+          "y": 697.14,
+          "width": 151.46,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "PLDI’09,",
+          "x": 54,
+          "y": 707.1,
+          "width": 26.54,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f11",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 80.54,
+          "y": 707.1,
+          "width": 7.09,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f11",
+          "rtl": false
+        },
+        {
+          "text": "June 15–20, 2009, Dublin, Ireland.",
+          "x": 87.63,
+          "y": 707.1,
+          "width": 97.24,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Copyright c",
+          "x": 54,
+          "y": 715.07,
+          "width": 35.48,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "©",
+          "x": 83.96,
+          "y": 715.07,
+          "width": 7.94,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f12",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 91.9,
+          "y": 715.07,
+          "width": 1.74,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f12",
+          "rtl": false
+        },
+        {
+          "text": "2009 ACM 978-1-60558-392-1/09/06. . . $5.00",
+          "x": 93.65,
+          "y": 715.07,
+          "width": 129.55,
+          "size": 6.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "and is used for the application logic of browser-based productivity",
+          "x": 317.01,
+          "y": 335.13,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "applications such as Google Mail, Google Docs and Zimbra Col-",
+          "x": 317.01,
+          "y": 345.1,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "laboration Suite. In this domain, in order to provide a fluid user",
+          "x": 317.01,
+          "y": 355.06,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "experience and enable a new generation of applications, virtual ma-",
+          "x": 317.01,
+          "y": 365.02,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "chines must provide a low startup time and high performance.",
+          "x": 317.01,
+          "y": 374.99,
+          "width": 221.77,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Compilers for statically typed languages rely on type informa-",
+          "x": 328.97,
+          "y": 384.95,
+          "width": 227.15,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "tion to generate efficient machine code. In a dynamically typed pro-",
+          "x": 317.01,
+          "y": 394.91,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "gramming language such as JavaScript, the types of expressions",
+          "x": 317.01,
+          "y": 404.87,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "may vary at runtime. This means that the compiler can no longer",
+          "x": 317.01,
+          "y": 414.84,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "easily transform operations into machine instructions that operate",
+          "x": 317.01,
+          "y": 424.8,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "on one specific type. Without exact type information, the compiler",
+          "x": 317.01,
+          "y": 434.76,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "must emit slower generalized machine code that can deal with all",
+          "x": 317.01,
+          "y": 444.72,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "potential type combinations. While compile-time static type infer-",
+          "x": 317.01,
+          "y": 454.69,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "ence might be able to gather type information to generate opti-",
+          "x": 317.01,
+          "y": 464.65,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "mized machine code, traditional static analysis is very expensive",
+          "x": 317.01,
+          "y": 474.61,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "and hence not well suited for the highly interactive environment of",
+          "x": 317.01,
+          "y": 484.57,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "a web browser.",
+          "x": 317.01,
+          "y": 494.54,
+          "width": 53.81,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "We present a trace-based compilation technique for dynamic",
+          "x": 328.97,
+          "y": 504.5,
+          "width": 227.15,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "languages that reconciles speed of compilation with excellent per-",
+          "x": 317.01,
+          "y": 514.46,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "formance of the generated machine code. Our system uses a mixed-",
+          "x": 317.01,
+          "y": 524.43,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "mode execution approach: the system starts running JavaScript in a",
+          "x": 317.01,
+          "y": 534.39,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "fast-starting bytecode interpreter. As the program runs, the system",
+          "x": 317.01,
+          "y": 544.35,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "identifies",
+          "x": 317.01,
+          "y": 554.31,
+          "width": 32.88,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 349.89,
+          "y": 554.31,
+          "width": 3.81,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "hot",
+          "x": 353.7,
+          "y": 554.31,
+          "width": 11.46,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 365.16,
+          "y": 554.31,
+          "width": 3.97,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": "(frequently executed) bytecode sequences, records",
+          "x": 369.13,
+          "y": 554.31,
+          "width": 186.99,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "them, and compiles them to fast native code. We call such a se-",
+          "x": 317.01,
+          "y": 564.28,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "quence of instructions a",
+          "x": 317.01,
+          "y": 574.24,
+          "width": 85.41,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 402.43,
+          "y": 574.24,
+          "width": 2.24,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "trace",
+          "x": 404.67,
+          "y": 574.24,
+          "width": 18.29,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": ".",
+          "x": 422.96,
+          "y": 574.24,
+          "width": 2.24,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Unlike method-based dynamic compilers, our dynamic com-",
+          "x": 328.97,
+          "y": 584.2,
+          "width": 227.15,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "piler operates at the granularity of individual loops. This design",
+          "x": 317.01,
+          "y": 594.16,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "choice is based on the expectation that programs spend most of",
+          "x": 317.01,
+          "y": 604.13,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "their time in hot loops. Even in dynamically typed languages, we",
+          "x": 317.01,
+          "y": 614.09,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "expect hot loops to be mostly",
+          "x": 317.01,
+          "y": 624.05,
+          "width": 103.93,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 420.94,
+          "y": 624.05,
+          "width": 1.99,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "type-stable",
+          "x": 422.93,
+          "y": 624.05,
+          "width": 39.34,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f10",
+          "rtl": false
+        },
+        {
+          "text": ", meaning that the types of",
+          "x": 462.27,
+          "y": 624.05,
+          "width": 93.84,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "values are invariant. (12) For example, we would expect loop coun-",
+          "x": 317.01,
+          "y": 634.01,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "ters that start as integers to remain integers for all iterations. When",
+          "x": 317.01,
+          "y": 643.98,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "both of these expectations hold, a trace-based compiler can cover",
+          "x": 317.01,
+          "y": 653.94,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "the program execution with a small number of type-specialized, ef-",
+          "x": 317.01,
+          "y": 663.9,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "ficiently compiled traces.",
+          "x": 317.01,
+          "y": 673.86,
+          "width": 90.4,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "Each compiled trace covers one path through the program with",
+          "x": 328.97,
+          "y": 683.83,
+          "width": 227.15,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "one mapping of values to types. When the VM executes a compiled",
+          "x": 317.01,
+          "y": 693.79,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "trace, it cannot guarantee that the same path will be followed",
+          "x": 317.01,
+          "y": 703.75,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
+        },
+        {
+          "text": "or that the same types will occur in subsequent loop iterations.",
+          "x": 317.01,
+          "y": 713.72,
+          "width": 239.11,
+          "size": 8.97,
+          "angle": 0,
+          "font": "g_d2_f2",
+          "rtl": false
         }
       ]
     }
@@ -214,7 +1862,7 @@
         "total": 247
       },
       "fonts": {
-        "g_d1_f1": {
+        "g_d3_f1": {
           "family": "'Times New Roman', serif",
           "weight": 400,
           "style": "normal",
@@ -224,7 +1872,7 @@
           "ascent": 0.678,
           "descent": -0.216
         },
-        "g_d1_f2": {
+        "g_d3_f2": {
           "family": "'Times New Roman', serif",
           "weight": 700,
           "style": "normal",
@@ -234,7 +1882,7 @@
           "ascent": 0.69,
           "descent": -0.209
         },
-        "g_d1_f3": {
+        "g_d3_f3": {
           "family": "'CMSY7', sans-serif",
           "weight": 400,
           "style": "normal",
@@ -244,7 +1892,7 @@
           "ascent": 0.75,
           "descent": -0.194
         },
-        "g_d1_f4": {
+        "g_d3_f4": {
           "family": "'CMU Typewriter Text', monospace",
           "weight": 400,
           "style": "normal",
@@ -254,7 +1902,7 @@
           "ascent": 0.611,
           "descent": -0.222
         },
-        "g_d1_f5": {
+        "g_d3_f5": {
           "family": "'CMSY6', sans-serif",
           "weight": 400,
           "style": "normal",
@@ -264,7 +1912,7 @@
           "ascent": 0.75,
           "descent": -0.194
         },
-        "g_d1_f6": {
+        "g_d3_f6": {
           "family": "'Times New Roman', serif",
           "weight": 400,
           "style": "normal",
@@ -283,7 +1931,7 @@
           "width": 362.67,
           "size": 11.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -293,7 +1941,7 @@
           "width": 363.58,
           "size": 11.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -303,7 +1951,7 @@
           "width": 78.9,
           "size": 11.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -313,7 +1961,7 @@
           "width": 188.41,
           "size": 17.22,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -323,7 +1971,7 @@
           "width": 66.9,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -333,7 +1981,7 @@
           "width": 4.08,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -343,7 +1991,7 @@
           "width": 53.96,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -353,7 +2001,7 @@
           "width": 99.36,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -363,7 +2011,7 @@
           "width": 61.7,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -373,7 +2021,7 @@
           "width": 4.08,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -383,7 +2031,7 @@
           "width": 53.96,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -393,7 +2041,7 @@
           "width": 78.44,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -403,7 +2051,7 @@
           "width": 53.86,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -413,7 +2061,7 @@
           "width": 4.08,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -423,7 +2071,7 @@
           "width": 68.33,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -433,7 +2081,7 @@
           "width": 83.67,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -443,7 +2091,7 @@
           "width": 68.83,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -453,7 +2101,7 @@
           "width": 4.08,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -463,7 +2111,7 @@
           "width": 68.33,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -473,7 +2121,7 @@
           "width": 73.21,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -483,7 +2131,7 @@
           "width": 48.85,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -493,7 +2141,7 @@
           "width": 4.08,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -503,7 +2151,7 @@
           "width": 68.33,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -513,7 +2161,7 @@
           "width": 83.67,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -523,7 +2171,7 @@
           "width": 70.57,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -533,7 +2181,7 @@
           "width": 10.96,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -543,7 +2191,7 @@
           "width": 86.25,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -553,7 +2201,7 @@
           "width": 104.59,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -563,7 +2211,7 @@
           "width": 61.72,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -573,7 +2221,7 @@
           "width": 4.08,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -583,7 +2231,7 @@
           "width": 53.96,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -593,7 +2241,7 @@
           "width": 120.27,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -603,7 +2251,7 @@
           "width": 67.08,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -613,7 +2261,7 @@
           "width": 10.96,
           "size": 6.97,
           "angle": 0,
-          "font": "g_d1_f3",
+          "font": "g_d3_f3",
           "rtl": false
         },
         {
@@ -623,7 +2271,7 @@
           "width": 135.95,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f4",
+          "font": "g_d3_f4",
           "rtl": false
         },
         {
@@ -633,7 +2281,7 @@
           "width": 44.49,
           "size": 11.96,
           "angle": 0,
-          "font": "g_d1_f2",
+          "font": "g_d3_f2",
           "rtl": false
         },
         {
@@ -643,7 +2291,7 @@
           "width": 324.74,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -653,7 +2301,7 @@
           "width": 324.26,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -663,7 +2311,7 @@
           "width": 324.26,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -673,7 +2321,7 @@
           "width": 325.51,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -683,7 +2331,7 @@
           "width": 324.27,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -693,7 +2341,7 @@
           "width": 32.93,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -703,7 +2351,7 @@
           "width": 6.01,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -713,7 +2361,7 @@
           "width": 285.2,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -723,7 +2371,7 @@
           "width": 324.62,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -733,7 +2381,7 @@
           "width": 325.92,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -743,7 +2391,7 @@
           "width": 324.26,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -753,7 +2401,7 @@
           "width": 325.51,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -763,7 +2411,7 @@
           "width": 324.44,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -773,7 +2421,7 @@
           "width": 324.26,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -783,7 +2431,7 @@
           "width": 324.27,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -793,7 +2441,7 @@
           "width": 324.27,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -803,7 +2451,7 @@
           "width": 122.4,
           "size": 9.96,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -813,7 +2461,7 @@
           "width": 3.82,
           "size": 5.98,
           "angle": 0,
-          "font": "g_d1_f5",
+          "font": "g_d3_f5",
           "rtl": false
         },
         {
@@ -823,7 +2471,7 @@
           "width": 379.86,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -833,7 +2481,7 @@
           "width": 396,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -843,7 +2491,7 @@
           "width": 396,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -853,7 +2501,7 @@
           "width": 396.31,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -863,7 +2511,7 @@
           "width": 396,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -873,7 +2521,7 @@
           "width": 396,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -883,7 +2531,7 @@
           "width": 396,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -893,7 +2541,7 @@
           "width": 396,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -903,7 +2551,7 @@
           "width": 46.3,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -913,7 +2561,7 @@
           "width": 3.43,
           "size": 5.98,
           "angle": 0,
-          "font": "g_d1_f5",
+          "font": "g_d3_f5",
           "rtl": false
         },
         {
@@ -923,7 +2571,7 @@
           "width": 143.21,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -933,7 +2581,7 @@
           "width": 3.43,
           "size": 5.98,
           "angle": 0,
-          "font": "g_d1_f5",
+          "font": "g_d3_f5",
           "rtl": false
         },
         {
@@ -943,7 +2591,7 @@
           "width": 156.15,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -953,7 +2601,7 @@
           "width": 352.14,
           "size": 8.97,
           "angle": 0,
-          "font": "g_d1_f1",
+          "font": "g_d3_f1",
           "rtl": false
         },
         {
@@ -963,8 +2611,203 @@
           "width": 341.08,
           "size": 20,
           "angle": -1.5708,
-          "font": "g_d1_f6",
+          "font": "g_d3_f6",
           "rtl": false
+        }
+      ]
+    }
+  },
+  "08-hebrew-doc.pdf": {
+    "info": {
+      "pages": 35,
+      "title": "עותק של פרויקט בן־יהודה כתשתית למחקר",
+      "producer": "",
+      "scanned": false,
+      "hasRTL": true,
+      "lang": "he",
+      "dir": "rtl"
+    },
+    "page": {
+      "number": 1,
+      "width": 960,
+      "height": 540,
+      "stats": {
+        "vector": 5,
+        "images": 1,
+        "total": 195
+      },
+      "fonts": {
+        "g_d4_f1": {
+          "family": "'Calibri', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Calibri",
+          "vertical": false,
+          "ascent": 0.75,
+          "descent": -0.25
+        },
+        "g_d4_f2": {
+          "family": "'Arial', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "ArialMT",
+          "vertical": false,
+          "ascent": 0.9052734375,
+          "descent": -0.2119140625
+        },
+        "g_d4_f3": {
+          "family": "'Arial', sans-serif",
+          "weight": 700,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Arial-BoldMT",
+          "vertical": false,
+          "ascent": 0.9052734375,
+          "descent": -0.2119140625
+        },
+        "g_d4_f5": {
+          "family": "'Alef', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Alef-Regular",
+          "vertical": false,
+          "ascent": 1.00927734375,
+          "descent": -0.3525390625
+        },
+        "g_d4_f6": {
+          "family": "'Alef', sans-serif",
+          "weight": 700,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Alef-Bold",
+          "vertical": false,
+          "ascent": 1.00927734375,
+          "descent": -0.3525390625
+        }
+      },
+      "runs": [
+        {
+          "text": "benyehuda.org",
+          "x": 149.4,
+          "y": 58.36,
+          "width": 195.33,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f1",
+          "rtl": false
+        },
+        {
+          "text": " ",
+          "x": 344.73,
+          "y": 58.36,
+          "width": 57.98,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f1",
+          "rtl": false
+        },
+        {
+          "text": "למחקר",
+          "x": 388.22,
+          "y": 58.36,
+          "width": 87.01,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f2",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 475.23,
+          "y": 58.36,
+          "width": 9.73,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f2",
+          "rtl": false
+        },
+        {
+          "text": "כתשתית",
+          "x": 482.52,
+          "y": 58.36,
+          "width": 106.43,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f2",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 588.95,
+          "y": 58.36,
+          "width": 9.76,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f2",
+          "rtl": false
+        },
+        {
+          "text": "בן־יהודה",
+          "x": 596.28,
+          "y": 58.36,
+          "width": 115.65,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f3",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 711.92,
+          "y": 58.36,
+          "width": 9.85,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f3",
+          "rtl": false
+        },
+        {
+          "text": "פרויקט",
+          "x": 719.31,
+          "y": 58.36,
+          "width": 91.17,
+          "size": 32,
+          "angle": 0,
+          "font": "g_d4_f3",
+          "rtl": true
+        },
+        {
+          "text": "אסף ברטוב, עורך מייסד",
+          "x": 316.63,
+          "y": 497.51,
+          "width": 256.91,
+          "size": 27,
+          "angle": 0,
+          "font": "g_d4_f5",
+          "rtl": true
+        },
+        {
+          "text": " ",
+          "x": 573.54,
+          "y": 497.51,
+          "width": 10.5,
+          "size": 27,
+          "angle": 0,
+          "font": "g_d4_f5",
+          "rtl": false
+        },
+        {
+          "text": "מרצה:",
+          "x": 581.41,
+          "y": 497.51,
+          "width": 71.09,
+          "size": 27,
+          "angle": 0,
+          "font": "g_d4_f6",
+          "rtl": true
         }
       ]
     }
@@ -989,7 +2832,7 @@
         "total": 24
       },
       "fonts": {
-        "g_d2_f1": {
+        "g_d5_f1": {
           "family": "'Helvetica', sans-serif",
           "weight": 400,
           "style": "normal",
@@ -1008,7 +2851,7 @@
           "width": 254.84,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1018,7 +2861,7 @@
           "width": 291.23,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1028,7 +2871,7 @@
           "width": 245.13,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1038,7 +2881,7 @@
           "width": 283.29,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1048,7 +2891,7 @@
           "width": 240.06,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1058,7 +2901,7 @@
           "width": 321.4,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1068,7 +2911,7 @@
           "width": 263.09,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1078,7 +2921,7 @@
           "width": 210.84,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         },
         {
@@ -1088,33 +2931,345 @@
           "width": 195.33,
           "size": 14,
           "angle": 0,
-          "font": "g_d2_f1",
+          "font": "g_d5_f1",
           "rtl": false
         }
       ]
     }
   },
-  "04-scanned-ccitt.pdf": {
+  "10-large-150p.pdf": {
     "info": {
-      "pages": 1,
+      "pages": 150,
       "title": "",
       "producer": "",
-      "scanned": true,
+      "scanned": false,
       "hasRTL": false,
       "lang": "en",
       "dir": "ltr"
     },
     "page": {
       "number": 1,
-      "width": 595.28,
-      "height": 841.89,
+      "width": 612,
+      "height": 792,
       "stats": {
-        "vector": 1,
-        "images": 6,
-        "total": 33
+        "vector": 0,
+        "images": 0,
+        "total": 66
       },
-      "fonts": {},
-      "runs": []
+      "fonts": {
+        "g_d6_f1": {
+          "family": "'Helvetica', sans-serif",
+          "weight": 400,
+          "style": "normal",
+          "generic": "sans-serif",
+          "name": "Helvetica",
+          "vertical": false,
+          "ascent": 0.9052734375,
+          "descent": -0.2119140625
+        }
+      },
+      "runs": [
+        {
+          "text": "Page 1 of 150",
+          "x": 56,
+          "y": 42,
+          "width": 87.18,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "The quick brown fox jumps over the lazy dog.",
+          "x": 56,
+          "y": 59,
+          "width": 280.9,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 1: filler text for load testing.",
+          "x": 56,
+          "y": 76,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 2: filler text for load testing.",
+          "x": 56,
+          "y": 93,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 3: filler text for load testing.",
+          "x": 56,
+          "y": 110,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 4: filler text for load testing.",
+          "x": 56,
+          "y": 127,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 5: filler text for load testing.",
+          "x": 56,
+          "y": 144,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 6: filler text for load testing.",
+          "x": 56,
+          "y": 161,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 7: filler text for load testing.",
+          "x": 56,
+          "y": 178,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 8: filler text for load testing.",
+          "x": 56,
+          "y": 195,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 9: filler text for load testing.",
+          "x": 56,
+          "y": 212,
+          "width": 197.65,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 10: filler text for load testing.",
+          "x": 56,
+          "y": 229,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 11: filler text for load testing.",
+          "x": 56,
+          "y": 246,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 12: filler text for load testing.",
+          "x": 56,
+          "y": 263,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 13: filler text for load testing.",
+          "x": 56,
+          "y": 280,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 14: filler text for load testing.",
+          "x": 56,
+          "y": 297,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 15: filler text for load testing.",
+          "x": 56,
+          "y": 314,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 16: filler text for load testing.",
+          "x": 56,
+          "y": 331,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 17: filler text for load testing.",
+          "x": 56,
+          "y": 348,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 18: filler text for load testing.",
+          "x": 56,
+          "y": 365,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 19: filler text for load testing.",
+          "x": 56,
+          "y": 382,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 20: filler text for load testing.",
+          "x": 56,
+          "y": 399,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 21: filler text for load testing.",
+          "x": 56,
+          "y": 416,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 22: filler text for load testing.",
+          "x": 56,
+          "y": 433,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 23: filler text for load testing.",
+          "x": 56,
+          "y": 450,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 24: filler text for load testing.",
+          "x": 56,
+          "y": 467,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 25: filler text for load testing.",
+          "x": 56,
+          "y": 484,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 26: filler text for load testing.",
+          "x": 56,
+          "y": 501,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 27: filler text for load testing.",
+          "x": 56,
+          "y": 518,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        },
+        {
+          "text": "Line 28: filler text for load testing.",
+          "x": 56,
+          "y": 535,
+          "width": 205.44,
+          "size": 14,
+          "angle": 0,
+          "font": "g_d6_f1",
+          "rtl": false
+        }
+      ]
     }
   }
 }

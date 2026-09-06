@@ -31,6 +31,7 @@ checks compare reassembled lines, not run boundaries.
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Iterator
@@ -40,6 +41,8 @@ from pdfminer.layout import LAParams, LTAnno, LTChar, LTCurve, LTFigure, LTImage
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
+import pypdfium2 as pdfium
+from pypdfium2 import raw
 
 from bidi import bidi
 from fonts import resolve_page_fonts
@@ -59,6 +62,43 @@ SCANNED_BELOW = 30
 # How many pages `inspect` reads to judge the language. Title pages are often a logo and
 # three words, which is far too little to go on.
 SAMPLE_PAGES = 3
+
+# Typographic ligatures, decomposed.
+#
+# A PDF from TeX or InDesign stores "identifies" with a single ﬁ glyph, and pdfminer
+# hands that back as U+FB01. pdf.js decomposes it, which is why `identifies` appears in
+# the TypeScript's model and `identiﬁes` appeared in ours — a difference that looks
+# cosmetic and is not: searching a converted document for "find" would miss every "ﬁnd",
+# copying text out would paste a character most fonts and keyboards cannot reproduce,
+# and a screen reader announces it as a symbol.
+#
+# **Latin and Armenian only, U+FB00–U+FB17.** The Hebrew presentation forms begin at
+# U+FB1D and must be left exactly as they are — decomposing those is the normalisation
+# accident that language.py warns about at length, arriving from the other direction.
+LIGATURES = {
+    "ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl", "ﬅ": "ft", "ﬆ": "st",
+    "ﬓ": "մն", "ﬔ": "մե", "ﬕ": "մի", "ﬖ": "վն", "ﬗ": "մխ",
+}
+_LIGATURE_TABLE = str.maketrans(LIGATURES)
+
+
+def decompose_ligatures(text: str) -> str:
+    """Replace typographic ligatures with the letters they stand for."""
+    return text.translate(_LIGATURE_TABLE)
+
+
+# A glyph pdfminer could not resolve to a character.
+#
+# When a font carries no usable ToUnicode mapping for a glyph, pdfminer emits its raw
+# identifier as literal text — `(cid:13)` — and that string then flows all the way into
+# the converted document, where a reader sees it. pdf.js resolves the same glyph from
+# the font's built-in encoding and gets `©`.
+#
+# We are not going to match it today, but emitting the placeholder is worse than not:
+# it is not text, it is a failure marker. So it is removed, counted, and reported as a
+# warning — a character lost loudly beats a character lost silently, which is the same
+# objection this codebase raises to pdf.js deleting angle brackets.
+UNMAPPED_GLYPH = re.compile(r"\(cid:\d+\)")
 
 
 @dataclass(slots=True)
@@ -114,7 +154,9 @@ def _glyph(char: LTChar, page_height: float) -> _Glyph | None:
     ax, ay = a / scale, -b / scale
 
     return _Glyph(
-        text=char.get_text(),
+        # Decomposed here rather than at run assembly, so grouping, bidi and the width
+        # calculation all see the same characters a reader will.
+        text=decompose_ligatures(char.get_text()),
         x=x,
         y=y,
         # `adv` is in text space; the matrix scale brings it into device space.
@@ -256,7 +298,7 @@ def _runs_from(glyphs: list[_Glyph]) -> Iterator[TextRun]:
     yield from flush()
 
 
-def _count_paint(layout) -> PageStats:
+def _count_paint(layout, path, number: int, unmapped: int) -> PageStats:
     """How much of the page is painted rather than typed.
 
     Not a translation. extract.ts counts pdf.js painting operators; pdfminer reports a
@@ -282,7 +324,29 @@ def _count_paint(layout) -> PageStats:
                 pass
 
     walk(layout)
-    return PageStats(vector=vector, images=images, total=total)
+
+    # Annotations are not page content, and neither pdfminer nor PDFium reports them
+    # among the objects a page paints — but pdf.js counted their appearance streams, and
+    # a page whose only graphics are highlights and link boxes has to be rasterised or
+    # they vanish. Counted separately so the reason stays legible.
+    annotations = 0
+    try:
+        document = pdfium.PdfDocument(str(path))
+        try:
+            annotations = int(raw.FPDFPage_GetAnnotCount(document[number - 1].raw))
+        finally:
+            document.close()
+    except Exception:
+        # A count we could not take is a count of zero, not a failed extraction.
+        pass
+
+    return PageStats(
+        vector=vector,
+        images=images,
+        total=total,
+        annotations=annotations,
+        unmapped=unmapped,
+    )
 
 
 def _chars(layout) -> Iterator[LTChar | LTAnno]:
@@ -354,6 +418,9 @@ def extract_page(path: str | Path, number: int, laparams: LAParams | None = None
     layout = pages[0]
 
     glyphs = _glyphs(_chars(layout), layout.height)
+    unmapped = sum(len(UNMAPPED_GLYPH.findall(g.text)) for g in glyphs)
+    for glyph in glyphs:
+        glyph.text = UNMAPPED_GLYPH.sub("", glyph.text)
     runs = list(_runs_from(_ordered(glyphs)))
 
     return PageModel(
@@ -362,7 +429,7 @@ def extract_page(path: str | Path, number: int, laparams: LAParams | None = None
         height=round2(layout.height),
         runs=runs,
         fonts=resolve_page_fonts(g.font for g in glyphs),
-        stats=_count_paint(layout),
+        stats=_count_paint(layout, path, number, unmapped),
     )
 
 

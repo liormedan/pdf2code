@@ -23,7 +23,7 @@
  * are checked as such.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -36,13 +36,18 @@ const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 const STANDARD_FONTS = join(ROOT, "node_modules", "pdfjs-dist", "standard_fonts") + "/";
 const CMAPS = join(ROOT, "node_modules", "pdfjs-dist", "cmaps") + "/";
 
-/** One page each, chosen for what they stress rather than for coverage. */
-const FIXTURES = [
-  "08-hebrew-doc.pdf", // right-to-left, embedded subsets
-  "07-academic-tables.pdf", // dense positioning, many small runs
-  "09-hostile-text.pdf", // text that must never become markup
-  "04-scanned-ccitt.pdf", // no text layer at all
-];
+/**
+ * Every fixture present, page one each.
+ *
+ * Started as four chosen for what they stress — right-to-left, dense tables, hostile
+ * text, no text layer at all — and became all of them once the model was matching, on
+ * the principle that a corpus you only run part of is a corpus that quietly rots. The
+ * list is read from disk rather than written here, so a fixture added by
+ * `npm run fixtures` is covered without anyone remembering to add it.
+ */
+const FIXTURES = (await readdir(join(ROOT, "fixtures")))
+  .filter((f) => f.endsWith(".pdf"))
+  .sort();
 
 const out: Record<string, unknown> = {};
 

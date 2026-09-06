@@ -37,12 +37,27 @@ FIXTURES = HERE.parent.parent / "fixtures"
 # Differences we have measured, understood and chosen not to fix yet. The key is the
 # fixture; the values are the first 24 characters of each affected run, matching how
 # the positional check reports them. Anything not listed here is a failure.
-KNOWN_DIFFERENCES: dict[str, set[str]] = {
+KNOWN_DIFFERENCES: dict[str, dict[str, str]] = {
     # Spaces inside text rotated ninety degrees come out as separate runs. Position,
     # size, angle and every character are correct; only the run boundaries differ.
     # See desktop/backlog.md, sprint 3.
-    "07-academic-tables.pdf": {"arXiv:1706.03762v7 [cs.C"},
+    "07-academic-tables.pdf": {"arXiv:1706.03762v7 [cs.C": "spaces inside rotated text split into their own runs"},
+    # One glyph pdfminer cannot resolve. The copyright sign in this document's CMSY7
+    # font has no usable ToUnicode entry, so pdfminer emits the placeholder "(cid:13)"
+    # where pdf.js reads the font's built-in encoding and gets "©". We remove the
+    # placeholder rather than print it — it is a failure marker, not text — which costs
+    # the character and splits the line it sat in. Reported as an UNMAPPED_GLYPHS
+    # warning so it is never silent. See desktop/backlog.md, sprint 4.
+    "06-annotations.pdf": {
+        "Copyright c": "line split by an unmappable glyph",
+        "©": "glyph has no ToUnicode entry; placeholder removed",
+        "2009 ACM 978-1-60558-392": "line split by an unmappable glyph",
+    },
 }
+
+# Fonts that exist only to carry a glyph we could not map, and so have no visible run
+# on our side. Same cause as the entry above.
+KNOWN_MISSING_FONTS: dict[str, set[str]] = {"06-annotations.pdf": {"CMSY7"}}
 
 FAILURES: list[str] = []
 
@@ -170,13 +185,22 @@ def check_pages() -> None:
         visible = {run.font for run in model.runs if run.text.strip()}
         py_fonts = {f.name for key, f in model.fonts.items() if key in visible}
         ts_fonts = {f["name"] for f in exp_page["fonts"].values()}
-        check(f"{name} fonts", py_fonts == ts_fonts, f"only py: {py_fonts - ts_fonts}, only ts: {ts_fonts - py_fonts}")
-
-        # The decision stats feed, not the counts themselves.
+        missing_fonts = ts_fonts - py_fonts - KNOWN_MISSING_FONTS.get(name, set())
         check(
-            f"{name} vector presence",
-            (model.stats.vector > 0) == (exp_page["stats"]["vector"] > 0),
-            f"py {model.stats.vector} vs ts {exp_page['stats']['vector']}",
+            f"{name} fonts",
+            not missing_fonts and not (py_fonts - ts_fonts),
+            f"only py: {py_fonts - ts_fonts}, only ts: {missing_fonts}",
+        )
+
+        # The decision the stats feed, not the counts themselves — and annotations count
+        # towards it, because pdf.js counted their appearance streams among its painting
+        # operators and a page whose only graphics are highlights still needs a raster.
+        py_paints = model.stats.vector + model.stats.annotations + model.stats.images
+        ts_paints = exp_page["stats"]["vector"] + exp_page["stats"]["images"]
+        check(
+            f"{name} agrees on whether the page is painted",
+            (py_paints > 0) == (ts_paints > 0),
+            f"py {py_paints} vs ts {ts_paints}",
         )
 
         # Every run the TypeScript found, at the same place, saying the same thing.
@@ -203,11 +227,11 @@ def check_pages() -> None:
         #
         # Printed on every run so it stays visible. Delete the entry, not the check,
         # when it is fixed.
-        known = KNOWN_DIFFERENCES.get(name, set())
+        known = KNOWN_DIFFERENCES.get(name, {})
         unexpected = [m for m in missing if m[2] not in known]
         for m in missing:
             if m[2] in known:
-                print(f"  known {name}: rotated run at ({m[0]}, {m[1]}) — spaces split out")
+                print(f"  known {name}: ({m[0]}, {m[1]}) — {known[m[2]]}")
 
         check(
             f"{name} every TypeScript run is present at its own position",
