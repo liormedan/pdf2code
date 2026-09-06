@@ -397,6 +397,7 @@
     "deliverReveal": "להציג את הקובץ בתיקייה",
     "deliverTotal": "{count} קבצים",
     "deliverPacked": "נארז ל-{path} · {size}",
-    "previewSource": "{file} — קוד המקור. רכיב אינו דף, ולכן הוא מוצג ולא מורץ."
+    "previewSource": "{file} — קוד המקור. רכיב אינו דף, ולכן הוא מוצג ולא מורץ.",
+    "deliverOpenFolderShortcut": "לפתוח את התיקייה — ‎Ctrl+Shift+O"
   }
 }

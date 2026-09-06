@@ -397,6 +397,7 @@
     "deliverReveal": "Show the file in its folder",
     "deliverTotal": "{count} files",
     "deliverPacked": "Packed to {path} · {size}",
-    "previewSource": "{file} — source. A component is not a page, so it is shown rather than run."
+    "previewSource": "{file} — source. A component is not a page, so it is shown rather than run.",
+    "deliverOpenFolderShortcut": "Open the folder — Ctrl+Shift+O"
   }
 }

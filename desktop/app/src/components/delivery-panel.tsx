@@ -75,6 +75,22 @@ export default function DeliveryPanel({ dir }: { dir: string }) {
     else setTimeout(() => setCopied(false), 2000);
   }, [dir, t]);
 
+  // Ctrl/Cmd+Shift+O opens the folder without reaching for the mouse. Bound while this
+  // panel is mounted, which is exactly while there is something to open — a shortcut
+  // that fires when there is no output would be a shortcut that does nothing.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || !event.shiftKey) return;
+      // `code` rather than `key`: with a Hebrew layout active, `key` is a Hebrew letter
+      // and the shortcut would silently stop working in the language we ship for.
+      if (event.code !== "KeyO") return;
+      event.preventDefault();
+      void run(() => openPath(dir));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dir, run]);
+
   const page = files.find((file) => file.name === "index.html");
   const total = files.reduce((sum, file) => sum + file.size, 0);
 
@@ -95,7 +111,13 @@ export default function DeliveryPanel({ dir }: { dir: string }) {
           </Button>
         ) : null}
 
-        <Button size="sm" variant="outline" onClick={() => void run(() => openPath(dir))} disabled={busy}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void run(() => openPath(dir))}
+          disabled={busy}
+          title={t("deliverOpenFolderShortcut")}
+        >
           <FolderOpen className="size-4" />
           {t("deliverOpenFolder")}
         </Button>
