@@ -4,6 +4,7 @@
 //! sprint 5 — the filesystem. The front end names what it wants and this side decides
 //! whether that is allowed, which is the boundary desktop/architecture.md §1 describes.
 
+mod deliver;
 mod documents;
 mod projects;
 mod sidecar;
@@ -69,6 +70,9 @@ pub fn run() {
             workbench::pick_export_dir,
             workbench::workbench_dir,
             workbench::read_image,
+            deliver::list_output,
+            deliver::open_path,
+            deliver::reveal_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

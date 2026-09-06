@@ -116,10 +116,16 @@ export const pageText = (path: string, pages: number[]) =>
 // The Rust side: where a file may be written, and how a thumbnail is seen.
 // ---------------------------------------------------------------------------
 
-/** The native save dialog. The only thing that makes a file path writable. */
-export async function pickSavePath(name: string): Promise<string | null> {
+/**
+ * The native save dialog. The only thing that makes a file path writable.
+ *
+ * `ext` picks the filter the dialog offers — pdf for an edited document, zip for a packed
+ * conversion. Checked on the Rust side rather than trusted, because it reaches a native
+ * API.
+ */
+export async function pickSavePath(name: string, ext = "pdf"): Promise<string | null> {
   if (!isDesktop()) return null;
-  return (await invoke<string | null>("pick_save_path", { name })) ?? null;
+  return (await invoke<string | null>("pick_save_path", { name, ext })) ?? null;
 }
 
 export async function pickExportDir(): Promise<string | null> {

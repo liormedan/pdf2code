@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import OutputPreview from "@/components/output-preview";
+import DeliveryPanel from "@/components/delivery-panel";
 import { useTranslations } from "@/i18n/provider";
 import {
   clearOutputRoot,
@@ -42,6 +43,9 @@ export default function ConvertPanel({
 }) {
   const t = useTranslations("desktop");
   const [root, setRoot] = useState<string | null>(null);
+  /** Which output file the preview is showing. Null until somebody picks another. */
+  const [picked, setPicked] = useState<string | null>(null);
+  const setShown = setPicked;
 
   useEffect(() => {
     void outputRoot().then(setRoot);
@@ -72,6 +76,13 @@ export default function ConvertPanel({
   const current = items.find((item) => item.state === "running") ?? null;
   const waiting = items.filter((item) => item.state === "waiting").length;
   const lastDone = [...items].reverse().find((item) => item.state === "done") ?? null;
+
+  // What can be shown: the page, and the component as source. A stylesheet and a README
+  // are output too, but nobody opens a preview to read a stylesheet.
+  const previewable = (lastDone?.result?.files ?? []).filter((name) =>
+    /\.(html?|jsx|tsx)$/i.test(name),
+  );
+  const shown = previewable.includes(picked ?? "") ? picked : (previewable[0] ?? null);
 
   const pages = current?.progress?.pages ?? 0;
   const page = current?.progress?.page ?? 0;
@@ -173,11 +184,12 @@ export default function ConvertPanel({
       ) : null}
 
       {lastDone?.result ? (
-        <div className="space-y-1 text-xs text-muted-foreground">
+        <div className="space-y-2 text-xs text-muted-foreground">
           <p>{t("convertOut")}</p>
-          {/* Shown, not opened. Opening a folder needs a shell permission this app
-              deliberately does not have. */}
-          <p className="font-mono text-[11px] break-all">{lastDone.result.out}</p>
+          {/* Opening the folder needs a permission this app withheld until sprint 1, and
+              it is still not the shell plugin: a Rust command that opens paths inside the
+              output directories, and refuses a file it could not have written. */}
+          <DeliveryPanel dir={lastDone.result.out} />
           {lastDone.result.warnings.map((warning) => (
             <p key={warning.code} className="text-warning">
               {wording(t, warning)}
@@ -186,8 +198,25 @@ export default function ConvertPanel({
         </div>
       ) : null}
 
-      {lastDone?.result?.files.includes("index.html") ? (
-        <OutputPreview dir={lastDone.result.out} file="index.html" />
+      {previewable.length > 0 && lastDone?.result ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+          {previewable.length > 1 ? (
+            <div className="flex flex-wrap gap-1">
+              {previewable.map((name) => (
+                <Button
+                  key={name}
+                  size="sm"
+                  variant={name === shown ? "secondary" : "ghost"}
+                  aria-pressed={name === shown}
+                  onClick={() => setShown(name)}
+                >
+                  {name}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+          {shown ? <OutputPreview dir={lastDone.result.out} file={shown} /> : null}
+        </div>
       ) : null}
     </div>
   );

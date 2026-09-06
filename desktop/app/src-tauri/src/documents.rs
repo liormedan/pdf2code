@@ -169,18 +169,26 @@ const PREVIEW_LIMIT: u64 = 8 * 1024 * 1024;
 /// conversions directory; anything else is refused, including a path that only looks
 /// like it belongs there. Canonicalising first is what makes `..` in the middle of an
 /// otherwise innocent path a refusal rather than an escape.
-#[tauri::command]
-pub fn read_output(app: AppHandle, path: String) -> Result<String, String> {
-    // Every directory output is allowed to land in — the app's own, and the folder the
-    // person chose if they chose one. Both, because a preview has to keep working for
-    // conversions made before the setting changed.
+/// Every directory output is allowed to land in — the app's own, and the folder the
+/// person chose if they chose one.
+///
+/// Both, because a preview has to keep working for conversions made before the setting
+/// changed. Public because `deliver.rs` opens what this reads, and two commands that
+/// disagree about which paths are in bounds is one of them being wrong.
+pub fn output_roots(app: &AppHandle) -> Vec<PathBuf> {
     let mut roots = Vec::new();
     if let Ok(dir) = app.path().app_data_dir() {
         roots.push(dir.join("conversions"));
     }
-    if let Some(chosen) = read_output_root(&app) {
+    if let Some(chosen) = read_output_root(app) {
         roots.push(PathBuf::from(chosen));
     }
+    roots
+}
+
+#[tauri::command]
+pub fn read_output(app: AppHandle, path: String) -> Result<String, String> {
+    let roots = output_roots(&app);
 
     // Both sides canonicalised: a root may itself be reached through a symlink or a
     // short path on Windows, and comparing a canonical child to a non-canonical parent

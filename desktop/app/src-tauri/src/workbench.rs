@@ -93,11 +93,21 @@ pub fn pick_save_path(
     app: AppHandle,
     writable: State<'_, Writable>,
     name: String,
+    ext: Option<String>,
 ) -> Option<String> {
+    // The workbench saves documents and the converter saves archives, and a dialog that
+    // offers the wrong extension is a dialog people fight with. Validated rather than
+    // interpolated: this string reaches a native API, so it stays letters.
+    let ext = ext.unwrap_or_else(|| "pdf".into());
+    if ext.is_empty() || ext.len() > 8 || !ext.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return None;
+    }
+    let label = ext.to_ascii_uppercase();
+
     let chosen = app
         .dialog()
         .file()
-        .add_filter("PDF", &["pdf"])
+        .add_filter(&label, &[ext.as_str()])
         .set_file_name(&name)
         .blocking_save_file()?;
 

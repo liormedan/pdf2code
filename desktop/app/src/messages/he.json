@@ -387,6 +387,16 @@
     "workbenchEarlier": "להזיז אחורה",
     "workbenchLater": "להזיז קדימה",
     "workbenchDropEnd": "לגרור לכאן כדי להעביר לסוף",
-    "workbenchUntouched": "קובצי המקור לא משתנים. שמירה יוצרת מסמך חדש במקום שתבחרו."
+    "workbenchUntouched": "קובצי המקור לא משתנים. שמירה יוצרת מסמך חדש במקום שתבחרו.",
+    "deliverOpenPage": "לפתוח את הדף",
+    "deliverOpenFolder": "לפתוח את התיקייה",
+    "deliverZip": "לארוז ל-ZIP",
+    "deliverCopyPath": "העתקת הנתיב",
+    "deliverCopied": "הועתק",
+    "deliverCopyFailed": "ההעתקה ללוח נחסמה בחלון הזה.",
+    "deliverReveal": "להציג את הקובץ בתיקייה",
+    "deliverTotal": "{count} קבצים",
+    "deliverPacked": "נארז ל-{path} · {size}",
+    "previewSource": "{file} — קוד המקור. רכיב אינו דף, ולכן הוא מוצג ולא מורץ."
   }
 }

@@ -103,7 +103,7 @@ def main() -> int:
     check(
         "declares the ops it has",
         set(hello.get("ops", []))
-        == {"echo", "sleep", "probe", "convert", "edit", "thumbnails", "exportImages", "compress", "text"},
+        == {"echo", "sleep", "probe", "convert", "edit", "thumbnails", "exportImages", "compress", "text", "zip"},
         str(sorted(hello.get("ops", []))),
     )
 

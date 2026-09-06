@@ -56,6 +56,21 @@ export default function OutputPreview({ dir, file }: { dir: string; file: string
     return <p className="text-xs text-muted-foreground">{t("previewLoading")}</p>;
   }
 
+  // A component is not a page: `PdfDocument.jsx` cannot be rendered in a frame that is
+  // denied scripts, and rendering it anywhere else would mean executing code generated
+  // from somebody's document inside our window. Shown as source, which is also the form
+  // in which it is going to be used.
+  if (!/\.html?$/i.test(file)) {
+    return (
+      <figure className="m-0 flex min-h-0 flex-1 flex-col gap-1.5">
+        <pre className="min-h-64 flex-1 overflow-auto rounded-lg border border-divider bg-card p-3 text-start text-[11px] leading-relaxed" dir="ltr">
+          <code>{html}</code>
+        </pre>
+        <figcaption className="text-[11px] text-muted-foreground">{t("previewSource", { file })}</figcaption>
+      </figure>
+    );
+  }
+
   return (
     <figure className="m-0 flex min-h-0 flex-1 flex-col gap-1.5">
       <iframe

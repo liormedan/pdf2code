@@ -10,14 +10,15 @@ python -m venv .venv
 .venv/Scripts/python.exe test_protocol.py
 ```
 
-ארבע סוויטות, בלי מסגרת בדיקות:
+חמש סוויטות, בלי מסגרת בדיקות:
 
 | קובץ | מה הוא מוודא |
 | --- | --- |
 | `test_protocol.py` | חוזה הסיידקאר — 21 בדיקות. מקבל נתיב לבינארי קפוא כארגומנט |
 | `test_engine.py` | **התאמה לטייפסקריפט** — 44 פונטים, 12 שפות, וארבעה מודלי עמוד |
 | `test_output.py` | **הזרקה** — הפלט מול `09-hostile-text.pdf`, וסיווגי הראסטר |
-| `test_pages.py` | **הסדנה** — התוכנית, הסירובים, התמונות, וקריטריון הסיום של ספרינט 6 |
+| `test_pages.py` | **הסדנה** — התוכנית, הסירובים, התמונות, וקריטריון הסיום |
+| `test_archive.py` | **אריזה ל-ZIP** — ובראשן הסירוב לכתוב ארכיון בתוך התיקייה שהוא אורז |
 
 ולידציית HTML5 והידור JSX דורשים את כלי ה-Node של המאגר, ולכן הם ב-`parity/validate_output.mjs`.
 
@@ -66,7 +67,7 @@ JSON תחום שורות על `stdin` ו-`stdout`. **בלי HTTP ובלי סוק
 **תשובות** — אפס או יותר `progress`, ואז בדיוק אחת מ-`result` / `error`:
 
 ```json
-{"type":"ready","protocol":1,"python":"3.13.5","ops":["compress","convert","echo","edit","exportImages","probe","sleep","text","thumbnails"]}
+{"type":"ready","protocol":1,"python":"3.13.5","ops":["compress","convert","echo","edit","exportImages","probe","sleep","text","thumbnails","zip"]}
 {"id":"j7","type":"progress","page":12,"pages":40,"phase":"extract"}
 {"id":"j7","type":"result","slept":2.0,"steps":40}
 {"id":"j7","type":"error","code":"CANCELLED","message":"cancelled"}

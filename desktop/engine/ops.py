@@ -316,6 +316,28 @@ def op_page_text(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     return {"pages": out}
 
 
+def op_zip(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """Pack a conversion's folder into one file somebody can send.
+
+    The engine does this rather than Rust because the engine already knows what it
+    wrote, and `zipfile` is in the standard library it already ships.
+    """
+    from archive import zip_dir  # noqa: PLC0415 - see op_probe
+
+    path = args.get("path")
+    out = args.get("out")
+    if not isinstance(path, str) or not path:
+        raise ValueError("zip needs a folder")
+    if not isinstance(out, str) or not out:
+        raise ValueError("zip needs an output path")
+
+    ctx.checkpoint()
+    ctx.progress(page=1, pages=2, phase="generate")
+    result = zip_dir(path, out, overwrite=bool(args.get("overwrite", False)))
+    ctx.progress(page=2, pages=2, phase="generate")
+    return result
+
+
 OPS: dict[str, Callable[[dict[str, Any], Context], dict[str, Any]]] = {
     "echo": op_echo,
     "sleep": op_sleep,
@@ -326,4 +348,5 @@ OPS: dict[str, Callable[[dict[str, Any], Context], dict[str, Any]]] = {
     "exportImages": op_export_images,
     "compress": op_compress,
     "text": op_page_text,
+    "zip": op_zip,
 }

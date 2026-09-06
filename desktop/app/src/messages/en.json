@@ -387,6 +387,16 @@
     "workbenchEarlier": "Move earlier",
     "workbenchLater": "Move later",
     "workbenchDropEnd": "Drop here to move to the end",
-    "workbenchUntouched": "Source files are never changed. Saving writes a new document where you choose."
+    "workbenchUntouched": "Source files are never changed. Saving writes a new document where you choose.",
+    "deliverOpenPage": "Open the page",
+    "deliverOpenFolder": "Open the folder",
+    "deliverZip": "Pack as ZIP",
+    "deliverCopyPath": "Copy path",
+    "deliverCopied": "Copied",
+    "deliverCopyFailed": "The clipboard was blocked in this window.",
+    "deliverReveal": "Show the file in its folder",
+    "deliverTotal": "{count} files",
+    "deliverPacked": "Packed to {path} · {size}",
+    "previewSource": "{file} — source. A component is not a page, so it is shown rather than run."
   }
 }
