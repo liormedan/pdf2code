@@ -27,7 +27,7 @@ from __future__ import annotations
 import io
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 import pypdfium2 as pdfium
 
@@ -116,7 +116,8 @@ def apply_plan(plan: list[PagePlan], out: str | Path, *, overwrite: bool = False
 
 
 def thumbnails(source: str | Path, out_dir: str | Path, *, width: int = 180,
-               pages: list[int] | None = None) -> list[dict]:
+               pages: list[int] | None = None,
+               on_page: Callable[[int, int], None] | None = None) -> list[dict]:
     """Render small page images, for a page view.
 
     Written to disk and returned as paths. Thumbnails of a three-hundred-page document
@@ -128,10 +129,14 @@ def thumbnails(source: str | Path, out_dir: str | Path, *, width: int = 180,
 
     document = pdfium.PdfDocument(str(source))
     try:
-        wanted = pages or range(1, len(document) + 1)
+        wanted = list(pages or range(1, len(document) + 1))
         made: list[dict] = []
 
-        for number in wanted:
+        for index, number in enumerate(wanted, start=1):
+            # Reported per page: a three-hundred-page document takes long enough that a
+            # page view with no sign of life reads as a hang.
+            if on_page is not None:
+                on_page(index, len(wanted))
             if number < 1 or number > len(document):
                 continue
             page = document[number - 1]

@@ -174,6 +174,13 @@ def check_images(work: Path) -> None:
     check("scaled to the width asked for", all(abs(t["width"] - 120) <= 1 for t in made),
           str([t["width"] for t in made]))
 
+    # Progress per page. A three-hundred-page document takes long enough that a page view
+    # with no sign of life reads as a hang, and this is the only thing that reports it.
+    seen: list[tuple[int, int]] = []
+    thumbnails(HEBREW, work / "progress", width=80, pages=[1, 2, 3],
+               on_page=lambda page, pages: seen.append((page, pages)))
+    check("progress is reported once per page", seen == [(1, 3), (2, 3), (3, 3)], str(seen))
+
     made = export_images(HEBREW, work / "images", pages=[1], scale=1.5, format="jpeg")
     check("exports at the size asked for", len(made) == 1 and Path(made[0]["path"]).exists())
     check("and in the format asked for", made[0]["path"].endswith(".jpg"))
@@ -181,6 +188,45 @@ def check_images(work: Path) -> None:
     out = compress(TABLES, work / "compressed.pdf")
     check("compression writes a readable document", pages_of(Path(out["out"])) == pages_of(TABLES))
     check("and reports what it actually saved", "saved" in out, str(out.get("saved")))
+
+
+def check_acceptance(work: Path) -> None:
+    """The sprint's acceptance criterion, run rather than asserted in a document.
+
+    From desktop/roadmap.md: a 35-page Hebrew PDF, three pages taken out, the order
+    changed, one page turned, a page merged in from another file, saved — and the result
+    opens correctly. The last clause is the one worth checking mechanically: a rebuilt
+    document whose text layer did not survive still opens, and looks fine, and is useless.
+    """
+    print("\n  The acceptance criterion, as a check")
+
+    keep = [n for n in range(1, 36) if n not in (4, 9, 30)]
+    # Reordered: page 2 first, then the rest. Rotated: the page that ends up second.
+    order = [2] + [n for n in keep if n != 2]
+
+    plan = [{"from": str(HEBREW), "page": n} for n in order]
+    plan[1]["rotate"] = 90
+    # Merged in from the other document, at a position that is not the end.
+    plan.insert(5, {"from": str(TABLES), "page": 1})
+
+    out = work / "acceptance.pdf"
+    result = apply_plan(parse_plan(plan), out)
+
+    check("three out, one in, from 35", result["pages"] == 33 and pages_of(out) == 33,
+          str(result["pages"]))
+    check("the page that was turned is turned", rotation_of(out, 2) == 90, str(rotation_of(out, 2)))
+    check("and no other page is", rotation_of(out, 1) == 0 and rotation_of(out, 3) == 0)
+
+    # The clause that matters: real text, in reading order, after the rebuild. Through the
+    # same extraction the converter uses, which is what makes the Hebrew logical rather
+    # than the visual order pdfminer hands back.
+    from extract import extract_page
+
+    model = extract_page(str(out), 1)
+    text = "".join(run.text for run in model.runs)
+    check("the text layer survived the rebuild", len(text) > 0, f"{len(text)} chars")
+    check("and it is still Hebrew, the right way round",
+          any("א" <= c <= "ת" for c in text) and any(run.rtl for run in model.runs))
 
 
 def main() -> int:
@@ -194,6 +240,7 @@ def main() -> int:
         check_plan(work)
         check_refusals(work)
         check_images(work)
+        check_acceptance(work)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 

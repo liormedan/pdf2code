@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { FileText, FolderClock, Settings2, ShieldCheck } from "lucide-react";
+import { FileText, FolderClock, Settings2, ShieldCheck, Wrench } from "lucide-react";
 import { Logo } from "@/components/logo";
 import ThemeToggle from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
 import ConvertPanel from "@/components/convert-panel";
 import SourcesPanel from "@/components/sources-panel";
 import ProjectsPanel from "@/components/projects-panel";
+import WorkbenchPanel from "@/components/workbench-panel";
+import { Button } from "@/components/ui/button";
 import { useTranslations } from "@/i18n/provider";
 import { engineStatus, isDesktop, onStatus, type EngineStatus, type PickedDocument } from "@/lib/engine";
 import { useConversions, type ConversionSettings } from "@/lib/use-conversions";
@@ -21,11 +23,19 @@ import { useConversions, type ConversionSettings } from "@/lib/use-conversions";
  *
  * The queue lives here because all three regions read it. Sources shows what is waiting,
  * the middle shows what is running, and projects is written by it as each one finishes.
+ *
+ * **Two modes, not two windows.** The workbench edits the document itself and the
+ * converter turns it into code; they share nothing but the engine, and showing both at
+ * once would be six panels for two unrelated jobs. Switching is a header control rather
+ * than a route, because there is still no router and adding one for two screens would
+ * buy nothing but a URL nobody can see.
  */
 export default function AppShell() {
   const t = useTranslations("desktop");
   const tApp = useTranslations("app");
   const status = useEngineStatus();
+
+  const [mode, setMode] = useState<"convert" | "workbench">("convert");
 
   const [settings, setSettings] = useState<ConversionSettings>({
     formats: ["html"],
@@ -48,11 +58,38 @@ export default function AppShell() {
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-divider px-5 py-3">
         <Logo name={tApp("name")} />
         <div className="flex items-center gap-1">
+          <nav className="me-2 flex items-center gap-0.5 rounded-lg border border-divider p-0.5">
+            <Button
+              size="sm"
+              variant={mode === "convert" ? "secondary" : "ghost"}
+              aria-pressed={mode === "convert"}
+              onClick={() => setMode("convert")}
+            >
+              <Settings2 className="size-4" />
+              {t("modeConvert")}
+            </Button>
+            <Button
+              size="sm"
+              variant={mode === "workbench" ? "secondary" : "ghost"}
+              aria-pressed={mode === "workbench"}
+              onClick={() => setMode("workbench")}
+            >
+              <Wrench className="size-4" />
+              {t("modeWorkbench")}
+            </Button>
+          </nav>
           <LanguageSwitcher />
           <ThemeToggle />
         </div>
       </header>
 
+      {mode === "workbench" ? (
+        <main className="min-h-0 flex-1 p-5">
+          <Region icon={Wrench} title={t("workbench")}>
+            {isDesktop() ? <WorkbenchPanel status={status} /> : <Empty line={t("engineNotInApp")} />}
+          </Region>
+        </main>
+      ) : (
       <main className="grid min-h-0 flex-1 gap-4 overflow-auto p-5 lg:grid-cols-[1fr_1fr_1fr]">
         <Region icon={FileText} title={t("sources")}>
           {isDesktop() ? (
@@ -92,6 +129,7 @@ export default function AppShell() {
           )}
         </Region>
       </main>
+      )}
 
       {/* The one claim the whole product rests on, kept on screen rather than in a
           marketing page the buyer already closed. */}

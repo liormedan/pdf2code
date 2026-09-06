@@ -212,7 +212,11 @@ pub fn read_output(app: AppHandle, path: String) -> Result<String, String> {
 /// stamped so a second conversion of the same file does not silently overwrite the
 /// first. Sprint 5 replaces this with a folder the person chooses.
 #[tauri::command]
-pub fn output_dir(app: AppHandle, source: String) -> Result<String, String> {
+pub fn output_dir(
+    app: AppHandle,
+    writable: tauri::State<'_, crate::workbench::Writable>,
+    source: String,
+) -> Result<String, String> {
     // The chosen folder if there is one, and the app's own directory otherwise.
     let base = match read_output_root(&app) {
         Some(root) => PathBuf::from(root),
@@ -237,6 +241,10 @@ pub fn output_dir(app: AppHandle, source: String) -> Result<String, String> {
 
     let dir = base.join(format!("{stem}-{stamp}"));
     std::fs::create_dir_all(&dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+
+    // A directory this side just made is a place the engine may write to. Registering it
+    // here is what keeps the rule in `engine_call` universal rather than a workbench one.
+    writable.allow(&dir);
 
     Ok(dir.to_string_lossy().into_owned())
 }

@@ -318,13 +318,26 @@ pub fn engine_job_id(engine: State<'_, Engine>) -> String {
     engine.next_job_id()
 }
 
+/// Run one job.
+///
+/// The one check here is about **writing**. Five of the nine operations take an `out`,
+/// and this command forwards whatever the window put in `args` — so a front end that
+/// could name any `out` would have a write primitive at an arbitrary path, through an
+/// engine that creates directories on the way. A path is writable only if a native
+/// dialog produced it or this side made it; see workbench::Writable.
 #[tauri::command]
 pub async fn engine_call(
     engine: State<'_, Engine>,
+    writable: State<'_, crate::workbench::Writable>,
     id: String,
     op: String,
     args: Value,
 ) -> Result<Value, String> {
+    if let Some(out) = args.get("out").and_then(Value::as_str) {
+        if !writable.permits(std::path::Path::new(out)) {
+            return Err("refused: nobody chose that place to write to".into());
+        }
+    }
     engine.call(id, op, args).await
 }
 

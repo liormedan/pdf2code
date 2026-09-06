@@ -7,6 +7,7 @@
 mod documents;
 mod projects;
 mod sidecar;
+mod workbench;
 
 use tauri::Manager;
 
@@ -37,6 +38,13 @@ pub fn run() {
             // The project store. Opened once at startup so a failure is visible now
             // rather than on the first conversion somebody wanted to keep.
             app.manage(projects::Store(std::sync::Mutex::new(projects::open(app.handle())?)));
+
+            // Where the engine is allowed to write, which starts empty: nothing is
+            // writable until a native dialog or this side produces the path.
+            app.manage(workbench::Writable::default());
+            // Last run's page thumbnails. They are a rendering of somebody's document,
+            // so they are cleared at launch rather than left to accumulate.
+            workbench::clear_scratch(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -57,6 +65,10 @@ pub fn run() {
             projects::list_projects,
             projects::forget_project,
             projects::source_state,
+            workbench::pick_save_path,
+            workbench::pick_export_dir,
+            workbench::workbench_dir,
+            workbench::read_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

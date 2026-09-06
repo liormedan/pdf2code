@@ -230,12 +230,17 @@ def op_thumbnails(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     if not isinstance(path, str) or not isinstance(out, str):
         raise ValueError("thumbnails needs a path and an output directory")
 
+    def progress(page: int, pages: int) -> None:
+        ctx.checkpoint()
+        ctx.progress(page=page, pages=pages, phase="render")
+
     ctx.checkpoint()
     made = thumbnails(
         path,
         out,
         width=int(args.get("width", 180)),
         pages=args.get("pages"),
+        on_page=progress,
     )
     return {"thumbnails": made}
 
