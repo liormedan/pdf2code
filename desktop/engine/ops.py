@@ -133,8 +133,74 @@ def op_probe(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     }
 
 
+def op_convert(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """Convert a document, writing the result to disk and reporting where.
+
+    The result carries **names, not contents**. A hundred and fifty rasterised pages as
+    base64 would be tens of megabytes of JSON through a pipe meant for control — see
+    desktop/architecture.md §2. The window is told the directory and reads from it.
+
+    `warnings` keeps the shape the interface already knows: a code and its parameters,
+    never a sentence. The engine does not know what language the reader speaks.
+    """
+    from convert import ConversionError, convert  # noqa: PLC0415 — see op_probe
+
+    path = args.get("path")
+    out = args.get("out")
+    if not isinstance(path, str) or not path:
+        raise ValueError("convert needs a path")
+    if not isinstance(out, str) or not out:
+        raise ValueError("convert needs an output directory")
+
+    formats = args.get("formats") or ["html"]
+    if not isinstance(formats, list) or not all(f in ("html", "react") for f in formats):
+        raise ValueError("formats must be a list of 'html' and/or 'react'")
+
+    def progress(page: int, pages: int, phase: str) -> None:
+        ctx.progress(page=page, pages=pages, phase=phase)
+
+    try:
+        result = convert(
+            path,
+            out,
+            formats=formats,
+            background=bool(args.get("background", True)),
+            background_scale=float(args.get("backgroundScale", 2)),
+            embed_images=bool(args.get("embedImages", True)),
+            title=str(args.get("title", "Converted document")),
+            component_name=str(args.get("componentName", "PdfDocument")),
+            max_pages=int(args.get("maxPages", 0)),
+            on_progress=progress,
+            is_cancelled=lambda: ctx.cancelled,
+        )
+    except ConversionError as error:
+        if error.code == "CANCELLED":
+            raise Cancelled() from error
+        raise
+
+    info = result.info
+    return {
+        "out": out,
+        "files": result.files,
+        "info": {
+            "pages": info.pages,
+            "converted": result.converted,
+            "title": info.title,
+            "producer": info.producer,
+            "scanned": info.scanned,
+            "hasRTL": info.has_rtl,
+            "lang": info.lang,
+            "dir": info.dir,
+        },
+        "warnings": [
+            {"code": w.code, "params": w.params, "message": w.message} for w in result.warnings
+        ],
+    }
+
+
 OPS: dict[str, Callable[[dict[str, Any], Context], dict[str, Any]]] = {
     "echo": op_echo,
     "sleep": op_sleep,
     "probe": op_probe,
+    "convert": op_convert,
 }
