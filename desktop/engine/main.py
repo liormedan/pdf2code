@@ -19,6 +19,7 @@ import sys
 import threading
 from typing import Any
 
+from failures import classify
 from ops import OPS, Cancelled
 from protocol import Wire, claim_stdout, log
 
@@ -95,11 +96,22 @@ def run_job(job: Job, op_name: str, args: dict[str, Any]) -> None:
             WIRE.result(job.id, payload)
     except Cancelled:
         WIRE.error(job.id, "CANCELLED", "cancelled")
+    except ValueError as exc:
+        # An operation refusing its arguments — an empty plan, a page that does not
+        # exist, an output that is also an input. Those are answers rather than
+        # incidents, and each already carries the sentence the operation wrote for it.
+        log(f"job {job.id} refused: {exc}")
+        WIRE.error(job.id, "BAD_REQUEST", str(exc))
     except Exception as exc:  # noqa: BLE001 — a sidecar must not die of one bad job
         # The traceback goes to the log, not to the window: it can quote a document's
         # contents, and this product's whole claim is that those stay put.
         log(f"job {job.id} failed: {exc!r}")
-        WIRE.error(job.id, "INTERNAL", str(exc))
+        # Every document that failed to open used to arrive as INTERNAL carrying
+        # PDFium's own words — the same sentence for a truncated file, an empty one, a
+        # renamed text file, and one another program had open. `classify` tells them
+        # apart by looking at the file, because the exception cannot.
+        code, message = classify(exc, args.get("path") if isinstance(args, dict) else None)
+        WIRE.error(job.id, code, message)
     finally:
         JOBS.remove(job.id)
 

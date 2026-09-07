@@ -128,9 +128,7 @@ export default function SourcesPanel({
                     not have. The engine's reason is short, and it is the only clue. */}
                 {item.error ? (
                   <span className="block text-[11px] text-destructive">
-                    {item.error.includes(HUNG)
-                      ? t("itemHung")
-                      : t("itemFailed", { message: item.error })}
+                    {reasonFor(t, item.error)}
                   </span>
                 ) : null}
               </span>
@@ -151,6 +149,26 @@ export default function SourcesPanel({
       )}
     </div>
   );
+}
+
+/**
+ * The sentence for a failed item.
+ *
+ * The engine sends a code; this picks the wording. A raw error string is a last resort
+ * rather than the norm — it is the engine's log voice, and it is in English whatever the
+ * window is running in.
+ */
+function reasonFor(
+  t: (key: string, params?: Record<string, string | number>) => string,
+  error: string,
+): string {
+  if (error.includes(HUNG)) return t("itemHung");
+  const split = error.indexOf("|");
+  if (split > 0) {
+    const tag = error.slice(0, split);
+    if (tag.startsWith("item")) return t(tag, { detail: error.slice(split + 1) });
+  }
+  return t("itemFailed", { message: error });
 }
 
 const kb = (bytes: number) =>

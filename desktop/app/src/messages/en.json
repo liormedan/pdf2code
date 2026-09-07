@@ -453,6 +453,8 @@
     "settingsShortcutSave": "Save as",
     "settingsShortcutsNote": "No shortcut fires while typing in a text field — each one checks where focus is before it does anything.",
     "engineRestart": "Restart the engine",
-    "itemHung": "The engine stopped answering and could not continue. It has been restarted — you can try again."
+    "itemHung": "The engine stopped answering and could not continue. It has been restarted — you can try again.",
+    "itemUnreadable": "The document could not be opened. {detail}",
+    "itemEncrypted": "The document is protected. {detail}"
   }
 }

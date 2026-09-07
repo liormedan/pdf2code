@@ -167,9 +167,17 @@ export function useConversions(settings: ConversionSettings, onRecorded: () => v
         // thirty-nine would each wait two minutes to fail the same way.
         const cancelled = message.includes("CANCELLED");
         const hung = message.includes(HUNG);
+        // The engine returns a code and the window owns the sentence, in whichever
+        // language it is running in. Until sprint 4 every unopenable document arrived
+        // as INTERNAL carrying PDFium's own words, so there was nothing to word.
+        const reason = message.includes("UNREADABLE")
+          ? "itemUnreadable"
+          : message.includes("ENCRYPTED")
+            ? "itemEncrypted"
+            : null;
         patch(item.key, {
           state: cancelled ? "cancelled" : "failed",
-          error: cancelled ? null : message,
+          error: cancelled ? null : reason ? `${reason}|${message}` : message,
           progress: null,
           took: (performance.now() - started) / 1000,
         });
