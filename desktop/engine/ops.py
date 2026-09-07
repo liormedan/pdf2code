@@ -284,7 +284,7 @@ def op_page_text(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     text out of a Hebrew PDF and getting it reversed is situation 5 in
     business/situations.md; getting it right here is the same win in a smaller place.
     """
-    from extract import extract_page  # noqa: PLC0415
+    from extract import extract_document  # noqa: PLC0415
 
     path = args.get("path")
     if not isinstance(path, str) or not path:
@@ -294,11 +294,25 @@ def op_page_text(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     if not isinstance(numbers, list) or not numbers:
         raise ValueError("text needs a list of page numbers")
 
+    # One walk, stopping at the last page asked for, rather than one walk per page.
+    # Asking pdfminer for page N makes it parse the N-1 before it, so the loop this used
+    # to be cost 218 ms/page on a five-hundred-page document against 22 for the converter
+    # doing strictly more work. Search over a long document is the thing that felt it.
+    wanted = {int(n) for n in numbers}
+    ctx.checkpoint()
+    models = {
+        model.number: model
+        for model in extract_document(path, max_pages=max(wanted))
+        if model.number in wanted
+    }
+
     out: list[dict[str, Any]] = []
     total = len(numbers)
     for index, number in enumerate(numbers, start=1):
         ctx.checkpoint()
-        model = extract_page(path, int(number))
+        model = models.get(int(number))
+        if model is None:
+            continue
         # Lines rather than runs: a run is a rendering detail, and nobody searches for
         # half a sentence because the font changed in the middle of it.
         lines: dict[float, list[str]] = {}

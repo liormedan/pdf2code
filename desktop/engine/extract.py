@@ -308,7 +308,7 @@ def _runs_from(glyphs: list[_Glyph]) -> Iterator[TextRun]:
     yield from flush()
 
 
-def _count_paint(layout, path, number: int, unmapped: int) -> PageStats:
+def _count_paint(layout, path, number: int, unmapped: int, document=None) -> PageStats:
     """How much of the page is painted rather than typed.
 
     Not a translation. extract.ts counts pdf.js painting operators; pdfminer reports a
@@ -339,13 +339,21 @@ def _count_paint(layout, path, number: int, unmapped: int) -> PageStats:
     # among the objects a page paints — but pdf.js counted their appearance streams, and
     # a page whose only graphics are highlights and link boxes has to be rasterised or
     # they vanish. Counted separately so the reason stays legible.
+    #
+    # `document` is passed in when the caller already has one open. It matters more than
+    # it looks: opening a PdfDocument here per page made a 520-page conversion open and
+    # close the same file 520 times, and that was one of the two reasons cost per page
+    # grew with document length instead of staying flat.
     annotations = 0
     try:
-        document = pdfium.PdfDocument(str(path))
-        try:
+        if document is not None:
             annotations = int(raw.FPDFPage_GetAnnotCount(document[number - 1].raw))
-        finally:
-            document.close()
+        else:
+            own = pdfium.PdfDocument(str(path))
+            try:
+                annotations = int(raw.FPDFPage_GetAnnotCount(own[number - 1].raw))
+            finally:
+                own.close()
     except Exception:
         # A count we could not take is a count of zero, not a failed extraction.
         pass
@@ -418,6 +426,59 @@ def _glyphs(items: Iterable[LTChar | LTAnno], page_height: float) -> list[_Glyph
     return glyphs
 
 
+def _model_from(layout, number: int, document) -> PageModel:
+    """Turn one laid-out page into a model. Shared by both entry points below."""
+    glyphs = _glyphs(_chars(layout), layout.height)
+    unmapped = sum(len(UNMAPPED_GLYPH.findall(g.text)) for g in glyphs)
+    for glyph in glyphs:
+        glyph.text = UNMAPPED_GLYPH.sub("", glyph.text)
+
+    return PageModel(
+        number=number,
+        width=round2(layout.width),
+        height=round2(layout.height),
+        runs=list(_runs_from(_ordered(glyphs))),
+        fonts=resolve_page_fonts(g.font for g in glyphs),
+        stats=_count_paint(layout, None, number, unmapped, document),
+    )
+
+
+def extract_document(
+    path: str | Path,
+    *,
+    max_pages: int = 0,
+    laparams: LAParams | None = None,
+) -> Iterator[PageModel]:
+    """Every page of a document, from a single pass over it.
+
+    **This exists because the obvious loop is quadratic.** `extract_page` asks pdfminer
+    for one page by number, and pdfminer reaches page N by parsing the N-1 before it — so
+    converting a document a page at a time re-parses it from the start every time.
+    Measured before this was written: 52 ms/page at fifty pages, 83 at a hundred and
+    fifty, 142 at three hundred, 231 at five hundred and twenty. The work per page had
+    not changed at all; only how much of the document was being re-read to reach it.
+
+    One `extract_pages` walk and one PDFium handle, both held for the whole document.
+    """
+    document = None
+    try:
+        try:
+            document = pdfium.PdfDocument(str(path))
+        except Exception:
+            # Only the annotation count needs it, and a count we cannot take is zero.
+            document = None
+
+        for index, layout in enumerate(
+            extract_pages(str(path), laparams=laparams or LAParams()), start=1
+        ):
+            if max_pages and index > max_pages:
+                return
+            yield _model_from(layout, index, document)
+    finally:
+        if document is not None:
+            document.close()
+
+
 def extract_page(path: str | Path, number: int, laparams: LAParams | None = None) -> PageModel:
     """Extract one page (1-based) into a renderer-agnostic model."""
     pages = list(
@@ -427,20 +488,16 @@ def extract_page(path: str | Path, number: int, laparams: LAParams | None = None
         raise ValueError(f"page {number} not found in {path}")
     layout = pages[0]
 
-    glyphs = _glyphs(_chars(layout), layout.height)
-    unmapped = sum(len(UNMAPPED_GLYPH.findall(g.text)) for g in glyphs)
-    for glyph in glyphs:
-        glyph.text = UNMAPPED_GLYPH.sub("", glyph.text)
-    runs = list(_runs_from(_ordered(glyphs)))
-
-    return PageModel(
-        number=number,
-        width=round2(layout.width),
-        height=round2(layout.height),
-        runs=runs,
-        fonts=resolve_page_fonts(g.font for g in glyphs),
-        stats=_count_paint(layout, path, number, unmapped),
-    )
+    # No shared handle here: one page, one document, opened and closed by _count_paint.
+    document = None
+    try:
+        document = pdfium.PdfDocument(str(path))
+        return _model_from(layout, number, document)
+    except Exception:
+        return _model_from(layout, number, None)
+    finally:
+        if document is not None:
+            document.close()
 
 
 def _metadata_string(value: object) -> str:

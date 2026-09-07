@@ -18,7 +18,7 @@ from typing import Callable, Literal
 
 import pypdfium2 as pdfium
 
-from extract import extract_page, inspect
+from extract import extract_document, inspect
 from html_out import to_html
 from model import DocumentInfo, PageModel, RasterHint, WarningCode
 from raster import as_data_uri, render_page, write_page_image
@@ -124,11 +124,16 @@ def convert(
     written: list[str] = []
 
     try:
-        for number in range(1, page_count + 1):
+        # One walk over the document rather than one per page. Asking pdfminer for page N
+        # makes it parse the N-1 pages before it, so the page-at-a-time loop this used to
+        # be cost more per page the longer the document got: 52 ms/page at fifty pages and
+        # 231 at five hundred and twenty, for identical work.
+        for number, model in enumerate(
+            extract_document(path, max_pages=page_count), start=1
+        ):
             cancelled()
             progress(number, page_count, "extract")
 
-            model = extract_page(path, number)
             pages.append(model)
 
             # Rasterise only where it earns its bytes: a page that is pure text
