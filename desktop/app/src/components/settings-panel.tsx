@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FolderOpen, HardDrive, Info, Loader2, Palette, Sliders, Trash2 } from "lucide-react";
+import { FolderOpen, HardDrive, Info, Keyboard, Loader2, Palette, Sliders, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -240,6 +240,33 @@ export default function SettingsPanel({
 
       <Separator />
 
+      <Section icon={Keyboard} title={t("settingsShortcuts")}>
+        <ShortcutTable
+          rows={[
+            ["Ctrl+1 / 2 / 3", "settingsShortcutModes"],
+            ["Ctrl+O", "settingsShortcutAdd"],
+            ["Ctrl+Enter", "settingsShortcutRun"],
+            ["Esc", "settingsShortcutCancel"],
+            ["Ctrl+Shift+O", "settingsShortcutOpenFolder"],
+          ]}
+        />
+        <p className="mt-3 text-[11px] font-medium text-muted-foreground">
+          {t("settingsShortcutsWorkbench")}
+        </p>
+        <ShortcutTable
+          rows={[
+            ["Ctrl+Z / Ctrl+Shift+Z", "settingsShortcutUndoRedo"],
+            ["R / Shift+R", "settingsShortcutRotate"],
+            ["Delete", "settingsShortcutDelete"],
+            ["Ctrl+A", "settingsShortcutSelectAll"],
+            ["Ctrl+S", "settingsShortcutSave"],
+          ]}
+        />
+        <p className="text-[11px] text-muted-foreground/80">{t("settingsShortcutsNote")}</p>
+      </Section>
+
+      <Separator />
+
       <Section icon={Info} title={t("settingsAbout")}>
         <p className="text-xs text-muted-foreground">
           {t("settingsVersion", { version: version || "—" })}
@@ -267,6 +294,23 @@ export default function SettingsPanel({
         ) : null}
       </Section>
     </div>
+  );
+}
+
+/** One block of key combo → what it does. Two of these sit side by side under Shortcuts. */
+function ShortcutTable({ rows }: { rows: [string, string][] }) {
+  const t = useTranslations("desktop");
+  return (
+    <table className="w-full text-[11px]">
+      <tbody>
+        {rows.map(([combo, labelKey]) => (
+          <tr key={combo} className="border-t border-divider first:border-t-0">
+            <td className="py-1 pe-3 font-mono whitespace-nowrap text-muted-foreground">{combo}</td>
+            <td className="py-1">{t(labelKey)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

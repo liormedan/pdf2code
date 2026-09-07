@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useTranslations } from "@/i18n/provider";
 import { pickDocuments, type EngineStatus } from "@/lib/engine";
+import { isTypingTarget } from "@/lib/utils";
 import {
   applyPlan,
   compressDocument,
@@ -359,6 +360,40 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
 
   const nothing = plan.present.length === 0;
   const some = selected.size > 0;
+
+  // Shortcuts for the six operations that already have buttons above. Placed before the
+  // early return below so the hook still runs when the engine is down — React does not
+  // allow a hook to appear only on some renders.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (running || isTypingTarget(event.target)) return;
+      const meta = event.ctrlKey || event.metaKey;
+
+      if (meta && event.code === "KeyZ" && !event.shiftKey) {
+        if (plan.past.length === 0) return;
+        event.preventDefault();
+        dispatch({ type: "undo" });
+      } else if (meta && (event.code === "KeyY" || (event.code === "KeyZ" && event.shiftKey))) {
+        if (plan.future.length === 0) return;
+        event.preventDefault();
+        dispatch({ type: "redo" });
+      } else if (meta && event.code === "KeyA" && !nothing) {
+        event.preventDefault();
+        selectAll();
+      } else if (meta && event.code === "KeyS" && !nothing) {
+        event.preventDefault();
+        void saveAs();
+      } else if (!meta && some && (event.code === "Delete" || event.code === "Backspace")) {
+        event.preventDefault();
+        dispatch({ type: "remove", uids: selected });
+      } else if (!meta && some && event.code === "KeyR") {
+        event.preventDefault();
+        dispatch({ type: "rotate", uids: selected, turn: event.shiftKey ? -90 : 90 });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [running, nothing, some, selected, plan.past.length, plan.future.length, saveAs, selectAll]);
 
   if (status.state !== "up") {
     return (

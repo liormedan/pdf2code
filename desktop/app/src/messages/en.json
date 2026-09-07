@@ -438,6 +438,19 @@
     "settingsStorageNote": "Only folders not named in the history are removed. A folder you chose as an output destination — one picked in a dialog rather than the app's own default — is never touched from here.",
     "settingsStorageCleaned": "{count} folders removed, {size} freed.",
     "settingsStorageNothingToClean": "Nothing to clean — every folder is either recent or still named in the history.",
-    "settingsStorageUnavailable": "Could not read the app's output folder."
+    "settingsStorageUnavailable": "Could not read the app's output folder.",
+    "settingsShortcuts": "Keyboard shortcuts",
+    "settingsShortcutModes": "Switch between Convert / Workbench / Settings",
+    "settingsShortcutAdd": "Add documents",
+    "settingsShortcutRun": "Run the conversion",
+    "settingsShortcutCancel": "Cancel a running job",
+    "settingsShortcutOpenFolder": "Open the output folder",
+    "settingsShortcutsWorkbench": "In the workbench only",
+    "settingsShortcutUndoRedo": "Undo / redo",
+    "settingsShortcutRotate": "Rotate the selected pages",
+    "settingsShortcutDelete": "Delete the selected pages",
+    "settingsShortcutSelectAll": "Select all pages",
+    "settingsShortcutSave": "Save as",
+    "settingsShortcutsNote": "No shortcut fires while typing in a text field — each one checks where focus is before it does anything."
   }
 }

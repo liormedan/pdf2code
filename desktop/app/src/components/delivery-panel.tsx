@@ -18,6 +18,7 @@ import {
   zipOutput,
   type OutFile,
 } from "@/lib/deliver";
+import { isTypingTarget } from "@/lib/utils";
 
 /**
  * What came out, and four ways to reach it.
@@ -81,6 +82,7 @@ export default function DeliveryPanel({ dir }: { dir: string }) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || !event.shiftKey) return;
+      if (isTypingTarget(event.target)) return;
       // `code` rather than `key`: with a Hebrew layout active, `key` is a Hebrew letter
       // and the shortcut would silently stop working in the language we ship for.
       if (event.code !== "KeyO") return;

@@ -438,6 +438,19 @@
     "settingsStorageNote": "רק תיקיות שאינן מופיעות בהיסטוריה נמחקות. תיקייה שנבחרה כתיקיית יעד — כזו שנבחרה בדיאלוג ולא ברירת המחדל של האפליקציה — לעולם לא נמחקת מכאן.",
     "settingsStorageCleaned": "{count} תיקיות נמחקו, {size} שוחררו.",
     "settingsStorageNothingToClean": "אין מה לנקות — כל התיקיות חדשות מספיק או עדיין מופיעות בהיסטוריה.",
-    "settingsStorageUnavailable": "לא ניתן לקרוא את תיקיית הפלט של האפליקציה."
+    "settingsStorageUnavailable": "לא ניתן לקרוא את תיקיית הפלט של האפליקציה.",
+    "settingsShortcuts": "קיצורי מקלדת",
+    "settingsShortcutModes": "מעבר בין המרה / סדנה / הגדרות",
+    "settingsShortcutAdd": "הוספת מסמכים",
+    "settingsShortcutRun": "הרצת ההמרה",
+    "settingsShortcutCancel": "ביטול ריצה",
+    "settingsShortcutOpenFolder": "פתיחת תיקיית הפלט",
+    "settingsShortcutsWorkbench": "בסדנה בלבד",
+    "settingsShortcutUndoRedo": "ביטול / ביצוע מחדש",
+    "settingsShortcutRotate": "סיבוב העמודים שנבחרו",
+    "settingsShortcutDelete": "מחיקת העמודים שנבחרו",
+    "settingsShortcutSelectAll": "בחירת כל העמודים",
+    "settingsShortcutSave": "שמירה בשם",
+    "settingsShortcutsNote": "שום קיצור לא פועל בזמן הקלדה בשדה טקסט — הוא בודק תמיד לאן המיקוד נמצא לפני שהוא עושה משהו."
   }
 }

@@ -11,9 +11,17 @@ import SettingsPanel from "@/components/settings-panel";
 import IntroCard from "@/components/intro-card";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "@/i18n/provider";
-import { engineStatus, isDesktop, onStatus, type EngineStatus, type PickedDocument } from "@/lib/engine";
+import {
+  engineStatus,
+  isDesktop,
+  onStatus,
+  pickDocuments,
+  type EngineStatus,
+  type PickedDocument,
+} from "@/lib/engine";
 import { useConversions, type ConversionSettings } from "@/lib/use-conversions";
 import { getSettings } from "@/lib/settings";
+import { isTypingTarget } from "@/lib/utils";
 
 /**
  * The window.
@@ -72,6 +80,52 @@ export default function AppShell() {
     (document: PickedDocument) => queue.add([document]),
     [queue],
   );
+
+  // Global shortcuts: switch modes, add documents, run, cancel. Never fires while
+  // somebody is typing — a search box in the workbench and inputs in settings both live
+  // under this listener, and "1" ending up in a text field because it also switched modes
+  // is the failure that ad-hoc key handling produces.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || isTypingTarget(event.target)) return;
+
+      if (event.code === "Digit1") {
+        event.preventDefault();
+        setMode("convert");
+      } else if (event.code === "Digit2") {
+        event.preventDefault();
+        setMode("workbench");
+      } else if (event.code === "Digit3") {
+        event.preventDefault();
+        setMode("settings");
+      } else if (event.code === "KeyO" && !event.shiftKey) {
+        // Shift+Ctrl+O is delivery-panel's "open the output folder" — this is the plain
+        // one, "add a document", and the two must not collide.
+        event.preventDefault();
+        void pickDocuments().then((picked) => picked.length && queue.add(picked));
+      } else if (event.code === "Enter") {
+        const waiting = queue.items.filter((item) => item.state === "waiting").length;
+        if (waiting > 0 && !queue.running && status.state === "up") {
+          event.preventDefault();
+          void queue.run();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [queue, status.state]);
+
+  // Escape cancels a running conversion. Its own listener: Escape has no modifier, and a
+  // modifier-gated handler above should not also have to reason about the one shortcut
+  // that is a bare key.
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.code !== "Escape" || isTypingTarget(event.target) || !queue.running) return;
+      queue.cancel();
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [queue]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
