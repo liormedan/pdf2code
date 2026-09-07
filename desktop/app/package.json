@@ -15,7 +15,9 @@
     "tauri": "tauri",
     "app": "tauri dev",
     "bundle": "tauri build",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:a11y": "node scripts/check-a11y.mjs",
+    "check": "npm run typecheck && npm run check:i18n && npm run check:a11y"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

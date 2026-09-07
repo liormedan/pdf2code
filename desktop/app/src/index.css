@@ -54,7 +54,12 @@
      hairline and carries no such requirement. */
   --border: #949080;
   --divider: #ddd8cc;
-  --input: #eae6dc;
+  /* The border of a text field is how somebody knows there is a field there, which
+     WCAG 1.4.11 covers at 3:1. It was 1.17:1 in light and 1.09:1 in dark — a control
+     with an invisible boundary. Darkened (and lightened) to the least that clears the
+     threshold, keeping the theme's warm cast. `divider` is deliberately left alone:
+     it separates regions rather than bounding controls, and 1.4.11 does not reach it. */
+  --input: #949086;
   --ring: #0d6b5b;
 
   --sidebar: #f4f1ea;
@@ -112,7 +117,7 @@
 
   --border: #85898c;
   --divider: #3b4045;
-  --input: #31353a;
+  --input: #74787d;
   --ring: #5cc3a8;
 
   --sidebar: #1f2225;
