@@ -87,6 +87,22 @@ def classify_page(page: PageModel) -> RasterHint:
     return RasterHint(kind="text", format="png", quality=1)
 
 
+def _declared_language(info: DocumentInfo, pages: list[PageModel]) -> str:
+    """The language to put in the output, which is not always the one we detected.
+
+    `detect_language` falls back to English when there is not enough evidence, which is
+    the right default for a paragraph and the wrong claim for a document with no text at
+    all. A scanned Hebrew contract would announce itself as English in the markup.
+
+    The model keeps what was detected — it describes the extraction. This is what the
+    generated document says about itself, and an empty string means the generators leave
+    the attribute off entirely, which is how HTML says "unknown".
+    """
+    if any(page.runs for page in pages):
+        return info.lang
+    return ""
+
+
 def convert(
     path: str | Path,
     out_dir: str | Path,
@@ -171,7 +187,7 @@ def convert(
                 pages,
                 title=info.title or title,
                 backgrounds=backgrounds,
-                lang=info.lang,
+                lang=_declared_language(info, pages),
                 dir=info.dir,
             ),
             encoding="utf-8",
@@ -183,7 +199,7 @@ def convert(
             pages,
             backgrounds=backgrounds,
             component_name=component_name,
-            lang=info.lang,
+            lang=_declared_language(info, pages),
             dir=info.dir,
         ).items():
             (out_dir / name).write_text(contents, encoding="utf-8")

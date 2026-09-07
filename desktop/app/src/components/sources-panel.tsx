@@ -100,7 +100,9 @@ export default function SourcesPanel({
       </div>
 
       {refused > 0 ? (
-        <p className="text-[11px] text-warning">{t("sourcesRefused", { count: refused })}</p>
+        <p role="alert" className="text-[11px] text-warning">
+          {t("sourcesRefused", { count: refused })}
+        </p>
       ) : null}
 
       {items.length === 0 ? (
@@ -127,7 +129,7 @@ export default function SourcesPanel({
                 {/* A failure that only says "failed" sends somebody to a log they do
                     not have. The engine's reason is short, and it is the only clue. */}
                 {item.error ? (
-                  <span className="block text-[11px] text-destructive">
+                  <span role="alert" className="block text-[11px] text-destructive">
                     {reasonFor(t, item.error)}
                   </span>
                 ) : null}

@@ -165,6 +165,27 @@ _BARE_CSS = """
 .pdf-page { box-shadow: none; }"""
 
 
+def _declared(lang: str, dir: str) -> str:
+    """The `lang` and `dir` attributes, or nothing at all.
+
+    **A document with no text has no language, and saying `lang="en"` about it is a claim
+    with no evidence behind it.** A scan of a Hebrew contract would declare itself English
+    — invisible, since there is no text to render either way, and wrong in the markup of a
+    product whose central promise is Hebrew.
+
+    Omitting the attribute is how HTML says "unknown". The model still reports what
+    `detect_language` returned, because the model describes what we extracted; this is the
+    document, and a document makes claims.
+    """
+    if not lang:
+        # HTML defines the empty string as "the language is unknown", which is exactly the
+        # situation and is valid markup. Omitting the attribute is not — our own validator
+        # says so, and it was right to. `dir` is left off: with no text there is nothing to
+        # lay out in either direction, and guessing one would be the same mistake smaller.
+        return ' lang=""'
+    return f' lang="{escape(lang)}" dir="{escape(dir)}"'
+
+
 def to_html(
     pages: list[PageModel],
     *,
@@ -196,7 +217,7 @@ def to_html(
     bare_css = _BARE_CSS if bare else ""
 
     return f"""<!DOCTYPE html>
-<html lang="{escape(lang)}" dir="{escape(dir)}">
+<html{_declared(lang, dir)}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

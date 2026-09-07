@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "pdf2code as an installed application. The shell — no conversion engine yet.",
+  "description": "pdf2code as an installed application. The shell \u2014 no conversion engine yet.",
   "engines": {
     "node": ">=22"
   },
@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "tauri": "tauri",
     "app": "tauri dev",
-    "bundle": "tauri build"
+    "bundle": "tauri build",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

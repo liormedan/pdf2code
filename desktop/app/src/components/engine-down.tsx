@@ -39,7 +39,13 @@ export default function EngineDown() {
   }, []);
 
   return (
-    <div className="space-y-2 rounded-lg border border-warning/40 bg-warning-muted px-3 py-2">
+    // `alert` rather than `status`: the engine going down changes what every button in
+    // the window will do next, and finding that out on the next click is finding it out
+    // too late.
+    <div
+      role="alert"
+      className="space-y-2 rounded-lg border border-warning/40 bg-warning-muted px-3 py-2"
+    >
       <p className="text-xs text-warning">{t("engineDownHelp")}</p>
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" onClick={() => void restart()} disabled={restarting}>

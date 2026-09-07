@@ -161,8 +161,19 @@ export default function DeliveryPanel({ dir }: { dir: string }) {
         </ul>
       ) : null}
 
-      {packed ? <p className="text-[11px] break-all text-muted-foreground">{packed}</p> : null}
-      {problem ? <p className="text-[11px] text-destructive">{problem}</p> : null}
+      {/* Both announced. "Copied" and "packed to…" are the only feedback these buttons
+          give, and a button whose entire result is a line of text somebody cannot see is
+          a button with no result. */}
+      {packed ? (
+        <p role="status" aria-live="polite" className="text-[11px] break-all text-muted-foreground">
+          {packed}
+        </p>
+      ) : null}
+      {problem ? (
+        <p role="alert" className="text-[11px] text-destructive">
+          {problem}
+        </p>
+      ) : null}
     </div>
   );
 }

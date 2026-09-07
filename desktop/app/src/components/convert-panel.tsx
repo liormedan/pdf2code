@@ -170,7 +170,10 @@ export default function ConvertPanel({
       </div>
 
       {current ? (
-        <div className="space-y-1.5">
+        // A live region, because a progress bar nobody can see reports nothing. `polite`
+        // rather than `assertive`: this changes once per page, and interrupting somebody
+        // mid-sentence five hundred times is worse than saying nothing at all.
+        <div className="space-y-1.5" role="status" aria-live="polite">
           <p className="truncate text-xs">{current.document.name}</p>
           {/* Empty until the first event: an empty bar is more honest than a full one. */}
           <Progress value={pages > 0 ? (page / pages) * 100 : 0} />

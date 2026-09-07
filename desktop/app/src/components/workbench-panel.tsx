@@ -529,7 +529,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
 
       {/* --- what happened ------------------------------------------------------------- */}
       {busy ? (
-        <div className="space-y-1 border-b border-divider px-4 py-2">
+        <div className="space-y-1 border-b border-divider px-4 py-2" role="status" aria-live="polite">
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
             {busy}
@@ -553,10 +553,16 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       ) : null}
 
       {error ? (
-        <p className="border-b border-divider px-4 py-2 text-xs text-destructive">{error}</p>
+        <p role="alert" className="border-b border-divider px-4 py-2 text-xs text-destructive">
+          {error}
+        </p>
       ) : null}
       {note ? (
-        <p className="border-b border-divider px-4 py-2 text-xs break-all text-muted-foreground">
+        <p
+          role="status"
+          aria-live="polite"
+          className="border-b border-divider px-4 py-2 text-xs break-all text-muted-foreground"
+        >
           {note}
         </p>
       ) : null}

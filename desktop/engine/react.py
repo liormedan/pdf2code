@@ -71,6 +71,19 @@ def _page_component(page: PageModel, background: str | None, indent: str = "  ")
     return "\n".join(lines)
 
 
+def _declared(lang: str, dir: str) -> str:
+    """The `lang` and `dir` props, or neither.
+
+    Same reasoning as html_out: a scan carries no text, so it carries no evidence of a
+    language, and a component that hardcodes `lang="en"` onto somebody's Hebrew scan is
+    asserting something nobody checked. See `_declared` there.
+    """
+    if not lang:
+        # See html_out._declared: the empty string is the standard's own "unknown".
+        return '      lang=""\n'
+    return f'      lang="{lang}"\n      dir="{dir}"\n'
+
+
 def to_react(
     pages: list[PageModel],
     *,
@@ -119,9 +132,7 @@ export default function {safe_name}({{ scale = 1, className = "" }}) {{
     <main
       className={{`pdf-doc ${{className}}`}}
       data-background={{{has_bg_js}}}
-      lang="{lang}"
-      dir="{dir}"
-      style={{scale === 1 ? undefined : {{ transform: `scale(${{scale}})`, transformOrigin: "0 0" }}}}
+{_declared(lang, dir)}      style={{scale === 1 ? undefined : {{ transform: `scale(${{scale}})`, transformOrigin: "0 0" }}}}
     >
       {{PAGES.map((Page, i) => (
         <Page key={{i}} />
