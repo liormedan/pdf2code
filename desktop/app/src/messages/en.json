@@ -455,6 +455,12 @@
     "engineRestart": "Restart the engine",
     "itemHung": "The engine stopped answering and could not continue. It has been restarted — you can try again.",
     "itemUnreadable": "The document could not be opened. {detail}",
-    "itemEncrypted": "The document is protected. {detail}"
+    "itemEncrypted": "The document is protected. {detail}",
+    "settingsReport": "Trouble report",
+    "settingsReportNote": "If something breaks, this helps us work out what. It contains the engine log only — no file names, no paths, no document contents. You can read all of it before handing it over.",
+    "settingsReportShow": "Show the report",
+    "settingsReportSave": "Save to a file",
+    "settingsReportSaved": "Saved to {path}",
+    "itemUnwritable": "The output could not be written. {detail}"
   }
 }

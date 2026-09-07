@@ -107,6 +107,7 @@ pub struct Engine {
     pending: Arc<Mutex<HashMap<String, oneshot::Sender<Value>>>>,
     status: Arc<Mutex<Status>>,
     next_id: AtomicU64,
+    log: Arc<crate::report::Log>,
     /// When the engine last proved it was alive — either by writing a line or by being
     /// asked something. Written by the reader thread, read by every waiting job.
     last_heard: Arc<Mutex<Instant>>,
@@ -122,8 +123,14 @@ impl Engine {
                 reason: "not started".into(),
             })),
             next_id: AtomicU64::new(1),
+            log: Arc::new(crate::report::Log::default()),
             last_heard: Arc::new(Mutex::new(Instant::now())),
         }
+    }
+
+    /// The engine's recent diagnostics, for a trouble report. Scrubbed by report.rs.
+    pub fn log(&self) -> Arc<crate::report::Log> {
+        self.log.clone()
     }
 
     pub fn status(&self) -> Status {
@@ -187,7 +194,7 @@ impl Engine {
             self.status.clone(),
             self.last_heard.clone(),
         );
-        spawn_logger(stderr);
+        spawn_logger(stderr, self.log.clone());
 
         *self.child.lock().unwrap() = Some(child);
         Ok(())
@@ -430,10 +437,16 @@ fn spawn_reader(
 
 /// The engine's diagnostics. They can quote a document, so they go to our log and never
 /// to the window.
-fn spawn_logger(stderr: std::process::ChildStderr) {
+fn spawn_logger(stderr: std::process::ChildStderr, log: Arc<crate::report::Log>) {
     std::thread::spawn(move || {
         for line in BufReader::new(stderr).lines().map_while(Result::ok) {
             eprintln!("engine: {line}");
+            // Kept as well as printed. In a release build there is no console to print
+            // to, and these lines are the only account of what went wrong on a machine
+            // we cannot see. They are scrubbed of paths before they go anywhere — see
+            // report.rs, which is the other half of the decision to keep them out of the
+            // window in the first place.
+            log.push(line);
         }
     });
 }

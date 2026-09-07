@@ -165,12 +165,12 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
         if (batch.size >= 8) {
           const done = batch;
           batch = new Map();
-          setThumbs((current) => new Map([...current, ...done]));
+          setThumbs((current) => merge(current, done));
         }
       }
       if (live && batch.size > 0) {
         const done = batch;
-        setThumbs((current) => new Map([...current, ...done]));
+        setThumbs((current) => merge(current, done));
       }
       fetching.current = false;
     })();
@@ -707,6 +707,42 @@ function Tool({
 }
 
 const Divider = () => <span className="mx-1 h-5 w-px shrink-0 bg-divider" aria-hidden="true" />;
+
+/**
+ * How many page images are kept in memory at once.
+ *
+ * Measured rather than guessed: five hundred and twenty thumbnails of a real document
+ * weigh 1.8 MB on disk and 2.4 MB as the base64 the window actually holds. So this is not
+ * the tight budget it was filed as — six hundred is roughly three megabytes, which is
+ * nothing, and the cap exists for the document nobody has tried yet rather than for the
+ * ones we measured. A five-thousand-page book would otherwise ask the WebView to hold
+ * twenty-three.
+ */
+const THUMBNAIL_CAP = 600;
+
+/**
+ * Add newly loaded images, dropping the oldest once the cap is reached.
+ *
+ * Insertion order is eviction order, which is right here because images are fetched in
+ * the order the pages are shown: the ones dropped first are the ones furthest from what
+ * anybody is looking at. A dropped thumbnail is re-fetched when it is scrolled back to —
+ * five milliseconds of work, against a map that grows without limit.
+ */
+function merge(current: Map<string, string>, loaded: Map<string, string>): Map<string, string> {
+  const next = new Map([...current, ...loaded]);
+  if (next.size <= THUMBNAIL_CAP) return next;
+
+  const drop = next.size - THUMBNAIL_CAP;
+  let dropped = 0;
+  for (const id of next.keys()) {
+    if (dropped >= drop) break;
+    // Never evict something this batch just loaded — it is about to be rendered.
+    if (loaded.has(id)) continue;
+    next.delete(id);
+    dropped += 1;
+  }
+  return next;
+}
 
 /** Just the file name, for a card that has to say which document it came from. */
 const short = (path: string) => path.split(/[\\/]/).pop()?.replace(/\.pdf$/i, "") ?? path;

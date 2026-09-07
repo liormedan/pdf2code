@@ -172,9 +172,11 @@ export function useConversions(settings: ConversionSettings, onRecorded: () => v
         // as INTERNAL carrying PDFium's own words, so there was nothing to word.
         const reason = message.includes("UNREADABLE")
           ? "itemUnreadable"
-          : message.includes("ENCRYPTED")
-            ? "itemEncrypted"
-            : null;
+          : message.includes("UNWRITABLE")
+            ? "itemUnwritable"
+            : message.includes("ENCRYPTED")
+              ? "itemEncrypted"
+              : null;
         patch(item.key, {
           state: cancelled ? "cancelled" : "failed",
           error: cancelled ? null : reason ? `${reason}|${message}` : message,

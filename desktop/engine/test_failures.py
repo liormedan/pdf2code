@@ -94,6 +94,38 @@ def check_classifier(work: Path) -> None:
     check("and so does one with no path to inspect", code == "INTERNAL", code)
 
 
+def check_write_failures(work: Path) -> None:
+    print("\n  The other half: the document opened and the output could not be written")
+
+    # A full disk arrives as one of these numbers. Simulated by number rather than by
+    # filling a real disk, because the code path is identical and the alternative is a
+    # test that needs a spare volume to run.
+    full = OSError("disk full")
+    full.winerror = 112
+    code, message = classify(full, GOOD, work / "out")
+    check("a full disk says so", code == "UNWRITABLE" and "not enough room" in message, message)
+
+    gone = OSError("path not found")
+    gone.winerror = 3
+    code, message = classify(gone, GOOD, work / "removed" / "out")
+    check("a folder deleted mid-batch says so", code == "UNWRITABLE" and "does not exist" in message, message)
+
+    denied = PermissionError("access denied")
+    denied.winerror = 5
+    code, message = classify(denied, GOOD, work / "out")
+    check("a read-only destination says so", code == "UNWRITABLE" and "permission" in message, message)
+
+    # The guard that keeps the two halves apart. A source another program holds open
+    # raises PermissionError as well, and calling that a place we cannot write to would
+    # send somebody to fix the wrong thing entirely.
+    code, message = classify(PermissionError("access denied"), work / "locked-source.pdf", None)
+    check(
+        "a locked source is still a read problem, not a write one",
+        code == "UNREADABLE",
+        f"{code}: {message}",
+    )
+
+
 def check_over_the_wire(work: Path) -> None:
     print("\n  The same files, through the sidecar")
 
@@ -116,6 +148,28 @@ def check_over_the_wire(work: Path) -> None:
             message = json.loads(proc.stdout.readline())
             if message.get("id") == job and message.get("type") in ("result", "error"):
                 return message
+
+    # Writing somewhere impossible, over the wire, with a document that is perfectly fine.
+    for label, out, expected in [
+        ("a drive that is not there", "Z:/nowhere/out", "does not exist"),
+        ("a file where the folder goes", str(work / "renamed.pdf"), "file where that folder"),
+    ]:
+        proc.stdin.write(
+            json.dumps(
+                {"id": label, "op": "convert", "args": {"path": str(GOOD), "out": out, "formats": ["html"]}}
+            )
+            + "\n"
+        )
+        proc.stdin.flush()
+        while True:
+            reply = json.loads(proc.stdout.readline())
+            if reply.get("id") == label and reply.get("type") in ("result", "error"):
+                break
+        check(
+            f"{label} is UNWRITABLE",
+            reply.get("code") == "UNWRITABLE" and expected in reply.get("message", ""),
+            f"{reply.get('code')}: {reply.get('message', '')[:46]}",
+        )
 
     for name, expected in [
         ("truncated.pdf", "damaged"),
@@ -171,6 +225,7 @@ def main() -> int:
     work = Path(tempfile.mkdtemp(prefix="pdf2code-failures-"))
     try:
         check_classifier(work)
+        check_write_failures(work)
         check_over_the_wire(work)
     finally:
         shutil.rmtree(work, ignore_errors=True)

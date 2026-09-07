@@ -118,3 +118,22 @@ export function cleanOldOutput(olderThanDays: number): Promise<CleanResult> {
   if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
   return invoke<CleanResult>("clean_old_output", { olderThanDays });
 }
+
+// ---------------------------------------------------------------------------
+// The trouble report. The engine's diagnostics go to its stderr and never to the window,
+// because they can quote a document — see report.rs. This is the other half: keep the
+// last lines, scrub every path out of them, and let somebody read the whole thing before
+// deciding to hand it over.
+// ---------------------------------------------------------------------------
+
+/** The report as text, so it can be read before it is written anywhere. */
+export function previewReport(): Promise<string> {
+  if (!isDesktop()) return Promise.resolve("");
+  return invoke<string>("preview_report");
+}
+
+/** Write it to a path a save dialog produced. Returns where it went. */
+export function exportReport(path: string): Promise<string> {
+  if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
+  return invoke<string>("export_report", { path });
+}

@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { FolderOpen, HardDrive, Info, Keyboard, Loader2, Palette, Sliders, Trash2 } from "lucide-react";
+import {
+  FolderOpen,
+  HardDrive,
+  Info,
+  Keyboard,
+  LifeBuoy,
+  Loader2,
+  Palette,
+  Sliders,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -14,10 +24,13 @@ import {
   getCredits,
   saveDefaults,
   storageSummary,
+  previewReport,
+  exportReport,
   type Credit,
   type StorageSummary,
 } from "@/lib/settings";
 import { humanSize } from "@/lib/deliver";
+import { pickSavePath } from "@/lib/workbench";
 import { forgetProject, listProjects } from "@/lib/projects";
 import type { ConversionSettings } from "@/lib/use-conversions";
 
@@ -49,6 +62,8 @@ export default function SettingsPanel({
   const [summary, setSummary] = useState<StorageSummary | null>(null);
   const [cleaning, setCleaning] = useState(false);
   const [cleanNote, setCleanNote] = useState<string | null>(null);
+  const [report, setReport] = useState<string | null>(null);
+  const [reportNote, setReportNote] = useState<string | null>(null);
 
   const loadStorage = useCallback(() => {
     void storageSummary().then(setSummary);
@@ -97,6 +112,16 @@ export default function SettingsPanel({
   // Thirty days, and not a setting: the folders are listed with their age right above the
   // button, so a person deciding whether to press it is looking at the actual numbers
   // rather than tuning a threshold they cannot see the effect of.
+  const saveReport = useCallback(async () => {
+    const chosen = await pickSavePath("pdf2code-report.txt", "txt");
+    if (!chosen) return;
+    try {
+      setReportNote(t("settingsReportSaved", { path: await exportReport(chosen) }));
+    } catch (failure) {
+      setReportNote(String(failure));
+    }
+  }, [t]);
+
   const clean = useCallback(async () => {
     setCleaning(true);
     setCleanNote(null);
@@ -263,6 +288,44 @@ export default function SettingsPanel({
           ]}
         />
         <p className="text-[11px] text-muted-foreground/80">{t("settingsShortcutsNote")}</p>
+      </Section>
+
+      <Separator />
+
+      <Section icon={LifeBuoy} title={t("settingsReport")}>
+        <p className="text-[11px] text-muted-foreground/80">{t("settingsReportNote")}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void previewReport().then(setReport)}
+          >
+            <LifeBuoy className="size-4" />
+            {t("settingsReportShow")}
+          </Button>
+          {report !== null ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void saveReport()}
+            >
+              {t("settingsReportSave")}
+            </Button>
+          ) : null}
+          {reportNote ? (
+            <span className="text-[11px] break-all text-muted-foreground">{reportNote}</span>
+          ) : null}
+        </div>
+        {/* Shown before it can be saved, and deliberately in full. A privacy promise
+            nobody can check is a promise. */}
+        {report !== null ? (
+          <pre
+            className="max-h-64 overflow-auto rounded-lg border border-divider bg-card p-3 text-start text-[11px]"
+            dir="ltr"
+          >
+            <code>{report}</code>
+          </pre>
+        ) : null}
       </Section>
 
       <Separator />

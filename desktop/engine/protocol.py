@@ -48,6 +48,9 @@ ERROR_CODES = (
     "UNKNOWN_OP",
     "ENCRYPTED",
     "UNREADABLE",
+    # The write side of UNREADABLE: the document opened fine and the output could not be
+    # written. A full disk lands here, and so does a folder somebody deleted mid-batch.
+    "UNWRITABLE",
     "INTERNAL",
 )
 

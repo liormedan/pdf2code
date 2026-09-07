@@ -35,13 +35,32 @@ MAGIC = b"%PDF"
 PEEK = 1024
 
 
-def classify(error: BaseException, path: str | Path | None) -> tuple[str, str]:
-    """Return the (code, log message) for a failure to open `path`.
+#: Windows and POSIX both have a way of saying each of these, and an operation that
+#: cannot write is a different problem from a document that cannot be read.
+DISK_FULL = {112, 39}          # ERROR_DISK_FULL, ERROR_HANDLE_DISK_FULL
+NO_SUCH_PLACE = {3, 267, 161}  # PATH_NOT_FOUND, DIRECTORY, BAD_PATHNAME
+IN_THE_WAY = {183, 80}         # ALREADY_EXISTS, FILE_EXISTS
+DENIED = {5, 19, 32}           # ACCESS_DENIED, WRITE_PROTECT, SHARING_VIOLATION
+
+
+def classify(
+    error: BaseException,
+    path: str | Path | None,
+    out: str | Path | None = None,
+) -> tuple[str, str]:
+    """Return the (code, log message) for a failed job.
 
     Ordered from the most specific cause to the least, because several of them produce
-    the same exception and only the order distinguishes them.
+    the same exception and only the order distinguishes them. `out` is checked first when
+    the failure looks like a write: a document that opened fine and an output that could
+    not be written is a different problem, and telling somebody their document is damaged
+    when their disk is full sends them to fix the wrong thing.
     """
     detail = str(error)
+
+    written = _from_write(error, out)
+    if written is not None:
+        return written
 
     if path is None:
         return _from_exception(error, detail)
@@ -102,3 +121,37 @@ def _from_exception(error: BaseException, detail: str) -> tuple[str, str]:
     # Not a document problem at all. Kept as INTERNAL so it stays visible as a bug in
     # us rather than being explained away as a bad file.
     return "INTERNAL", detail
+
+
+def _from_write(error: BaseException, out: str | Path | None) -> tuple[str, str] | None:
+    """Whether this was a failure to write, and what to say about it.
+
+    Returns None when the error is not about writing, so the caller falls through to the
+    read classification. Keyed on the operating system's own error number rather than on
+    the message, because the message is localised — on a Hebrew Windows these arrive in
+    Hebrew, and matching English words against them would quietly stop working on exactly
+    the machines this product is for.
+    """
+    # No output path means the job was not writing anywhere, so nothing here applies.
+    # This guard is load-bearing: a locked *source* raises PermissionError too, and
+    # without it a document somebody had open in another program would be reported as a
+    # place we could not write to.
+    if out is None or not isinstance(error, OSError):
+        return None
+
+    number = getattr(error, "winerror", None) or error.errno
+    if number is None:
+        return None
+
+    where = f" ({Path(out).name})"
+
+    if number in DISK_FULL or number == 28:  # 28 is ENOSPC
+        return "UNWRITABLE", f"there is not enough room on the disk{where}"
+    if number in NO_SUCH_PLACE or number == 2:  # 2 is ENOENT
+        return "UNWRITABLE", f"that folder does not exist any more{where}"
+    if number in IN_THE_WAY:
+        return "UNWRITABLE", f"there is a file where that folder should be{where}"
+    if number in DENIED or number == 13:  # 13 is EACCES
+        return "UNWRITABLE", f"no permission to write there{where}"
+
+    return None

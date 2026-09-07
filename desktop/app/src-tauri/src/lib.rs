@@ -7,6 +7,7 @@
 mod deliver;
 mod documents;
 mod projects;
+mod report;
 mod settings;
 mod storage;
 mod sidecar;
@@ -35,6 +36,7 @@ pub fn run() {
             // truthful from the first frame, and an engine that cannot start is
             // something to find out about at launch rather than mid-conversion.
             let engine = sidecar::Engine::new();
+            let engine_log = engine.log();
             engine.start(app.handle());
             app.manage(engine);
 
@@ -45,6 +47,8 @@ pub fn run() {
             // Where the engine is allowed to write, which starts empty: nothing is
             // writable until a native dialog or this side produces the path.
             app.manage(workbench::Writable::default());
+            // The engine's log lives with the engine; the window gets it only scrubbed.
+            app.manage(engine_log);
             // Last run's page thumbnails. They are a rendering of somebody's document,
             // so they are cleared at launch rather than left to accumulate.
             workbench::clear_scratch(app.handle());
@@ -86,6 +90,8 @@ pub fn run() {
             settings::credits,
             storage::storage_summary,
             storage::clean_old_output,
+            report::export_report,
+            report::preview_report,
             workbench::pick_save_path,
             workbench::pick_export_dir,
             workbench::workbench_dir,

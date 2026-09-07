@@ -110,7 +110,8 @@ def run_job(job: Job, op_name: str, args: dict[str, Any]) -> None:
         # PDFium's own words — the same sentence for a truncated file, an empty one, a
         # renamed text file, and one another program had open. `classify` tells them
         # apart by looking at the file, because the exception cannot.
-        code, message = classify(exc, args.get("path") if isinstance(args, dict) else None)
+        fields = args if isinstance(args, dict) else {}
+        code, message = classify(exc, fields.get("path"), fields.get("out"))
         WIRE.error(job.id, code, message)
     finally:
         JOBS.remove(job.id)

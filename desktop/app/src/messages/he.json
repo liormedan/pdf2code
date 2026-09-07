@@ -455,6 +455,12 @@
     "engineRestart": "הפעלה מחדש של המנוע",
     "itemHung": "המנוע הפסיק לענות ולא ניתן היה להמשיך. הוא הופעל מחדש — אפשר לנסות שוב.",
     "itemUnreadable": "אי אפשר לפתוח את המסמך. {detail}",
-    "itemEncrypted": "המסמך מוגן. {detail}"
+    "itemEncrypted": "המסמך מוגן. {detail}",
+    "settingsReport": "דוח תקלה",
+    "settingsReportNote": "אם משהו נשבר, הדוח הזה עוזר לנו להבין מה. הוא מכיל את יומן המנוע בלבד — בלי שמות קבצים, בלי נתיבים ובלי תוכן של מסמכים. אפשר לקרוא אותו במלואו לפני שמוסרים אותו.",
+    "settingsReportShow": "להציג את הדוח",
+    "settingsReportSave": "לשמור כקובץ",
+    "settingsReportSaved": "נשמר ב-{path}",
+    "itemUnwritable": "לא ניתן היה לכתוב את הפלט. {detail}"
   }
 }
