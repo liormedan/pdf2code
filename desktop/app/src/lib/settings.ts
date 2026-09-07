@@ -76,3 +76,45 @@ export function appVersion(): Promise<string> {
   if (!isDesktop()) return Promise.resolve("dev");
   return invoke<string>("app_version");
 }
+
+// ---------------------------------------------------------------------------
+// Disk used by the app's own output — scoped to that folder alone. If somebody chose an
+// output root in a native dialog, that folder is theirs to manage; cleaning here never
+// touches it. See storage.rs.
+// ---------------------------------------------------------------------------
+
+export interface OutputFolder {
+  name: string;
+  path: string;
+  bytes: number;
+  ageDays: number;
+  /** Still named in the history — cleaning never removes this one. */
+  referenced: boolean;
+}
+
+export interface StorageSummary {
+  path: string;
+  bytes: number;
+  folders: OutputFolder[];
+}
+
+export async function storageSummary(): Promise<StorageSummary | null> {
+  if (!isDesktop()) return null;
+  try {
+    return await invoke<StorageSummary>("storage_summary");
+  } catch {
+    return null;
+  }
+}
+
+export interface CleanResult {
+  removed: number;
+  freedBytes: number;
+  keptReferenced: number;
+}
+
+/** Delete conversion folders older than `olderThanDays`, except ones the history still names. */
+export function cleanOldOutput(olderThanDays: number): Promise<CleanResult> {
+  if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
+  return invoke<CleanResult>("clean_old_output", { olderThanDays });
+}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FolderOpen, Info, Palette, Sliders, Trash2 } from "lucide-react";
+import { FolderOpen, HardDrive, Info, Loader2, Palette, Sliders, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,16 @@ import ThemeToggle from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
 import { useTranslations } from "@/i18n/provider";
 import { clearOutputRoot, outputRoot, pickOutputRoot } from "@/lib/engine";
-import { appVersion, getCredits, saveDefaults, type Credit } from "@/lib/settings";
+import {
+  appVersion,
+  cleanOldOutput,
+  getCredits,
+  saveDefaults,
+  storageSummary,
+  type Credit,
+  type StorageSummary,
+} from "@/lib/settings";
+import { humanSize } from "@/lib/deliver";
 import { forgetProject, listProjects } from "@/lib/projects";
 import type { ConversionSettings } from "@/lib/use-conversions";
 
@@ -37,13 +46,21 @@ export default function SettingsPanel({
   const [version, setVersion] = useState("");
   const [history, setHistory] = useState(0);
   const [cleared, setCleared] = useState(false);
+  const [summary, setSummary] = useState<StorageSummary | null>(null);
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanNote, setCleanNote] = useState<string | null>(null);
+
+  const loadStorage = useCallback(() => {
+    void storageSummary().then(setSummary);
+  }, []);
 
   useEffect(() => {
     void outputRoot().then(setRoot);
     void getCredits().then(setCredits);
     void appVersion().then(setVersion);
     void listProjects().then((rows) => setHistory(rows.length));
-  }, []);
+    loadStorage();
+  }, [loadStorage]);
 
   // Written through on every change rather than behind a Save button. There is nothing
   // here to get half-right, and a Save button on four controls is a button that only
@@ -76,6 +93,27 @@ export default function SettingsPanel({
     setHistory(0);
     setCleared(true);
   }, []);
+
+  // Thirty days, and not a setting: the folders are listed with their age right above the
+  // button, so a person deciding whether to press it is looking at the actual numbers
+  // rather than tuning a threshold they cannot see the effect of.
+  const clean = useCallback(async () => {
+    setCleaning(true);
+    setCleanNote(null);
+    try {
+      const result = await cleanOldOutput(30);
+      setCleanNote(
+        result.removed > 0
+          ? t("settingsStorageCleaned", { count: result.removed, size: humanSize(result.freedBytes) })
+          : t("settingsStorageNothingToClean"),
+      );
+      loadStorage();
+    } catch (failure) {
+      setCleanNote(String(failure));
+    } finally {
+      setCleaning(false);
+    }
+  }, [loadStorage, t]);
 
   return (
     <div className="min-h-0 flex-1 space-y-5 overflow-auto p-5">
@@ -171,6 +209,33 @@ export default function SettingsPanel({
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground/80">{t("settingsHistoryNote")}</p>
+      </Section>
+
+      <Separator />
+
+      <Section icon={HardDrive} title={t("settingsStorage")}>
+        {summary ? (
+          <>
+            <p className="text-xs text-muted-foreground">
+              {t("settingsStorageSummary", {
+                size: humanSize(summary.bytes),
+                count: summary.folders.length,
+              })}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="ghost" onClick={() => void clean()} disabled={cleaning}>
+                {cleaning ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                {t("settingsStorageClean")}
+              </Button>
+              {cleanNote ? (
+                <span className="text-[11px] text-muted-foreground">{cleanNote}</span>
+              ) : null}
+            </div>
+            <p className="text-[11px] text-muted-foreground/80">{t("settingsStorageNote")}</p>
+          </>
+        ) : (
+          <p className="text-[11px] text-muted-foreground/80">{t("settingsStorageUnavailable")}</p>
+        )}
       </Section>
 
       <Separator />

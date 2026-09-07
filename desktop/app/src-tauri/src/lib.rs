@@ -8,6 +8,7 @@ mod deliver;
 mod documents;
 mod projects;
 mod settings;
+mod storage;
 mod sidecar;
 mod workbench;
 
@@ -82,6 +83,8 @@ pub fn run() {
             settings::save_defaults,
             settings::mark_intro_seen,
             settings::credits,
+            storage::storage_summary,
+            storage::clean_old_output,
             workbench::pick_save_path,
             workbench::pick_export_dir,
             workbench::workbench_dir,

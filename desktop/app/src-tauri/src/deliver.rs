@@ -60,7 +60,7 @@ fn permitted(app: &AppHandle, writable: &Writable, path: &Path) -> bool {
 /// somewhere else, but **this is the comparison that decides whether a path escapes**,
 /// and a scope check that is only exercised by running the whole program is a scope check
 /// nobody exercises.
-fn within(roots: &[PathBuf], real: &Path) -> bool {
+pub(crate) fn within(roots: &[PathBuf], real: &Path) -> bool {
     roots
         .iter()
         .filter_map(|root| root.canonicalize().ok())

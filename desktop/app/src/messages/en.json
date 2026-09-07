@@ -431,6 +431,13 @@
     "introWhere": "Output is saved in the app's data folder, and you can change that in Settings. When a conversion finishes there is a button that opens the folder.",
     "introLocal": "Conversion runs on this machine only. No file is sent anywhere.",
     "introGotIt": "Got it",
-    "introDismiss": "Dismiss"
+    "introDismiss": "Dismiss",
+    "settingsStorage": "Storage",
+    "settingsStorageSummary": "{size} in the app's output folder, across {count} conversion folders.",
+    "settingsStorageClean": "Clean folders older than 30 days",
+    "settingsStorageNote": "Only folders not named in the history are removed. A folder you chose as an output destination — one picked in a dialog rather than the app's own default — is never touched from here.",
+    "settingsStorageCleaned": "{count} folders removed, {size} freed.",
+    "settingsStorageNothingToClean": "Nothing to clean — every folder is either recent or still named in the history.",
+    "settingsStorageUnavailable": "Could not read the app's output folder."
   }
 }
