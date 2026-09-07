@@ -24,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTranslations } from "@/i18n/provider";
 import { pickDocuments, type EngineStatus } from "@/lib/engine";
 import { isTypingTarget } from "@/lib/utils";
+import EngineDown from "@/components/engine-down";
 import {
   applyPlan,
   compressDocument,
@@ -397,8 +398,10 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
 
   if (status.state !== "up") {
     return (
-      <div className="flex flex-1 items-center justify-center p-8 text-center">
-        <p className="max-w-sm text-xs text-warning">{t("engineDownHelp")}</p>
+      <div className="flex flex-1 items-center justify-center p-8">
+        <div className="max-w-sm">
+          <EngineDown />
+        </div>
       </div>
     );
   }

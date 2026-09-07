@@ -12,6 +12,12 @@ publish = false
 name = "pdf2code_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+# Test-only: a runtime and #[tokio::test], to drive the sidecar watchdog loop without a
+# real subprocess. Dev-dependencies do not reach the installer, so this does not lengthen
+# the dependency list the customer is asked to audit.
+[dev-dependencies]
+tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
@@ -22,7 +28,8 @@ serde_json = "1"
 # Only the synchronisation primitives: a job's reply arrives on the reader thread and
 # has to wake the async command that is awaiting it. Tauri already builds on tokio, so
 # this adds a name rather than a dependency.
-tokio = { version = "1", features = ["sync"] }
+# `time` is for the watchdog in sidecar.rs, not for a runtime: Tauri already runs one.
+tokio = { version = "1", features = ["sync", "time"] }
 # The native file picker. Used only from Rust: the window calls our own command and
 # never touches the plugin, so no dialog permission is granted to the WebView.
 tauri-plugin-dialog = "2"

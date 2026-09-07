@@ -64,6 +64,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app_version,
             sidecar::engine_status,
+            sidecar::engine_restart,
             sidecar::engine_job_id,
             sidecar::engine_call,
             sidecar::engine_cancel,

@@ -347,7 +347,7 @@
     "projectsChanged": "The source file has changed since it was converted",
     "sourcesRefused": "{count} files were not added — only PDF is supported.",
     "sourcesFirstRun": "Drop PDF files here, or add them. Conversion runs on this machine only.",
-    "engineDownHelp": "The engine did not start, so nothing can be converted. Closing and reopening the app fixes most cases.",
+    "engineDownHelp": "The engine did not start, so nothing can be converted. Restarting it usually fixes this, and the window stays open.",
     "itemFailed": "Failed: {message}",
     "modeConvert": "Convert",
     "modeWorkbench": "Workbench",
@@ -451,6 +451,8 @@
     "settingsShortcutDelete": "Delete the selected pages",
     "settingsShortcutSelectAll": "Select all pages",
     "settingsShortcutSave": "Save as",
-    "settingsShortcutsNote": "No shortcut fires while typing in a text field — each one checks where focus is before it does anything."
+    "settingsShortcutsNote": "No shortcut fires while typing in a text field — each one checks where focus is before it does anything.",
+    "engineRestart": "Restart the engine",
+    "itemHung": "The engine stopped answering and could not continue. It has been restarted — you can try again."
   }
 }

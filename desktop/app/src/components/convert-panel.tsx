@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import OutputPreview from "@/components/output-preview";
 import DeliveryPanel from "@/components/delivery-panel";
+import EngineDown from "@/components/engine-down";
 import { useTranslations } from "@/i18n/provider";
 import {
   clearOutputRoot,
@@ -148,11 +149,7 @@ export default function ConvertPanel({
 
       {/* A disabled button with no explanation is a dead end. The status bar says the
           engine is down; this says what that means for the thing you were about to do. */}
-      {status.state !== "up" ? (
-        <p className="rounded-lg border border-warning/40 bg-warning-muted px-3 py-2 text-xs text-warning">
-          {t("engineDownHelp")}
-        </p>
-      ) : null}
+      {status.state !== "up" ? <EngineDown /> : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <Button

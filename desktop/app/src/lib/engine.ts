@@ -80,6 +80,21 @@ export function engineCall<T = unknown>(id: string, op: string, args: unknown = 
   return invoke<T>("engine_call", { id, op, args });
 }
 
+/**
+ * Kill the engine and start it again, returning the status it came back with.
+ *
+ * Offered wherever the window reports the engine as down or hung. The alternative it
+ * used to offer was "close the app and open it again", which works and is a strange
+ * thing to ask of somebody already looking at a button.
+ */
+export function restartEngine(): Promise<EngineStatus> {
+  if (!isDesktop()) return Promise.resolve(OFFLINE);
+  return invoke<EngineStatus>("engine_restart");
+}
+
+/** The engine went quiet mid-job and the watchdog gave up on it. See sidecar.rs. */
+export const HUNG = "ENGINE_HUNG";
+
 export function engineCancel(id: string): Promise<void> {
   if (!isDesktop()) return unavailable<void>();
   return invoke("engine_cancel", { id });

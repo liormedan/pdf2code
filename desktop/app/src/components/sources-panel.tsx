@@ -3,7 +3,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { FilePlus2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "@/i18n/provider";
-import { describeDocument, isDesktop, pickDocuments, type PickedDocument } from "@/lib/engine";
+import { describeDocument, HUNG, isDesktop, pickDocuments, type PickedDocument } from "@/lib/engine";
 import type { QueueItem } from "@/lib/use-conversions";
 
 /**
@@ -128,7 +128,9 @@ export default function SourcesPanel({
                     not have. The engine's reason is short, and it is the only clue. */}
                 {item.error ? (
                   <span className="block text-[11px] text-destructive">
-                    {t("itemFailed", { message: item.error })}
+                    {item.error.includes(HUNG)
+                      ? t("itemHung")
+                      : t("itemFailed", { message: item.error })}
                   </span>
                 ) : null}
               </span>

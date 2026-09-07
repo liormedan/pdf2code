@@ -16,6 +16,7 @@ use std::path::PathBuf;
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -39,12 +40,76 @@ pub enum Status {
     Up { protocol: u32, python: String, ops: Vec<String> },
 }
 
+/// How long the engine may say **nothing at all** before a waiting job gives up on it.
+///
+/// Not a time limit on the work. Every operation that can run long reports progress per
+/// page, so a document that takes ten minutes is heard from a hundred times on the way.
+/// What this catches is the case that has no other symptom: the process is alive, its
+/// stdout is still open — so the reader thread never notices — and it has simply stopped
+/// answering. Without this, `call` awaits forever, the progress bar sits still, and
+/// Cancel writes a line to a process that is not reading either.
+///
+/// Two minutes is deliberately generous. It is long enough that a single pathological
+/// page cannot trip it, and short enough that nobody sits in front of a dead window
+/// wondering whether to wait.
+const SILENCE_LIMIT: Duration = Duration::from_secs(120);
+
+/// How often a waiting job wakes to ask whether the engine has gone quiet.
+const WATCHDOG_POLL: Duration = Duration::from_secs(5);
+
+/// What `call` returns when the watchdog fires. Matched by the window, so it stays a
+/// code with a stable prefix rather than a sentence — the same rule the engine's own
+/// errors follow.
+pub const HUNG: &str = "ENGINE_HUNG: the engine stopped answering";
+
+/// Whether silence this long means the engine has stopped answering.
+///
+/// One line, pulled out because it is the whole judgement the watchdog makes and because
+/// a decision that can only be exercised by waiting two minutes for a wedged subprocess
+/// is a decision nobody exercises.
+fn is_hung(silent_for: Duration, limit: Duration) -> bool {
+    silent_for >= limit
+}
+
+/// Wait for a job to end, giving up if the engine goes silent for too long.
+///
+/// Takes `silence` as a closure rather than reading the engine directly, so the loop can
+/// be tested against a receiver that never resolves and a clock that does whatever the
+/// test needs. Waiting two real minutes on a real wedged subprocess to find out whether
+/// this works is not a test anybody runs twice.
+async fn await_with_watchdog(
+    rx: oneshot::Receiver<Value>,
+    silence: impl Fn() -> Duration,
+    limit: Duration,
+    poll: Duration,
+) -> Result<Value, String> {
+    let mut rx = rx;
+    loop {
+        match tokio::time::timeout(poll, &mut rx).await {
+            // The job ended, one way or the other. `result` and `error` both arrive
+            // here; deciding which is bad news is the caller's job.
+            Ok(Ok(message)) => return Ok(message),
+            // The sender was dropped, which happens when the engine died mid-job or the
+            // engine was restarted underneath it. Reporting it beats hanging forever.
+            Ok(Err(_)) => return Err("engine stopped before answering".into()),
+            // Still waiting, which is normal. The question is only whether the engine has
+            // gone quiet altogether — a job reporting progress resets that clock however
+            // long it runs.
+            Err(_) if is_hung(silence(), limit) => return Err(HUNG.into()),
+            Err(_) => continue,
+        }
+    }
+}
+
 pub struct Engine {
     stdin: Mutex<Option<ChildStdin>>,
     child: Mutex<Option<Child>>,
     pending: Arc<Mutex<HashMap<String, oneshot::Sender<Value>>>>,
     status: Arc<Mutex<Status>>,
     next_id: AtomicU64,
+    /// When the engine last proved it was alive — either by writing a line or by being
+    /// asked something. Written by the reader thread, read by every waiting job.
+    last_heard: Arc<Mutex<Instant>>,
 }
 
 impl Engine {
@@ -57,6 +122,7 @@ impl Engine {
                 reason: "not started".into(),
             })),
             next_id: AtomicU64::new(1),
+            last_heard: Arc::new(Mutex::new(Instant::now())),
         }
     }
 
@@ -110,7 +176,17 @@ impl Engine {
         let stderr = child.stderr.take().ok_or("engine has no stderr")?;
         *self.stdin.lock().unwrap() = child.stdin.take();
 
-        spawn_reader(app.clone(), stdout, self.pending.clone(), self.status.clone());
+        // Reset before the reader starts: the clock measures silence since we last had
+        // reason to believe the engine was alive, and a fresh process is that reason.
+        *self.last_heard.lock().unwrap() = Instant::now();
+
+        spawn_reader(
+            app.clone(),
+            stdout,
+            self.pending.clone(),
+            self.status.clone(),
+            self.last_heard.clone(),
+        );
         spawn_logger(stderr);
 
         *self.child.lock().unwrap() = Some(child);
@@ -146,9 +222,51 @@ impl Engine {
             return Err(e);
         }
 
-        // An error here means the reader thread dropped the sender, which happens only
-        // when the engine died mid-job. Reporting it as such beats hanging forever.
-        rx.await.map_err(|_| "engine stopped before answering".to_string())
+        // Asking counts as hearing: the clock measures how long the engine has been quiet
+        // since it had something to answer. Without this reset, a job submitted after an
+        // idle afternoon would be declared hung the moment it started.
+        *self.last_heard.lock().unwrap() = Instant::now();
+
+        let last_heard = self.last_heard.clone();
+        let outcome = await_with_watchdog(
+            rx,
+            move || last_heard.lock().unwrap().elapsed(),
+            SILENCE_LIMIT,
+            WATCHDOG_POLL,
+        )
+        .await;
+
+        // A job the watchdog gave up on is still registered, and nothing is ever going to
+        // answer it. Left in place it would make a later job with the same id impossible.
+        if outcome.as_ref().err().map(String::as_str) == Some(HUNG) {
+            self.pending.lock().unwrap().remove(&id);
+        }
+        outcome
+    }
+
+    /// Kill the engine and start it again.
+    ///
+    /// The kill comes first and the polite stdin close does not: a wedged process is
+    /// wedged precisely because it is not reading its stdin, so closing it would change
+    /// nothing and leave the old process alive beside the new one.
+    ///
+    /// Every job still waiting is woken by its sender being dropped with `pending`, so a
+    /// restart never leaves a caller awaiting a process that no longer exists.
+    pub fn restart(&self, app: &AppHandle) {
+        {
+            if let Some(child) = self.child.lock().unwrap().as_mut() {
+                let _ = child.kill();
+                // Reaped here rather than left to the OS: an unwaited child on Windows
+                // keeps its handle, and this is a path that can run repeatedly.
+                let _ = child.wait();
+            }
+        }
+        *self.child.lock().unwrap() = None;
+        *self.stdin.lock().unwrap() = None;
+        self.pending.lock().unwrap().clear();
+
+        eprintln!("engine: restarting");
+        self.start(app);
     }
 
     /// Ask a running job to stop. Fire and forget: the job's own terminal message is
@@ -234,10 +352,16 @@ fn spawn_reader(
     stdout: std::process::ChildStdout,
     pending: Arc<Mutex<HashMap<String, oneshot::Sender<Value>>>>,
     status: Arc<Mutex<Status>>,
+    last_heard: Arc<Mutex<Instant>>,
 ) {
     std::thread::spawn(move || {
         for line in BufReader::new(stdout).lines() {
             let Ok(line) = line else { break };
+
+            // Any line at all, including one we cannot parse: this is a liveness signal,
+            // not a correctness one.
+            *last_heard.lock().unwrap() = Instant::now();
+
             let Ok(message) = serde_json::from_str::<Value>(&line) else {
                 // The engine forces UTF-8 and owns stdout exclusively, so this should
                 // not happen. If it does, one bad line must not desynchronise the rest.
@@ -292,6 +416,11 @@ fn spawn_reader(
 
         // The pipe closed: the engine is gone. Every caller still waiting is woken by
         // its sender being dropped here, rather than left awaiting forever.
+        //
+        // Logged, because it was not: the log said the engine had been spawned and that
+        // it had come up, and then went quiet about the one transition somebody reading
+        // the log is trying to explain.
+        eprintln!("engine: stopped — its stdout closed");
         pending.lock().unwrap().clear();
         let down = Status::Down { reason: "engine stopped".into() };
         *status.lock().unwrap() = down.clone();
@@ -327,6 +456,7 @@ pub fn engine_job_id(engine: State<'_, Engine>) -> String {
 /// dialog produced it or this side made it; see workbench::Writable.
 #[tauri::command]
 pub async fn engine_call(
+    app: AppHandle,
     engine: State<'_, Engine>,
     writable: State<'_, crate::workbench::Writable>,
     id: String,
@@ -338,7 +468,16 @@ pub async fn engine_call(
             return Err("refused: nobody chose that place to write to".into());
         }
     }
-    engine.call(id, op, args).await
+
+    let outcome = engine.call(id, op, args).await;
+
+    // A wedged engine does not un-wedge. Leaving it running means the next job waits two
+    // minutes to fail the same way, and the one after that — so the recovery happens here
+    // rather than being left as advice in an error message.
+    if outcome.as_ref().err().map(String::as_str) == Some(HUNG) {
+        engine.restart(&app);
+    }
+    outcome
 }
 
 #[tauri::command]
@@ -349,4 +488,111 @@ pub fn engine_cancel(engine: State<'_, Engine>, id: String) -> Result<(), String
 #[tauri::command]
 pub fn engine_status(engine: State<'_, Engine>) -> Status {
     engine.status()
+}
+
+/// Start the engine over, on request.
+///
+/// The window offers this wherever it reports the engine as down, because the honest
+/// alternative it used to offer was "close the app and open it again" — which works, and
+/// is a strange thing to ask of somebody sitting in front of a button that could do it.
+#[tauri::command]
+pub fn engine_restart(app: AppHandle, engine: State<'_, Engine>) -> Status {
+    engine.restart(&app);
+    engine.status()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn silence_under_the_limit_is_just_a_slow_job() {
+        assert!(!is_hung(Duration::from_secs(0), SILENCE_LIMIT));
+        assert!(!is_hung(Duration::from_secs(119), SILENCE_LIMIT));
+    }
+
+    #[test]
+    fn silence_at_the_limit_is_a_hung_engine() {
+        assert!(is_hung(SILENCE_LIMIT, SILENCE_LIMIT));
+        assert!(is_hung(Duration::from_secs(600), SILENCE_LIMIT));
+    }
+
+    #[test]
+    fn the_watchdog_wakes_far_more_often_than_it_fires() {
+        // If these ever crossed, a job could sit past the limit without anything
+        // checking — the watchdog would exist and not watch.
+        assert!(
+            WATCHDOG_POLL < SILENCE_LIMIT,
+            "the poll interval has to be shorter than the limit it enforces"
+        );
+    }
+
+    /// Silence long past the limit, and a job that never answers: the loop has to give
+    /// up rather than await forever. This is the failure the watchdog exists for, and
+    /// before it the window sat on a still progress bar with a Cancel that went nowhere.
+    #[tokio::test]
+    async fn a_job_that_never_answers_a_silent_engine_gives_up() {
+        let (_tx, rx) = oneshot::channel::<Value>();
+        let outcome = await_with_watchdog(
+            rx,
+            || Duration::from_secs(999),
+            Duration::from_millis(10),
+            Duration::from_millis(1),
+        )
+        .await;
+        assert_eq!(outcome.err().as_deref(), Some(HUNG));
+    }
+
+    /// The case that must **not** fire: a long job on a talkative engine. The clock keeps
+    /// being reset by progress, so however long this waits, it waits.
+    #[tokio::test]
+    async fn a_long_job_on_a_talking_engine_is_left_alone() {
+        let (tx, rx) = oneshot::channel::<Value>();
+
+        // Answers only after several watchdog polls have already come and gone.
+        tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(30)).await;
+            let _ = tx.send(json!({ "type": "result", "ok": true }));
+        });
+
+        let outcome = await_with_watchdog(
+            rx,
+            // Never silent: this is what progress arriving looks like to the watchdog.
+            || Duration::from_millis(0),
+            Duration::from_millis(10),
+            Duration::from_millis(1),
+        )
+        .await;
+
+        assert_eq!(
+            outcome.expect("a talking engine must never be declared hung")["ok"],
+            json!(true)
+        );
+    }
+
+    /// An engine that dies mid-job wakes its callers rather than leaving them waiting,
+    /// and is reported as a death rather than as a hang — they are different states and
+    /// the window says different things about them.
+    #[tokio::test]
+    async fn an_engine_that_dies_is_not_reported_as_hung() {
+        let (tx, rx) = oneshot::channel::<Value>();
+        drop(tx);
+
+        let outcome = await_with_watchdog(
+            rx,
+            || Duration::from_millis(0),
+            Duration::from_millis(10),
+            Duration::from_millis(1),
+        )
+        .await;
+
+        assert_eq!(outcome.err().as_deref(), Some("engine stopped before answering"));
+    }
+
+    #[test]
+    fn the_hung_code_is_matchable_by_the_window() {
+        // The front end distinguishes this from a cancel and from a crash by prefix, the
+        // same way it already reads the engine's own error codes.
+        assert!(HUNG.starts_with("ENGINE_HUNG"));
+    }
 }

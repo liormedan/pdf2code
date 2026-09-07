@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   engineCall,
   engineCancel,
+  HUNG,
   newJobId,
   onProgress,
   outputDir,
@@ -161,16 +162,21 @@ export function useConversions(settings: ConversionSettings, onRecorded: () => v
         onRecorded();
       } catch (error) {
         const message = String(error);
+        // A cancel is not a failure. A hang is, but it is a failure of the engine rather
+        // than of this document, so it stops the batch the way a cancel does — the next
+        // thirty-nine would each wait two minutes to fail the same way.
         const cancelled = message.includes("CANCELLED");
+        const hung = message.includes(HUNG);
         patch(item.key, {
           state: cancelled ? "cancelled" : "failed",
           error: cancelled ? null : message,
           progress: null,
           took: (performance.now() - started) / 1000,
         });
-        // A cancel stops the batch; a failure does not. One document the engine could
-        // not open says nothing about the next thirty-nine.
-        if (cancelled) stopped.current = true;
+        // A cancel stops the batch, and so does a hung engine. One document the engine
+        // could not open says nothing about the next thirty-nine; an engine that stopped
+        // answering says everything about them.
+        if (cancelled || hung) stopped.current = true;
       } finally {
         activeJob.current = null;
         activeKey.current = null;
