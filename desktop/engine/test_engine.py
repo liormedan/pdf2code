@@ -38,10 +38,19 @@ FIXTURES = HERE.parent.parent / "fixtures"
 # fixture; the values are the first 24 characters of each affected run, matching how
 # the positional check reports them. Anything not listed here is a failure.
 KNOWN_DIFFERENCES: dict[str, dict[str, str]] = {
-    # Spaces inside text rotated ninety degrees come out as separate runs. Position,
-    # size, angle and every character are correct; only the run boundaries differ.
+    # The rotated sidebar is now one run with its spaces inside it, which is what this
+    # entry used to be about. What is left is narrower and deliberate: where the document
+    # draws **two** space glyphs, we keep two and pdf.js collapses them to one.
+    #
+    # The document decides this, not either implementation. Between "7" and "[" the gap
+    # is exactly 10 units and the font's space glyph is 5 — two of them, drawn. We keep
+    # what is drawn, because a run is one positioned span whose text flows inside it, and
+    # dropping a space would pull every following character out of the place the document
+    # puts it. Matching pdf.js here would mean moving glyphs to agree with a normalisation.
     # See desktop/backlog.md, sprint 3.
-    "07-academic-tables.pdf": {"arXiv:1706.03762v7 [cs.C": "spaces inside rotated text split into their own runs"},
+    "07-academic-tables.pdf": {
+        "arXiv:1706.03762v7 [cs.C": "document draws two space glyphs; pdf.js collapses them, we keep them"
+    },
     # One glyph pdfminer cannot resolve. The copyright sign in this document's CMSY7
     # font has no usable ToUnicode entry, so pdfminer emits the placeholder "(cid:13)"
     # where pdf.js reads the font's built-in encoding and gets "©". We remove the

@@ -196,10 +196,28 @@ def _ordered(glyphs: list[_Glyph]) -> list[_Glyph]:
     first. Sorting each line by its own writing direction fixes that without disturbing
     ordinary text, where `along` is just x and the order is already correct.
     """
-    ordered: list[_Glyph] = []
-    line: list[_Glyph] = []
+    # Keyed by the line a glyph sits on rather than accumulated as it arrives, because
+    # pdfminer does not always emit one visual line in one piece. The arXiv sidebar comes
+    # out as its thirty-three characters, then other page content, then the six spaces
+    # that belong between them — and a grouper that only breaks on a change of line puts
+    # those spaces in a line of their own, which is how they ended up as three separate
+    # runs after the text instead of inside it.
+    #
+    # First appearance decides the order of the lines themselves, so ordinary documents
+    # come out exactly as before; only the pieces of a split line are rejoined.
+    lines: dict[tuple[float, float], list[_Glyph]] = {}
 
-    def flush_line() -> None:
+    def line_key(glyph: _Glyph) -> tuple[float, float]:
+        # Rounded to the same tolerance the old adjacency check used, so two glyphs that
+        # counted as one line then still count as one line now.
+        return (round2(glyph.angle, 4), round(glyph.across * 2) / 2)
+
+    for glyph in glyphs:
+        lines.setdefault(line_key(glyph), []).append(glyph)
+
+    ordered: list[_Glyph] = []
+
+    def flush_line(line: list[_Glyph]) -> None:
         if not line:
             return
         sorted_line = sorted(line, key=lambda g: g.along)
@@ -213,17 +231,9 @@ def _ordered(glyphs: list[_Glyph]) -> list[_Glyph]:
             for glyph, marker in zip(sorted_line, [""] + markers[:-1]):
                 glyph.space_before = marker
         ordered.extend(sorted_line)
-        line.clear()
 
-    for glyph in glyphs:
-        if line and (
-            round2(line[-1].angle, 4) != round2(glyph.angle, 4)
-            or abs(line[-1].across - glyph.across) > 0.5
-        ):
-            flush_line()
-        line.append(glyph)
-
-    flush_line()
+    for line in lines.values():
+        flush_line(line)
     return _place_spaces(ordered)
 
 
