@@ -9,6 +9,7 @@ import ProjectsPanel from "@/components/projects-panel";
 import WorkbenchPanel from "@/components/workbench-panel";
 import SettingsPanel from "@/components/settings-panel";
 import IntroCard from "@/components/intro-card";
+import PreviewScreen from "@/components/preview-screen";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "@/i18n/provider";
 import {
@@ -50,6 +51,31 @@ export default function AppShell() {
   // Null until the Rust side answers, so the first-run card cannot flash on a machine
   // that dismissed it a year ago.
   const [showIntro, setShowIntro] = useState(false);
+  /**
+   * The conversion being read full-window, if any.
+   *
+   * Not a header mode: a fourth tab that is empty until somebody converts something is a
+   * tab that is usually clutter. This is a place you arrive at from a result and leave
+   * with one button, which is what "open the page" always meant.
+   */
+  const [reading, setReading] = useState<{ dir: string; files: string[] } | null>(null);
+
+  /**
+   * Go to a header mode.
+   *
+   * Reading a conversion covers whichever mode is underneath it, so pressing a header
+   * button while it is open has to close it. Without this the button lights up, the mode
+   * changes, and the screen does not — which is indistinguishable from a broken control.
+   * Every way of changing mode goes through here, keyboard included, so there is one
+   * place where that stays true.
+   */
+  const go = useCallback((next: "convert" | "workbench" | "settings") => {
+    setReading(null);
+    setMode(next);
+  }, []);
+
+  /** The mode the header should show as pressed: none of them, while reading. */
+  const showing = reading ? null : mode;
 
   const [settings, setSettings] = useState<ConversionSettings>({
     formats: ["html"],
@@ -91,13 +117,13 @@ export default function AppShell() {
 
       if (event.code === "Digit1") {
         event.preventDefault();
-        setMode("convert");
+        go("convert");
       } else if (event.code === "Digit2") {
         event.preventDefault();
-        setMode("workbench");
+        go("workbench");
       } else if (event.code === "Digit3") {
         event.preventDefault();
-        setMode("settings");
+        go("settings");
       } else if (event.code === "KeyO" && !event.shiftKey) {
         // Shift+Ctrl+O is delivery-panel's "open the output folder" — this is the plain
         // one, "add a document", and the two must not collide.
@@ -135,29 +161,29 @@ export default function AppShell() {
           <nav className="me-2 flex items-center gap-0.5 rounded-lg border border-divider p-0.5">
             <Button
               size="sm"
-              variant={mode === "convert" ? "secondary" : "ghost"}
-              aria-pressed={mode === "convert"}
-              onClick={() => setMode("convert")}
+              variant={showing === "convert" ? "secondary" : "ghost"}
+              aria-pressed={showing === "convert"}
+              onClick={() => go("convert")}
             >
               <Settings2 className="size-4" />
               {t("modeConvert")}
             </Button>
             <Button
               size="sm"
-              variant={mode === "workbench" ? "secondary" : "ghost"}
-              aria-pressed={mode === "workbench"}
-              onClick={() => setMode("workbench")}
+              variant={showing === "workbench" ? "secondary" : "ghost"}
+              aria-pressed={showing === "workbench"}
+              onClick={() => go("workbench")}
             >
               <Wrench className="size-4" />
               {t("modeWorkbench")}
             </Button>
             <Button
               size="icon"
-              variant={mode === "settings" ? "secondary" : "ghost"}
-              aria-pressed={mode === "settings"}
+              variant={showing === "settings" ? "secondary" : "ghost"}
+              aria-pressed={showing === "settings"}
               aria-label={t("modeSettings")}
               title={t("modeSettings")}
-              onClick={() => setMode("settings")}
+              onClick={() => go("settings")}
             >
               <Settings className="size-4" />
             </Button>
@@ -167,7 +193,11 @@ export default function AppShell() {
         </div>
       </header>
 
-      {mode === "settings" ? (
+      {reading ? (
+        <main className="flex min-h-0 flex-1 flex-col p-0">
+          <PreviewScreen dir={reading.dir} files={reading.files} onBack={() => setReading(null)} />
+        </main>
+      ) : mode === "settings" ? (
         <main className="min-h-0 flex-1 p-5">
           <Region icon={Settings} title={t("settings")}>
             <SettingsPanel settings={settings} onSettings={setSettings} />
@@ -207,6 +237,7 @@ export default function AppShell() {
               running={queue.running}
               onRun={() => void queue.run()}
               onCancel={queue.cancel}
+              onRead={setReading}
             />
           ) : (
             <Empty line={t("engineNotInApp")} />

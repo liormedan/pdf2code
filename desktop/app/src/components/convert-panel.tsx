@@ -33,6 +33,7 @@ export default function ConvertPanel({
   running,
   onRun,
   onCancel,
+  onRead,
 }: {
   status: EngineStatus;
   settings: ConversionSettings;
@@ -41,6 +42,8 @@ export default function ConvertPanel({
   running: boolean;
   onRun: () => void;
   onCancel: () => void;
+  /** Open a finished conversion full-window. */
+  onRead: (what: { dir: string; files: string[] }) => void;
 }) {
   const t = useTranslations("desktop");
   const [root, setRoot] = useState<string | null>(null);
@@ -189,7 +192,13 @@ export default function ConvertPanel({
           {/* Opening the folder needs a permission this app withheld until sprint 1, and
               it is still not the shell plugin: a Rust command that opens paths inside the
               output directories, and refuses a file it could not have written. */}
-          <DeliveryPanel dir={lastDone.result.out} />
+          <DeliveryPanel
+            dir={lastDone.result.out}
+            onRead={() =>
+              lastDone.result &&
+              onRead({ dir: lastDone.result.out, files: lastDone.result.files })
+            }
+          />
           {lastDone.result.warnings.map((warning) => (
             <p key={warning.code} className="text-warning">
               {wording(t, warning)}
