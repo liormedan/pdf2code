@@ -87,28 +87,47 @@ export function rungFor(cssWidth: number, zoom: number, pixelRatio = 1): number 
 }
 
 /**
- * The width in CSS pixels a page should occupy.
+ * How big to draw the page, and how much room it will take once turned.
  *
- * `page` fits the whole sheet, which needs the height as well and therefore the page's own
- * ratio — a landscape page fitted to width would still overflow downwards. A quarter turn
- * swaps that ratio, which is why the rotation is an argument here rather than something
- * the caller is trusted to have applied.
+ * **Two numbers that are only the same while the page is upright**, which is the bug this
+ * replaces. The previous version returned "the width the page should occupy" and the
+ * component used it as the width of the `<img>` — fine at 0° and 180°, and wrong at 90°,
+ * where the element's width becomes the page's *height* on screen. Fitting to width then
+ * sized the image so that its height filled the room, and a portrait page turned sideways
+ * ran off the edge with no way to see the rest of it.
+ *
+ * So this returns both: `image` is what the element is set to before it is rotated, and
+ * `shown` is the box it occupies afterwards — which is what the wrapper must reserve, or
+ * the rotation is clipped rather than laid out.
  */
-export function fitWidth(
+export function pageBox(
   fit: Fit,
   zoom: number,
   room: { width: number; height: number },
   page: { width: number; height: number },
   rotate: number,
-): number {
-  const turned = rotate % 180 !== 0;
-  const w = turned ? page.height : page.width;
-  const h = turned ? page.width : page.height;
+): { image: { width: number; height: number }; shown: { width: number; height: number } } {
+  const pw = Math.max(1, page.width);
+  const ph = Math.max(1, page.height);
+  const turned = ((rotate % 360) + 360) % 360 % 180 !== 0;
 
-  if (fit === "actual") return w * zoom;
-  if (fit === "width") return room.width * zoom;
-  // Fit the whole page: whichever of the two constraints bites first.
-  return Math.min(room.width, (room.height * w) / Math.max(1, h)) * zoom;
+  // What one pixel of page width becomes on screen, before zoom.
+  const shownW = turned ? ph : pw;
+  const shownH = turned ? pw : ph;
+
+  let scale: number;
+  if (fit === "actual") {
+    scale = 1;
+  } else if (fit === "width") {
+    scale = room.width / shownW;
+  } else {
+    // Fit the whole sheet: whichever of the two constraints bites first.
+    scale = Math.min(room.width / shownW, Math.max(1, room.height) / shownH);
+  }
+  scale *= zoom;
+
+  const image = { width: pw * scale, height: ph * scale };
+  return { image, shown: { width: shownW * scale, height: shownH * scale } };
 }
 
 // ---------------------------------------------------------------------------------------

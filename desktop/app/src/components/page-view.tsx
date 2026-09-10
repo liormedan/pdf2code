@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "@/i18n/provider";
 import { engineCancel } from "@/lib/engine";
-import { fitWidth, latest, rungFor, step, viewedAt, type Fit } from "@/lib/viewer";
+import { latest, pageBox, rungFor, step, viewedAt, type Fit } from "@/lib/viewer";
 import { readImage, renderPages, workbenchDir, type Doc, type Leaf } from "@/lib/workbench";
 
 /**
@@ -112,10 +112,19 @@ export default function PageView({
   const dirs = useRef<Map<string, string>>(new Map());
   const ratioKey = useRef<string>("");
 
-  const shownWidth =
-    at && box.width > 0
-      ? fitWidth(shape ? fit : "width", zoom, box, shape ?? { width: 1, height: 1 }, at.leaf.rotate)
-      : 0;
+  /**
+   * The element's size, and the box it takes once turned.
+   *
+   * Two numbers, because a rotation makes them differ: the `<img>` is set to `image` and
+   * the wrapper reserves `shown`. Sizing the element to the room and rotating it was the
+   * bug — at 90° the element's width becomes the page's height on screen, so fitting to
+   * width made the *height* fill the room and the page ran off the side.
+   */
+  const layout =
+    at && box.width > 0 && shape
+      ? pageBox(fit, zoom, box, shape, at.leaf.rotate)
+      : null;
+  const shownWidth = layout?.shown.width ?? (at && box.width > 0 ? box.width * zoom : 0);
 
   useEffect(() => {
     if (!at || !doc || box.width === 0) return;
@@ -204,9 +213,13 @@ export default function PageView({
   }
 
   const total = plan.length;
-  const turned = at.leaf.rotate % 180 !== 0;
-  const drawnWidth = Math.max(40, shownWidth);
-  const drawnHeight = shape ? (drawnWidth * shape.height) / Math.max(1, shape.width) : drawnWidth * 1.4;
+  // Before the first render there is no shape, so the page is guessed at a common ratio
+  // and corrected the moment it arrives. Guessing is only for the placeholder's size.
+  const element = layout?.image ?? {
+    width: Math.max(40, shownWidth),
+    height: Math.max(40, shownWidth) * 1.4,
+  };
+  const frame = layout?.shown ?? element;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -344,8 +357,8 @@ export default function PageView({
             // The wrapper is given the turned dimensions and the image is centred in it.
             <div
               style={{
-                width: `${Math.round(turned ? drawnHeight : drawnWidth)}px`,
-                height: `${Math.round(turned ? drawnWidth : drawnHeight)}px`,
+                width: `${Math.round(frame.width)}px`,
+                height: `${Math.round(frame.height)}px`,
               }}
               // Centred by flex rather than by `left-1/2` and a translate. Centring is
               // direction-neutral, but `left` is not: under RTL the logical form resolves
@@ -357,8 +370,8 @@ export default function PageView({
                 src={image}
                 alt={t("viewerPageAlt", { index: at.index + 1, total })}
                 style={{
-                  width: `${Math.round(drawnWidth)}px`,
-                  height: `${Math.round(drawnHeight)}px`,
+                  width: `${Math.round(element.width)}px`,
+                  height: `${Math.round(element.height)}px`,
                   transform: `rotate(${at.leaf.rotate}deg)`,
                 }}
                 className="max-w-none shrink-0 bg-white shadow-sm"

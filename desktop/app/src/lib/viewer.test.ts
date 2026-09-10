@@ -18,7 +18,7 @@
 
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
-import { fitWidth, keepViewing, latest, rungFor, step, viewedAt } from "./viewer.ts";
+import { keepViewing, latest, pageBox, rungFor, step, viewedAt } from "./viewer.ts";
 import type { Leaf } from "./workbench.ts";
 
 /** A plan, written the way the reducer builds one. */
@@ -126,23 +126,63 @@ describe("how large to render", () => {
     strictEqual(rungFor(4000, 4), 2400);
   });
 
-  test("fit to width fills the room; actual size ignores it", () => {
+  test("fit to width fills the room, and actual size ignores it", () => {
     const room = { width: 800, height: 600 };
     const page = { width: 400, height: 800 };
-    strictEqual(fitWidth("width", 1, room, page, 0), 800);
-    strictEqual(fitWidth("actual", 1, room, page, 0), 400);
-    strictEqual(fitWidth("width", 2, room, page, 0), 1600);
+    const fit = pageBox("width", 1, room, page, 0);
+    strictEqual(fit.shown.width, 800, "the page fills the room's width");
+    strictEqual(fit.image.width, 800, "and upright, the element is that wide too");
+
+    strictEqual(pageBox("actual", 1, room, page, 0).image.width, 400);
+    strictEqual(pageBox("width", 2, room, page, 0).shown.width, 1600);
   });
 
-  test("fit to page respects the height, and a quarter turn swaps the ratio", () => {
+  test("a page turned a quarter still fits the room it was fitted to", () => {
+    // The failure this exists for: the element's width is the page's height once turned,
+    // so sizing the element to the room made the *height* fill it and the width overflow.
+    // A portrait page turned sideways ran off the edge with no way back to it.
     const room = { width: 800, height: 600 };
     const tall = { width: 400, height: 800 };
-    // Upright: height is the binding constraint — 600 * 400/800.
-    strictEqual(fitWidth("page", 1, room, tall, 0), 300);
-    // Turned: the page is now wider than tall, so the room's width binds instead.
-    strictEqual(fitWidth("page", 1, room, tall, 90), 800);
+
+    const turned = pageBox("width", 1, room, tall, 90);
+    strictEqual(turned.shown.width, 800, "what is on screen is still 800 wide");
+    strictEqual(turned.image.width, 400, "which means the element itself is half that");
+    strictEqual(turned.image.height, 800, "and the element's height is what fills the room");
+    strictEqual(turned.shown.height, 400);
+
+    // 270° is the same shape as 90°, and −90° is 270°.
+    deepStrictEqual(pageBox("width", 1, room, tall, 270).shown, turned.shown);
+    deepStrictEqual(pageBox("width", 1, room, tall, -90).shown, turned.shown);
     // Half a turn is the same shape as none.
-    strictEqual(fitWidth("page", 1, room, tall, 180), 300);
+    deepStrictEqual(pageBox("width", 1, room, tall, 180).shown, pageBox("width", 1, room, tall, 0).shown);
+  });
+
+  test("fit to page never exceeds the room, upright or turned", () => {
+    const room = { width: 800, height: 600 };
+    const tall = { width: 400, height: 800 };
+
+    for (const rotate of [0, 90, 180, 270]) {
+      const { shown } = pageBox("page", 1, room, tall, rotate);
+      strictEqual(shown.width <= room.width + 0.001, true, `width at ${rotate}°: ${shown.width}`);
+      strictEqual(shown.height <= room.height + 0.001, true, `height at ${rotate}°: ${shown.height}`);
+    }
+
+    // Upright the height binds: 600 tall, so 300 wide.
+    strictEqual(pageBox("page", 1, room, tall, 0).shown.width, 300);
+    // Turned, the page is 800×400 on screen and the width binds exactly.
+    strictEqual(pageBox("page", 1, room, tall, 90).shown.width, 800);
+  });
+
+  test("the element keeps the page's own proportions whatever the rotation", () => {
+    const page = { width: 400, height: 800 };
+    for (const rotate of [0, 90, 180, 270]) {
+      const { image } = pageBox("width", 1, { width: 800, height: 600 }, page, rotate);
+      strictEqual(
+        Math.round((image.height / image.width) * 1000),
+        2000,
+        `the image is stretched at ${rotate}°`,
+      );
+    }
   });
 });
 
