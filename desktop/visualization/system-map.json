@@ -1,0 +1,692 @@
+{
+  "generatedBy": "desktop/visualization/sync-system-map.mjs",
+  "sources": [
+    {
+      "file": "desktop/delegation.md",
+      "sha256": "04a8f7e46b439aad"
+    },
+    {
+      "file": "desktop/architecture.md",
+      "sha256": "04d007e83d3d77dc"
+    },
+    {
+      "file": "desktop/backlog.md",
+      "sha256": "5e095854e77199d5"
+    },
+    {
+      "file": "desktop/built.md",
+      "sha256": "a0fafe67e74b77df"
+    },
+    {
+      "file": "desktop/decisions.md",
+      "sha256": "50952ec0f53be6e2"
+    }
+  ],
+  "processes": [
+    {
+      "id": "window",
+      "name": "החלון",
+      "nameEn": "Window",
+      "stack": [
+        "React 19",
+        "TypeScript",
+        "Vite 8",
+        "Tailwind 4",
+        "shadcn/ui"
+      ],
+      "path": "desktop/app/src/",
+      "is": "חלון אחד, שלושה אזורים, שני מצבים נוספים, RTL מלא. מנסח כל מה שהמשתמש קורא.",
+      "isNot": "אין לו מערכת קבצים, אין לו רשת ואין לו shell. הוא נוקב בשם של מה שהוא רוצה.",
+      "source": "delegation.md",
+      "parts": [
+        {
+          "name": "app-shell",
+          "file": "desktop/app/src/components/app-shell.tsx",
+          "does": "הכותרת, המצבים, והתור שכל שלושת האזורים קוראים"
+        },
+        {
+          "name": "convert-panel",
+          "file": "desktop/app/src/components/convert-panel.tsx",
+          "does": "הגדרות ההמרה, ההרצה, וההתקדמות"
+        },
+        {
+          "name": "workbench-panel",
+          "file": "desktop/app/src/components/workbench-panel.tsx",
+          "does": "עמודי המסמך: סיבוב, סדר, מחיקה, מיזוג, חיפוש"
+        },
+        {
+          "name": "preview-screen",
+          "file": "desktop/app/src/components/preview-screen.tsx",
+          "does": "קריאת הפלט בתוך האפליקציה, במסגרת עם sandbox ריק"
+        },
+        {
+          "name": "i18n",
+          "file": "desktop/app/src/messages/",
+          "does": "שתי חבילות הודעות, מפתחות זהים, נאכף על ידי check-i18n"
+        }
+      ]
+    },
+    {
+      "id": "shell",
+      "name": "המעטפת",
+      "nameEn": "Shell",
+      "stack": [
+        "Rust",
+        "Tauri 2",
+        "rusqlite"
+      ],
+      "path": "desktop/app/src-tauri/",
+      "is": "מכריעה מה מותר, מחזיקה את SQLite ואת ההגדרות, ומחזיקה את תהליך המנוע.",
+      "isNot": "לא מעבדת מסמכים. אף פעם לא פותחת PDF בעצמה.",
+      "source": "delegation.md",
+      "parts": [
+        {
+          "name": "Writable",
+          "file": "desktop/app/src-tauri/src/workbench.rs",
+          "does": "רשימת הנתיבים שמותר לכתוב אליהם. נתיב מצטרף רק דרך דיאלוג מקורי או output_dir"
+        },
+        {
+          "name": "sidecar",
+          "file": "desktop/app/src-tauri/src/sidecar.rs",
+          "does": "מפעיל את המנוע ומחזיק אותו. שומר־ראש על שתיקה ולא על משך"
+        },
+        {
+          "name": "deliver",
+          "file": "desktop/app/src-tauri/src/deliver.rs",
+          "does": "פתיחה, חשיפה ורשימת פלט. רשימת היתר לסיומות, ShellExecuteW לקבצים"
+        },
+        {
+          "name": "report",
+          "file": "desktop/app/src-tauri/src/report.rs",
+          "does": "דוח תקלה עם מקרצף נתיבים: בלי שם קובץ, בלי נתיב, בלי תוכן"
+        },
+        {
+          "name": "storage",
+          "file": "desktop/app/src-tauri/src/storage.rs",
+          "does": "ניקוי תיקיות פלט ישנות, מתוחם למה שהאפליקציה עצמה יצרה"
+        }
+      ]
+    },
+    {
+      "id": "engine",
+      "name": "המנוע",
+      "nameEn": "Engine",
+      "stack": [
+        "Python 3.13",
+        "pypdfium2",
+        "pdfminer.six",
+        "Pillow"
+      ],
+      "path": "desktop/engine/",
+      "is": "ההמרה עצמה: ראסטר, טקסט ממוקם, RTL, ופעולות על עמודים.",
+      "isNot": "לא מנסח משפטים. מחזיר קודים — SCANNED, TRUNCATED, UNREADABLE — והחלון בעל הניסוח.",
+      "source": "delegation.md",
+      "parts": [
+        {
+          "name": "extract",
+          "file": "desktop/engine/extract.py",
+          "does": "שכבת הטקסט: תווים, פונטים וקואורדינטות, מקובצים לשורות חזותיות"
+        },
+        {
+          "name": "bidi",
+          "file": "desktop/engine/bidi.py",
+          "does": "סדר חזותי נכנס, סדר לוגי יוצא. בלעדיו העברית חוזרת הפוכה"
+        },
+        {
+          "name": "raster",
+          "file": "desktop/engine/raster.py",
+          "does": "שכבת הראסטר: כל ציור וקטורי וכל תמונה"
+        },
+        {
+          "name": "pages",
+          "file": "desktop/engine/pages.py",
+          "does": "תוכנית אחת: סיבוב, סדר, מחיקה, חילוץ, פיצול, מיזוג, ייצוא"
+        },
+        {
+          "name": "failures",
+          "file": "desktop/engine/failures.py",
+          "does": "סיווג כישלונות: קטוע, ריק, לא-PDF, נעול, חסר, תיקייה"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": "window",
+      "to": "shell",
+      "protocol": "invoke",
+      "detail": "קריאה בשם לפקודה רשומה. החלון מבקש, ה-Rust מכריע.",
+      "source": "architecture.md"
+    },
+    {
+      "from": "shell",
+      "to": "engine",
+      "protocol": "NDJSON · stdin/stdout",
+      "detail": "שורת JSON אחת לכל הודעה, על צינורות. צינור אינו מאזין לאיש.",
+      "source": "architecture.md"
+    }
+  ],
+  "flow": [
+    {
+      "step": "PDF על הדיסק של המשתמש",
+      "where": "disk"
+    },
+    {
+      "step": "דיאלוג מקורי בוחר אותו",
+      "where": "shell"
+    },
+    {
+      "step": "המנוע קורא, מפיק שתי שכבות",
+      "where": "engine"
+    },
+    {
+      "step": "HTML עצמאי או רכיב React",
+      "where": "engine"
+    },
+    {
+      "step": "נכתב רק לנתיב שנבחר",
+      "where": "shell"
+    },
+    {
+      "step": "נקרא בחלון או בדפדפן",
+      "where": "window"
+    }
+  ],
+  "forbidden": [
+    {
+      "what": "שרת HTTP מקומי",
+      "why": "פורט מאזין הוא ממצא בסריקת אבטחה אצל בדיוק הלקוח שקונה על ״שום דבר לא עוזב את המכונה״",
+      "source": "delegation.md"
+    },
+    {
+      "what": "העלאה, ענן, חשבון",
+      "why": "סותר את סיבת הקנייה. הלקוח המרכזי הוא מי שהמסמכים שלו אסורים בהעלאה",
+      "source": "delegation.md"
+    },
+    {
+      "what": "telemetry",
+      "why": "אין ערוץ יוצא בכלל, ולכן גם אין מה למדוד מרחוק",
+      "source": "delegation.md"
+    },
+    {
+      "what": "נתיב או תוכן בדוח תקלה",
+      "why": "מקרצף ב-report.rs. דוח שנשלח חייב להיות בטוח לשליחה",
+      "source": "delegation.md"
+    },
+    {
+      "what": "כתיבה לנתיב שאיש לא בחר",
+      "why": "engine_call בודק כל out מול Writable לפני שהמנוע רואה את הבקשה",
+      "source": "delegation.md"
+    },
+    {
+      "what": "רישיון קופילפט",
+      "why": "PyMuPDF נפסלה על AGPL-3.0. מוצר דסקטופ סגור שנמכר בכסף",
+      "source": "decisions.md"
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "PDF ← HTML עצמאי",
+      "state": "built",
+      "where": "engine",
+      "source": "delegation.md"
+    },
+    {
+      "name": "PDF ← רכיב React",
+      "state": "built",
+      "where": "engine",
+      "source": "delegation.md"
+    },
+    {
+      "name": "שתי שכבות: ראסטר + טקסט ממוקם",
+      "state": "built",
+      "where": "engine",
+      "source": "delegation.md"
+    },
+    {
+      "name": "עברית ו-RTL בפלט, נגזרים מהמסמך",
+      "state": "built",
+      "where": "engine",
+      "source": "delegation.md"
+    },
+    {
+      "name": "שחזור טיפוגרפיה מפונטים מוטמעים",
+      "state": "built",
+      "where": "engine",
+      "source": "delegation.md"
+    },
+    {
+      "name": "אצווה עם התקדמות וביטול",
+      "state": "built",
+      "where": "window",
+      "source": "delegation.md"
+    },
+    {
+      "name": "היסטוריה מקומית והרצה חוזרת",
+      "state": "built",
+      "where": "shell",
+      "source": "delegation.md"
+    },
+    {
+      "name": "סדנת עמודים",
+      "state": "built",
+      "where": "window",
+      "source": "delegation.md"
+    },
+    {
+      "name": "קריאת הפלט בתוך האפליקציה",
+      "state": "built",
+      "where": "window",
+      "source": "delegation.md"
+    },
+    {
+      "name": "ממשק דו-לשוני, מצב כהה, נגישות מקלדת",
+      "state": "built",
+      "where": "window",
+      "source": "delegation.md"
+    },
+    {
+      "name": "מציג PDF בגודל קריא",
+      "state": "planned",
+      "where": "window",
+      "source": "workbench-audit.md"
+    },
+    {
+      "name": "OCR",
+      "state": "out-of-scope",
+      "where": "engine",
+      "source": "delegation.md"
+    },
+    {
+      "name": "PowerPoint",
+      "state": "out-of-scope",
+      "where": "engine",
+      "source": "delegation.md"
+    },
+    {
+      "name": "macOS ו-Linux",
+      "state": "out-of-scope",
+      "where": "shell",
+      "source": "delegation.md"
+    },
+    {
+      "name": "צנזור",
+      "state": "out-of-scope",
+      "where": "engine",
+      "source": "decisions.md"
+    },
+    {
+      "name": "עריכת טקסט במקום",
+      "state": "out-of-scope",
+      "where": "engine",
+      "source": "decisions.md"
+    },
+    {
+      "name": "סנכרון ענן וחשבונות",
+      "state": "out-of-scope",
+      "where": "window",
+      "source": "delegation.md"
+    }
+  ],
+  "sprints": [
+    {
+      "number": 1,
+      "name": "מסירת הפלט",
+      "weight": 10,
+      "status": "done",
+      "blockedOn": null,
+      "owner": "engineering",
+      "items": {
+        "done": [
+          "פתיחת תיקייה ופתיחת קובץ — [deliver.rs](app/src-tauri/src/deliver.rs). לא `shell.open` גורף: פקודה משלנו שמקבלת רק נתיב בתוך תיקיות הפלט או ברשימת המותרים",
+          "ייצוא ZIP — נבנה במנוע, כי הוא כבר מחזיק את הקבצים ו-`zipfile` כבר בספרייה התקנית שלו. אפס תלויות חדשות",
+          "העתקת נתיב ללוח — ה-API של ה-WebView, בלי הרשאה נוספת",
+          "רשימת הקבצים שנוצרו, עם גודל לכל אחד — לחיצה על שם מציגה אותו בתיקייה",
+          "תצוגה מקדימה ל-React — כקוד מקור. רכיב אינו דף, ולהריץ אותו היה אומר להריץ קוד שנוצר ממסמך של מישהו בתוך החלון שלנו",
+          "קיצור מקלדת — `Ctrl+Shift+O` פותח את תיקיית הפלט. מזוהה לפי `event.code` ולא `event.key`, אחרת פריסת מקלדת עברית שוברת אותו בשקט"
+        ],
+        "open": [],
+        "deferred": [
+          "גרירה מהחלון החוצה — נדחתה, ראה למטה"
+        ]
+      }
+    },
+    {
+      "number": 2,
+      "name": "הגדרות, אודות וריצה ראשונה",
+      "weight": 8,
+      "status": "done",
+      "blockedOn": null,
+      "owner": "engineering",
+      "items": {
+        "done": [
+          "מסך הגדרות — מצב שלישי בכותרת, לצד ההמרה והסדנה. חמישה מקטעים: מראה, ברירות מחדל, תיקיית יעד, היסטוריה ואודות",
+          "שמירת ברירות המחדל להמרה — [settings.rs](app/src-tauri/src/settings.rs). נכתבות בכל שינוי, בלי כפתור שמירה: אין כאן מה לחצות, וכפתור שמירה על ארבעה פקדים הוא כפתור שקיים רק כדי שישכחו אותו",
+          "מסך אודות — גרסה, ועשרה רכיבי צד שלישי עם הרישיון והגרסה שלהם",
+          "מסך ריצה ראשונה — שלוש שורות, פעם אחת. נזכר בצד Rust ולא ב-localStorage, כי WebView מנקה אחסון וברכה חוזרת נראית כמו באג",
+          "זכירת גודל ומיקום החלון — נשמר ב-`CloseRequested` ולא בכל גרירה. חלון שנזכר על מסך שכבר לא מחובר נשכח, כי חלון שנפתח מחוץ למסך נראה בדיוק כמו אפליקציה שלא עלתה",
+          "ניקוי היסטוריה — הרשומות נמחקות, קובצי הפלט נשארים",
+          "ניקוי תיקיות פלט ישנות — [storage.rs](app/src-tauri/src/storage.rs). מקטע ״אחסון״ חדש במסך ההגדרות: גודל כולל, ומחיקת תיקיות מעל 30 יום",
+          "קיצורי מקלדת נוספים + לוח קיצורים — עשרה קיצורים: מעבר מצבים, הוספת מסמכים, הרצה, ביטול, וחמישה בסדנה (ביטול/ביצוע מחדש, סיבוב, מחיקה, בחירת הכול, שמירה). מתועדים במקטע חדש בהגדרות"
+        ],
+        "open": [],
+        "deferred": []
+      }
+    },
+    {
+      "number": 3,
+      "name": "סגירת הליבה",
+      "weight": 10,
+      "status": "done",
+      "blockedOn": null,
+      "owner": "engineering",
+      "items": {
+        "done": [
+          "סיידקאר שנתקע — שומר־ראש ב-[sidecar.rs](app/src-tauri/src/sidecar.rs). ראה למטה",
+          "רווחים בטקסט מסובב ב-90° — תוקן. הסרגל יוצא כריצה אחת. ראה למטה",
+          "מסמכים אמיתיים שאינם הפיקסצ'רים שלנו — סרוק אמיתי בן 4 עמודים. ראה למטה",
+          "קובץ עברי בנתיב עם רווחים — [test_paths.py](engine/test_paths.py), 33 בדיקות מול הסיידקאר האמיתי"
+        ],
+        "open": [],
+        "deferred": []
+      }
+    },
+    {
+      "number": 4,
+      "name": "חוסן ומסמכים גדולים",
+      "weight": 12,
+      "status": "done",
+      "blockedOn": null,
+      "owner": "engineering",
+      "items": {
+        "done": [
+          "מדידה על 500+ עמודים — [parity/measure_large.py](engine/parity/measure_large.py). מצאה שני באגים ריבועיים, ראה למטה",
+          "מסמך מוצפן או מוגן סיסמה — קוד `ENCRYPTED`, מנוסח בחלון",
+          "מסמך פגום — קוד `UNREADABLE`, ומובחן מקובץ ריק, מקובץ שאינו PDF, ומקובץ שלא קיים",
+          "מסמך נעול בידי תוכנה אחרת — מובחן, למרות ש-PDFium מדווח עליו בדיוק כמו על פגום",
+          "תקרה לתמונות ממוזערות — 600 בזיכרון, פינוי לפי סדר הכנסה. התקרה היא בשביל המסמך שאיש עוד לא ניסה, לא בשביל אלה שנמדדו",
+          "דיסק מלא באמצע כתיבה — קוד `UNWRITABLE` חדש, ראה למטה",
+          "המרה שנכשלת באמצע אצווה — לכל פריט יש עכשיו סיבה משלו, והתור ממשיך",
+          "״ייצא דוח תקלה״ — בלי מסמכים בתוכו — [report.rs](app/src-tauri/src/report.rs)"
+        ],
+        "open": [],
+        "deferred": []
+      }
+    },
+    {
+      "number": 5,
+      "name": "נגישות ו-i18n מלאים",
+      "weight": 8,
+      "status": "done",
+      "blockedOn": null,
+      "owner": "engineering",
+      "items": {
+        "done": [
+          "בדיקת מחרוזות אוטומטית — [check-i18n.mjs](app/scripts/check-i18n.mjs), `npm run check:i18n`. ראה למטה",
+          "מחרוזות חסרות בשתי השפות — אין. 136 מפתחות שהחלון מבקש, כולם קיימים בעברית ובאנגלית",
+          "ניקוי מחרוזות מתות — 18 נמחקו, שאריות מפאנל הבדיקה של ספרינט 2 ומגרסאות קודמות של פאנל ההמרה",
+          "כל קוד שגיאה של המנוע מנוסח — נבדק מול `protocol.py` עצמו, לא מול רשימה שמישהו מתחזק ביד",
+          "הכרזה לקורא מסך — אזורים חיים להתקדמות, לשגיאות ולתוצאות. ראה למטה",
+          "מסמך בלי טקסט כבר לא מצהיר שהוא אנגלי — הממצא מספרינט 3",
+          "ניגודיות — נבדקת אוטומטית — [check-a11y.mjs](app/scripts/check-a11y.mjs), 28 צמדים בשתי הערכות מול WCAG AA. מצאה כשל אמיתי, ראה למטה",
+          "RTL — נסרק אוטומטית — 17 מחלקות כיוון פיזיות תוקנו למחלקות לוגיות",
+          "`npm run check` — טייפצ'ק, מחרוזות ונגישות בפקודה אחת"
+        ],
+        "open": [],
+        "deferred": [
+          "מעבר מקלדת בפועל, ובדיקה עם קורא מסך אמיתי — דורש אדם, עבר לספרינט 9"
+        ]
+      }
+    },
+    {
+      "number": 6,
+      "name": "CI ואוטומציית בנייה",
+      "weight": 10,
+      "status": "partly",
+      "blockedOn": null,
+      "owner": "engineering",
+      "items": {
+        "done": [
+          "שבע סוויטות הפייתון על כל דחיפה — דרך [run_suites.py](engine/run_suites.py), שמדווח דילוגים בקול. ראה למטה",
+          "`cargo test`, טייפצ'ק, מחרוזות, נגישות ובנייה — ב-job נפרד",
+          "בניית המנוע הקפוא ב-CI — PyInstaller רץ שם, לא על מכונת פיתוח",
+          "MSI ו-NSIS אוטומטיים — רק על `main`, ורק אחרי ששני החצאים ירוקים",
+          "גרסה נגזרת ולא מוקלדת — [check-version.mjs](app/scripts/check-version.mjs). היא מוצהרת בשלושה קבצים ואיש לא שמר עליהם מסונכרנים",
+          "בדיקת רישיונות כשלב — [check-credits.mjs](app/scripts/check-credits.mjs). ראה למטה",
+          "ארטיפקטים לכל build על main, 30 יום"
+        ],
+        "open": [],
+        "deferred": [
+          "חתימה בתוך ה-CI — כשהתעודה תגיע (ספרינט 10). חסרה במכוון ולא מדומה — שלב שמעמיד פנים שהוא חותם גרוע מהיעדר שלב"
+        ]
+      }
+    },
+    {
+      "number": 7,
+      "name": "זהות",
+      "weight": 10,
+      "status": "blocked",
+      "blockedOn": "ח1",
+      "owner": "engineering",
+      "items": {
+        "done": [],
+        "open": [
+          "ההכרעה: האם יש חשבון, ומה הוא משרת — רישוי, סנכרון, או מדידה",
+          "אם כן: Firebase או מפתח מקומי",
+          "אם Firebase: מה בדיוק נשלח, ואיך מוכיחים שאין בו מסמכים",
+          "מצב לא-מקוון — האפליקציה חייבת לעבוד בלי רשת",
+          "קשר לחשבון באתר, אם בכלל",
+          "גורל מנוע ה-TS והאתר — עבר לכאן מספרינט 3. השאלה הצטמצמה: לא מתי מתחילים, אלא מתי מוחקים"
+        ],
+        "deferred": []
+      }
+    },
+    {
+      "number": 8,
+      "name": "רישוי, עדכונים ותמיכה",
+      "weight": 10,
+      "status": "blocked",
+      "blockedOn": "ח2",
+      "owner": "engineering",
+      "items": {
+        "done": [],
+        "open": [
+          "מפתח רישיון: הפעלה, אימות לא-מקוון, תקופת חסד",
+          "Tauri updater, מניפסט חתום, עדכון שלא דורס העדפות",
+          "גרסת ניסיון: מה מוגבל, ואיך זה נאמר בכנות",
+          "מסלול תמיכה"
+        ],
+        "deferred": []
+      }
+    },
+    {
+      "number": 9,
+      "name": "אימות בלחיצה",
+      "weight": 8,
+      "status": "open",
+      "blockedOn": null,
+      "owner": "you",
+      "items": {
+        "done": [],
+        "open": [
+          "מסירת הפלט — לפתוח תיקייה, לארוז ZIP, ולוודא שהוא נפתח מחוץ לאפליקציה",
+          "״בדפדפן״ אחרי המעבר ל-`ShellExecuteW` — הקוד הוחלף ב-8.9 בדיוק בגלל כישלון שנראה כמו הצלחה, והלחיצה היא ההוכחה היחידה. גם הנתיב ההפוך: קובץ בנתיב עם עברית ורווחים, שזה מה ש-`explorer.exe` לא שימר",
+          "קריאה בתוך המערכת — להמיר, ללחוץ ״לקרוא כאן״, לעבור בין הלשוניות, ולחזור",
+          "הגדרות — לשנות הגדרה, לסגור, לפתוח, ולראות שהיא שם; ניקוי אחסון; הקיצורים",
+          "אצווה — 40 קבצים בהרצה אחת, סגירה באמצע, פתיחה מחדש וההיסטוריה שם",
+          "סדנה — גרירה לשינוי סדר, דיאלוג שמירה נייטיבי, ושאלת הדריסה על קובץ המקור",
+          "תקיעה אמיתית — להקפיא את תהליך המנוע, להמתין שתי דקות, ולראות שהוא מופעל מחדש לבד",
+          "מעבר מקלדת מלא — כל פעולה בלי עכבר, כולל רשת העמודים בסדנה",
+          "קורא מסך אמיתי — לוודא שההכרזות שנוספו בספרינט 5 אכן נשמעות ומובנות"
+        ],
+        "deferred": []
+      }
+    },
+    {
+      "number": 10,
+      "name": "שחרור",
+      "weight": 14,
+      "status": "blocked",
+      "blockedOn": "ח3",
+      "owner": "you",
+      "items": {
+        "done": [],
+        "open": [
+          "תעודת חתימת קוד",
+          "התקנה על שלוש מכונות נקיות: בלי הרשאות מנהל · אנטי-וירוס תוקפני · מכונה בעברית",
+          "אימות חזותי שהעברית נטענת בתוך ההתקנה",
+          "אימות שהמנוע הקפוא עולה מתוך MSI מותקן",
+          "תנאי שימוש, מדיניות פרטיות, רישיון קצה",
+          "טקסט מדויק על מה שלא עוזב את המכונה",
+          "אימות רישיונות בגרסאות שננעלו בפועל",
+          "דף הורדה, וההכרעה על גורל האתר"
+        ],
+        "deferred": []
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "id": "ח1",
+      "name": "הכרעת הזהות",
+      "detail": "האם לדסקטופ יש חשבון בכלל",
+      "blocks": "ספרינט 7",
+      "who": "הנהלה"
+    },
+    {
+      "id": "ח2",
+      "name": "הכרעת התמחור",
+      "detail": "והיא השתנתה: המוצר כבר אינו ממיר אלא מקום עבודה",
+      "blocks": "ספרינט 8",
+      "who": "הנהלה"
+    },
+    {
+      "id": "ח3",
+      "name": "תעודת חתימת קוד",
+      "detail": "הנפקה בימים עד שבועות",
+      "blocks": "ספרינט 10, ושלב החתימה ב-6",
+      "who": "הנהלה"
+    }
+  ],
+  "waitingOnYou": [
+    {
+      "sprint": 7,
+      "what": "זהות",
+      "need": "שם המוצר, לוגו, צבע, שם החברה כפי שיופיע במתקין",
+      "after": "אני בונה: אייקונים, מיתוג במתקין, מסך אודות, מטא-דאטה"
+    },
+    {
+      "sprint": 8,
+      "what": "מחיר ורישוי",
+      "need": "מודל (רישיון לצמיתות / מנוי), מחיר, ספק תשלום",
+      "after": "אני בונה: מנגנון הרישוי, בדיקת עדכונים, נתיב התמיכה"
+    },
+    {
+      "sprint": 6,
+      "what": "תעודת חתימה",
+      "need": "רכישת תעודת Code Signing מספק",
+      "after": "אני מוסיף את שלב החתימה ל-CI — הוא נעדר בכוונה ולא מדומה"
+    },
+    {
+      "sprint": null,
+      "what": "בית לקורפוס הבדיקות",
+      "need": "איפה יושבים מסמכי הבדיקה, אם לא כאן",
+      "after": "שש חבילות בדיקה יפסיקו לדלג ב-CI"
+    },
+    {
+      "sprint": 9,
+      "what": "אימות בלחיצה",
+      "need": "7 פריטים, ידניים",
+      "after": "אני מתקן מה שיימצא"
+    },
+    {
+      "sprint": 10,
+      "what": "שחרור",
+      "need": "8 פריטים, ידניים",
+      "after": "—"
+    }
+  ],
+  "decisions": {
+    "decided": [
+      {
+        "title": "דסקטופ לפני אתר",
+        "date": "5.9.2026",
+        "who": "הנהלה"
+      },
+      {
+        "title": "הערימה: Tauri + React + shadcn + מנוע פייתון",
+        "date": "5.9.2026",
+        "who": "הנהלה"
+      },
+      {
+        "title": "IPC על stdio ולא על HTTP מקומי",
+        "date": "5.9.2026",
+        "who": "הנדסה"
+      },
+      {
+        "title": "ספריית ה-PDF: pypdfium2 + pdfminer.six",
+        "date": "5.9.2026",
+        "who": "הנהלה"
+      },
+      {
+        "title": "סדנת PDF — כן לצורה, לא לניסוח ״Adobe״",
+        "date": "6.9.2026",
+        "who": "הנהלה"
+      }
+    ],
+    "open": [
+      {
+        "index": 1,
+        "title": "מסלול הגשר",
+        "blocks": [],
+        "urgent": false,
+        "moot": true
+      },
+      {
+        "index": 2,
+        "title": "תעודת חתימת קוד",
+        "blocks": [
+          10
+        ],
+        "urgent": true,
+        "moot": false
+      },
+      {
+        "index": 3,
+        "title": "גורל האתר הקיים",
+        "blocks": [],
+        "urgent": false,
+        "moot": false
+      },
+      {
+        "index": 4,
+        "title": "מודל התמחור",
+        "blocks": [
+          8
+        ],
+        "urgent": false,
+        "moot": false
+      },
+      {
+        "index": 5,
+        "title": "Windows בלבד בגרסה הראשונה",
+        "blocks": [],
+        "urgent": false,
+        "moot": false
+      },
+      {
+        "index": 6,
+        "title": "אריזת LibreOffice",
+        "blocks": [],
+        "urgent": false,
+        "moot": false
+      }
+    ]
+  },
+  "progress": {
+    "closed": 48,
+    "reached": 58,
+    "done": 5,
+    "total": 10
+  }
+}

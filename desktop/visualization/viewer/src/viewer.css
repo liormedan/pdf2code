@@ -1,0 +1,18 @@
+/*
+ * The viewer's stylesheet.
+ *
+ * `@import` of the product's own tokens rather than a copy of them: the map should look
+ * like the thing it describes, and two palettes drifting apart is exactly the duplication
+ * this whole rearrangement was about. It is a **read** across the boundary and the only
+ * one — no product file imports anything from here, so the dependency points one way.
+ *
+ * That import also keeps `check-a11y` in charge of these colours. It measures the tokens
+ * in `app/src/index.css`, which are the tokens rendered here.
+ */
+@import "../../../app/src/index.css";
+
+/* The `dark` class is set on <html> in index.html; this tells the browser to match its
+   own chrome — scrollbars and form controls — to it. */
+:root {
+  color-scheme: dark;
+}

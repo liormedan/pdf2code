@@ -1,0 +1,130 @@
+{
+  "$comment": [
+    "The half of the system map that is written by a person, not parsed.",
+    "",
+    "sync-system-map.mjs derives sprints, blockers and decisions from the documents,",
+    "because those have structure — headings, tables, checkboxes — and a parser reading",
+    "them is reading facts. What a process IS, what it may NOT do, and why a boundary",
+    "exists are prose, and a script that pattern-matched prose into a status would be",
+    "inventing exactly what it must never invent.",
+    "",
+    "So this file holds those, and the generator VALIDATES it rather than trusting it:",
+    "every id here has to appear in the links, every link has to name ids that exist, and",
+    "every `source` has to name a document that is actually one of the five inputs. A claim",
+    "here that nothing backs is a failed sync, not a quiet line on a map.",
+    "",
+    "Hebrew, because the documents it paraphrases are Hebrew and a translation nobody",
+    "checks is a second thing to keep true. The map's own chrome is bilingual.",
+    "",
+    "Update this when the ARCHITECTURE changes. Sprints and decisions update themselves."
+  ],
+
+  "processes": [
+    {
+      "id": "window",
+      "name": "החלון",
+      "nameEn": "Window",
+      "stack": ["React 19", "TypeScript", "Vite 8", "Tailwind 4", "shadcn/ui"],
+      "path": "desktop/app/src/",
+      "is": "חלון אחד, שלושה אזורים, שני מצבים נוספים, RTL מלא. מנסח כל מה שהמשתמש קורא.",
+      "isNot": "אין לו מערכת קבצים, אין לו רשת ואין לו shell. הוא נוקב בשם של מה שהוא רוצה.",
+      "source": "delegation.md",
+      "parts": [
+        { "name": "app-shell", "file": "desktop/app/src/components/app-shell.tsx", "does": "הכותרת, המצבים, והתור שכל שלושת האזורים קוראים" },
+        { "name": "convert-panel", "file": "desktop/app/src/components/convert-panel.tsx", "does": "הגדרות ההמרה, ההרצה, וההתקדמות" },
+        { "name": "workbench-panel", "file": "desktop/app/src/components/workbench-panel.tsx", "does": "עמודי המסמך: סיבוב, סדר, מחיקה, מיזוג, חיפוש" },
+        { "name": "preview-screen", "file": "desktop/app/src/components/preview-screen.tsx", "does": "קריאת הפלט בתוך האפליקציה, במסגרת עם sandbox ריק" },
+        { "name": "i18n", "file": "desktop/app/src/messages/", "does": "שתי חבילות הודעות, מפתחות זהים, נאכף על ידי check-i18n" }
+      ]
+    },
+    {
+      "id": "shell",
+      "name": "המעטפת",
+      "nameEn": "Shell",
+      "stack": ["Rust", "Tauri 2", "rusqlite"],
+      "path": "desktop/app/src-tauri/",
+      "is": "מכריעה מה מותר, מחזיקה את SQLite ואת ההגדרות, ומחזיקה את תהליך המנוע.",
+      "isNot": "לא מעבדת מסמכים. אף פעם לא פותחת PDF בעצמה.",
+      "source": "delegation.md",
+      "parts": [
+        { "name": "Writable", "file": "desktop/app/src-tauri/src/workbench.rs", "does": "רשימת הנתיבים שמותר לכתוב אליהם. נתיב מצטרף רק דרך דיאלוג מקורי או output_dir" },
+        { "name": "sidecar", "file": "desktop/app/src-tauri/src/sidecar.rs", "does": "מפעיל את המנוע ומחזיק אותו. שומר־ראש על שתיקה ולא על משך" },
+        { "name": "deliver", "file": "desktop/app/src-tauri/src/deliver.rs", "does": "פתיחה, חשיפה ורשימת פלט. רשימת היתר לסיומות, ShellExecuteW לקבצים" },
+        { "name": "report", "file": "desktop/app/src-tauri/src/report.rs", "does": "דוח תקלה עם מקרצף נתיבים: בלי שם קובץ, בלי נתיב, בלי תוכן" },
+        { "name": "storage", "file": "desktop/app/src-tauri/src/storage.rs", "does": "ניקוי תיקיות פלט ישנות, מתוחם למה שהאפליקציה עצמה יצרה" }
+      ]
+    },
+    {
+      "id": "engine",
+      "name": "המנוע",
+      "nameEn": "Engine",
+      "stack": ["Python 3.13", "pypdfium2", "pdfminer.six", "Pillow"],
+      "path": "desktop/engine/",
+      "is": "ההמרה עצמה: ראסטר, טקסט ממוקם, RTL, ופעולות על עמודים.",
+      "isNot": "לא מנסח משפטים. מחזיר קודים — SCANNED, TRUNCATED, UNREADABLE — והחלון בעל הניסוח.",
+      "source": "delegation.md",
+      "parts": [
+        { "name": "extract", "file": "desktop/engine/extract.py", "does": "שכבת הטקסט: תווים, פונטים וקואורדינטות, מקובצים לשורות חזותיות" },
+        { "name": "bidi", "file": "desktop/engine/bidi.py", "does": "סדר חזותי נכנס, סדר לוגי יוצא. בלעדיו העברית חוזרת הפוכה" },
+        { "name": "raster", "file": "desktop/engine/raster.py", "does": "שכבת הראסטר: כל ציור וקטורי וכל תמונה" },
+        { "name": "pages", "file": "desktop/engine/pages.py", "does": "תוכנית אחת: סיבוב, סדר, מחיקה, חילוץ, פיצול, מיזוג, ייצוא" },
+        { "name": "failures", "file": "desktop/engine/failures.py", "does": "סיווג כישלונות: קטוע, ריק, לא-PDF, נעול, חסר, תיקייה" }
+      ]
+    }
+  ],
+
+  "links": [
+    {
+      "from": "window",
+      "to": "shell",
+      "protocol": "invoke",
+      "detail": "קריאה בשם לפקודה רשומה. החלון מבקש, ה-Rust מכריע.",
+      "source": "architecture.md"
+    },
+    {
+      "from": "shell",
+      "to": "engine",
+      "protocol": "NDJSON · stdin/stdout",
+      "detail": "שורת JSON אחת לכל הודעה, על צינורות. צינור אינו מאזין לאיש.",
+      "source": "architecture.md"
+    }
+  ],
+
+  "flow": [
+    { "step": "PDF על הדיסק של המשתמש", "where": "disk" },
+    { "step": "דיאלוג מקורי בוחר אותו", "where": "shell" },
+    { "step": "המנוע קורא, מפיק שתי שכבות", "where": "engine" },
+    { "step": "HTML עצמאי או רכיב React", "where": "engine" },
+    { "step": "נכתב רק לנתיב שנבחר", "where": "shell" },
+    { "step": "נקרא בחלון או בדפדפן", "where": "window" }
+  ],
+
+  "forbidden": [
+    { "what": "שרת HTTP מקומי", "why": "פורט מאזין הוא ממצא בסריקת אבטחה אצל בדיוק הלקוח שקונה על ״שום דבר לא עוזב את המכונה״", "source": "delegation.md" },
+    { "what": "העלאה, ענן, חשבון", "why": "סותר את סיבת הקנייה. הלקוח המרכזי הוא מי שהמסמכים שלו אסורים בהעלאה", "source": "delegation.md" },
+    { "what": "telemetry", "why": "אין ערוץ יוצא בכלל, ולכן גם אין מה למדוד מרחוק", "source": "delegation.md" },
+    { "what": "נתיב או תוכן בדוח תקלה", "why": "מקרצף ב-report.rs. דוח שנשלח חייב להיות בטוח לשליחה", "source": "delegation.md" },
+    { "what": "כתיבה לנתיב שאיש לא בחר", "why": "engine_call בודק כל out מול Writable לפני שהמנוע רואה את הבקשה", "source": "delegation.md" },
+    { "what": "רישיון קופילפט", "why": "PyMuPDF נפסלה על AGPL-3.0. מוצר דסקטופ סגור שנמכר בכסף", "source": "decisions.md" }
+  ],
+
+  "capabilities": [
+    { "name": "PDF ← HTML עצמאי", "state": "built", "where": "engine", "source": "delegation.md" },
+    { "name": "PDF ← רכיב React", "state": "built", "where": "engine", "source": "delegation.md" },
+    { "name": "שתי שכבות: ראסטר + טקסט ממוקם", "state": "built", "where": "engine", "source": "delegation.md" },
+    { "name": "עברית ו-RTL בפלט, נגזרים מהמסמך", "state": "built", "where": "engine", "source": "delegation.md" },
+    { "name": "שחזור טיפוגרפיה מפונטים מוטמעים", "state": "built", "where": "engine", "source": "delegation.md" },
+    { "name": "אצווה עם התקדמות וביטול", "state": "built", "where": "window", "source": "delegation.md" },
+    { "name": "היסטוריה מקומית והרצה חוזרת", "state": "built", "where": "shell", "source": "delegation.md" },
+    { "name": "סדנת עמודים", "state": "built", "where": "window", "source": "delegation.md" },
+    { "name": "קריאת הפלט בתוך האפליקציה", "state": "built", "where": "window", "source": "delegation.md" },
+    { "name": "ממשק דו-לשוני, מצב כהה, נגישות מקלדת", "state": "built", "where": "window", "source": "delegation.md" },
+    { "name": "מציג PDF בגודל קריא", "state": "planned", "where": "window", "source": "workbench-audit.md" },
+    { "name": "OCR", "state": "out-of-scope", "where": "engine", "source": "delegation.md" },
+    { "name": "PowerPoint", "state": "out-of-scope", "where": "engine", "source": "delegation.md" },
+    { "name": "macOS ו-Linux", "state": "out-of-scope", "where": "shell", "source": "delegation.md" },
+    { "name": "צנזור", "state": "out-of-scope", "where": "engine", "source": "decisions.md" },
+    { "name": "עריכת טקסט במקום", "state": "out-of-scope", "where": "engine", "source": "decisions.md" },
+    { "name": "סנכרון ענן וחשבונות", "state": "out-of-scope", "where": "window", "source": "delegation.md" }
+  ]
+}
