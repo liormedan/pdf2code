@@ -38,6 +38,68 @@ const WORDS = {
     decisionMoot: "התייתרה",
     decisionMootWhy: "התייתרה. נשארת ביומן כי הכיוון שבו ההמלצה התהפכה הוא חלק ממנו.",
     generatedFrom: "נוצר מ-{count} מסמכים. `npm run map:check` נכשל אם המפה מיושנת.",
+    views: "מה רוצים לראות",
+    view_overview: "סקירה",
+    view_flow: "זרימת המרה",
+    view_boundaries: "גבולות אבטחה",
+    view_capabilities: "יכולות מוצר",
+    view_status: "סטטוס פיתוח",
+    view_overview_says:
+      "שלושה תהליכים, אדם בקצה אחד וקובץ בקצה השני. לחצו על חלק כדי לראות מה הוא, מה נכנס אליו, מה יוצא ממנו ומה הוא מסרב לעשות.",
+    view_flow_says:
+      "מה קורה למסמך, מהרגע שבוחרים אותו ועד שהפלט על הדיסק. החרוזים בצינורות נעים בכיוון שבו נתונים באמת עוברים.",
+    view_boundaries_says:
+      "הטבעת סגורה, וזו הטענה: אין פורט מאזין, אין העלאה, אין ענן ואין telemetry. שום דבר לא חוצה אותה.",
+    view_capabilities_says:
+      "מה המוצר עושה היום, מה מתוכנן, ומה נשאר בחוץ בכוונה. מחוץ לטווח אינו ״עוד לא הספקנו״ — זו הכרעה שנרשמה.",
+    view_status_says:
+      "התמונה לא מחזיקה סטטוס ספרינטים, ולהעמיד פנים שכן היה השקר הראשון של המפה. הרשימה כאן עושה את העבודה.",
+    tour: "סיור",
+    tourStart: "התחל סיור",
+    tourStop: "לצאת מהסיור",
+    tourDone: "סיום",
+    tourStep: "צעד {at} מתוך {total}",
+    previous: "הקודם",
+    next: "הבא",
+    backToOverview: "חזרה לסקירה",
+    tour_you_title: "אתם",
+    tour_you_body:
+      "בוחרים PDF מהדיסק. הוא נשאר שם — לא מועתק, לא מועלה, ולא נשמר אצלנו. נשמר נתיב בלבד.",
+    tour_window_title: "החלון",
+    tour_window_body:
+      "מה שאתם רואים ולוחצים. הוא מנסח כל מילה, אבל אין לו מערכת קבצים, רשת או shell — הוא רק נוקב בשם של מה שהוא רוצה.",
+    tour_shell_title: "המעטפת",
+    tour_shell_body:
+      "ה-Rust מכריע אם מותר. דיאלוג מקורי הוא הדרך היחידה שנתיב הופך לניתן־לכתיבה, וכל בקשת כתיבה נבדקת מולו לפני שהמנוע רואה אותה.",
+    tour_engine_title: "המנוע",
+    tour_engine_body:
+      "פייתון קורא את המסמך ובונה שתי שכבות: ראסטר שנושא כל ציור, וטקסט אמיתי וממוקם מעליו. הוא מחזיר קודים ולא משפטים.",
+    tour_output_title: "הפלט וההגנות",
+    tour_output_body:
+      "HTML עצמאי או רכיב React, בנתיב שבחרתם. הטבעת האדומה סגורה לאורך כל הדרך: שום דבר לא עזב את המכונה.",
+    end_you_title: "אתם",
+    end_you_body:
+      "המסמך שלכם, על הדיסק שלכם. האפליקציה שומרת נתיב ולא תוכן — זה מה שמאפשר להגיד ״לא מעתיקים את המסמכים שלך״ ולעמוד מאחורי זה בביקורת.",
+    end_output_title: "הפלט",
+    end_output_body:
+      "דף HTML עצמאי או רכיב React, נכתב רק לנתיב שנבחר בדיאלוג מקורי. אנחנו לא הבעלים שלו.",
+    isHeading: "מה זה",
+    inHeading: "מה נכנס",
+    outHeading: "מה יוצא",
+    boundsHeading: "מה הוא לא יעשה",
+    partOf: "חלק מ-",
+    didHeading: "מה נעשה",
+    leftHeading: "מה נשאר",
+    movedHeading: "נדחה או הועבר",
+    needsYouHeading: "דורש אותך",
+    stateHeading: "מצב",
+    capabilities: "יכולות",
+    cap_built: "קיים",
+    "cap_planned": "מתוכנן",
+    "cap_out-of-scope": "מחוץ לטווח, בהכרעה",
+    flowTitle: "מסלול המסמך",
+    canvasNoteCompact:
+      "המסך צר מדי לסיבוב חופשי, אז הוא כבוי. השתמשו בכפתורי התצוגה או בסיור — הם מגיעים לכל מקום שהעכבר היה מגיע אליו.",
     language: "English",
   },
   en: {
@@ -67,6 +129,68 @@ const WORDS = {
     decisionMootWhy:
       "Moot. Kept in the log because the direction the recommendation turned is part of it.",
     generatedFrom: "Generated from {count} documents. `npm run map:check` fails when the map is out of date.",
+    views: "What to look at",
+    view_overview: "Overview",
+    view_flow: "Conversion flow",
+    view_boundaries: "Security boundaries",
+    view_capabilities: "Capabilities",
+    view_status: "Development status",
+    view_overview_says:
+      "Three processes, a person at one end and a file at the other. Click a part to see what it is, what reaches it, what leaves it, and what it refuses to do.",
+    view_flow_says:
+      "What happens to a document, from choosing it to the output on disk. The beads in the pipes move the way data actually travels.",
+    view_boundaries_says:
+      "The ring is closed, and that is the claim: no listening port, no upload, no cloud, no telemetry. Nothing crosses it.",
+    view_capabilities_says:
+      "What the product does today, what is planned, and what stays out on purpose. Out of scope is not \u201cwe did not get to it\u201d \u2014 it is a decision that was written down.",
+    view_status_says:
+      "The picture holds no sprint status, and pretending otherwise would be the map's first lie. The list here does that work.",
+    tour: "Tour",
+    tourStart: "Start tour",
+    tourStop: "Leave the tour",
+    tourDone: "Finish",
+    tourStep: "Step {at} of {total}",
+    previous: "Previous",
+    next: "Next",
+    backToOverview: "Back to overview",
+    tour_you_title: "You",
+    tour_you_body:
+      "You pick a PDF off your disk. It stays there \u2014 not copied, not uploaded, not kept by us. Only a path is stored.",
+    tour_window_title: "The window",
+    tour_window_body:
+      "What you see and click. It words every sentence, but it has no filesystem, no network and no shell \u2014 it only names what it wants.",
+    tour_shell_title: "The shell",
+    tour_shell_body:
+      "Rust decides what is allowed. A native dialog is the only way a path becomes writable, and every write is checked against that before the engine sees it.",
+    tour_engine_title: "The engine",
+    tour_engine_body:
+      "Python reads the document and builds two layers: a raster carrying every drawing, and real positioned text above it. It returns codes, never sentences.",
+    tour_output_title: "Output and protections",
+    tour_output_body:
+      "A standalone HTML page or a React component, at the path you chose. The red ring stayed closed the whole way: nothing left the machine.",
+    end_you_title: "You",
+    end_you_body:
+      "Your document, on your disk. The app stores a path and not the contents \u2014 which is what lets it say \u201cwe do not copy your documents\u201d and stand behind it under audit.",
+    end_output_title: "The output",
+    end_output_body:
+      "A standalone HTML page or a React component, written only to a path chosen in a native dialog. We do not own it.",
+    isHeading: "What it is",
+    inHeading: "What comes in",
+    outHeading: "What goes out",
+    boundsHeading: "What it will not do",
+    partOf: "Part of",
+    didHeading: "Done",
+    leftHeading: "Left",
+    movedHeading: "Rejected or moved",
+    needsYouHeading: "Needs you",
+    stateHeading: "State",
+    capabilities: "Capabilities",
+    cap_built: "Built",
+    "cap_planned": "Planned",
+    "cap_out-of-scope": "Out of scope, by decision",
+    flowTitle: "The document's route",
+    canvasNoteCompact:
+      "The screen is too narrow for free orbit, so it is off. Use the view buttons or the tour \u2014 they reach everywhere the mouse would.",
     language: "עברית",
   },
 } as const;

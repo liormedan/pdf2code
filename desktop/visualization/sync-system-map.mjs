@@ -318,6 +318,18 @@ for (const capability of authored.capabilities) {
     refuse("system-map.authored.json", `capability "${capability.name}" lives in "${capability.where}"`);
   }
 }
+
+// What crosses a process's edge, and what it refuses to let cross. The inspector is built
+// on these three, and a process missing one shows a heading with nothing under it — which
+// reads as "there is no boundary here" rather than "nobody wrote it down". Required, so
+// that adding a fourth process is a decision about what it may do and not just a box.
+for (const process of authored.processes) {
+  for (const field of ["inputs", "outputs", "boundaries"]) {
+    if (!Array.isArray(process[field]) || process[field].length === 0) {
+      refuse("system-map.authored.json", `process "${process.id}" has no ${field}`);
+    }
+  }
+}
 // A citation is the difference between a map and a drawing. Every authored claim names the
 // document it paraphrases, and the name has to be one this script actually read — plus the
 // audit, which is the one document allowed to describe something not yet built.

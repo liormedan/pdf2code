@@ -25,6 +25,12 @@ export interface Process {
   isNot: string;
   source: string;
   parts: { name: string; file: string; does: string }[];
+  /** What crosses into this process. sourceText. */
+  inputs: string[];
+  /** What it sends out. sourceText. */
+  outputs: string[];
+  /** What it will not do, however it is asked. sourceText. */
+  boundaries: string[];
 }
 
 export interface Link {
@@ -83,7 +89,12 @@ export type Selection =
   | { kind: "process"; id: string }
   | { kind: "part"; id: string; part: string }
   | { kind: "sprint"; id: string }
-  | { kind: "decision"; id: string };
+  | { kind: "decision"; id: string }
+  /** The person at one end and the written file at the other — not processes, but the
+   *  two things the processes sit between, and the first thing a newcomer looks for. */
+  | { kind: "end"; id: string }
+  /** The boundary itself: everything this program refuses to do. */
+  | { kind: "fence"; id: string };
 
 /**
  * The four states, and the token each one borrows.
