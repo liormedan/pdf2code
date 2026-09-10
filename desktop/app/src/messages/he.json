@@ -468,6 +468,7 @@
     "viewerActualSize": "100%",
     "viewerPageAlt": "עמוד {index} מתוך {total}",
     "viewerScanned": "סרוק — תמונה בלבד",
-    "workbenchPageShown": "מוצג עכשיו"
+    "workbenchPageShown": "מוצג עכשיו",
+    "viewerNothingYet": "ממתין למדידת המסך…"
   }
 }

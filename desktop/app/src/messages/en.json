@@ -468,6 +468,7 @@
     "viewerActualSize": "100%",
     "viewerPageAlt": "Page {index} of {total}",
     "viewerScanned": "Scanned — image only",
-    "workbenchPageShown": "shown now"
+    "workbenchPageShown": "shown now",
+    "viewerNothingYet": "Waiting for the page area to be measured…"
   }
 }

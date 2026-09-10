@@ -51,7 +51,6 @@ export default function PageView({
   running: boolean;
 }) {
   const t = useTranslations("desktop");
-  const room = useRef<HTMLDivElement>(null);
 
   const [fit, setFit] = useState<Fit>("width");
   const [zoom, setZoom] = useState(1);
@@ -76,19 +75,34 @@ export default function PageView({
    * The room the page has, measured rather than assumed.
    *
    * Fit-to-width is a statement about this box, and the box changes when the window
-   * resizes, when the rail is scrolled, and when a message strip appears above it. A
+   * resizes, when the strip is scrolled, and when a message appears above it. A
    * `ResizeObserver` is the only thing that sees all three.
+   *
+   * **A callback ref and not an effect**, which is the whole reason this was broken once.
+   * With no document open this component returns early and the scroll box does not exist,
+   * so an effect with empty dependencies ran against `null`, attached nothing, and never
+   * ran again — the box stayed at zero width, the render below returned early forever, and
+   * the viewer sat on "rendering the page…" for a page it had never started. A callback ref
+   * fires when the element actually arrives, which is the event that matters.
    */
-  useEffect(() => {
-    const element = room.current;
+  const watching = useRef<ResizeObserver | null>(null);
+  const room = useCallback((element: HTMLDivElement | null) => {
+    watching.current?.disconnect();
+    watching.current = null;
     if (!element) return;
+
     const observer = new ResizeObserver(([entry]) => {
       const rect = entry?.contentRect;
       if (rect) setBox({ width: rect.width, height: rect.height });
     });
     observer.observe(element);
-    return () => observer.disconnect();
+    watching.current = observer;
+    // Measured once immediately as well: the observer's first callback is a frame away,
+    // and a frame of zero width is a frame of deciding not to render anything.
+    const rect = element.getBoundingClientRect();
+    setBox({ width: rect.width, height: rect.height });
   }, []);
+  useEffect(() => () => watching.current?.disconnect(), []);
 
   /** One render in flight; a newer one cancels the older and drops its answer. */
   const want = useMemo(() => latest((id) => void engineCancel(id)), []);
@@ -351,7 +365,13 @@ export default function PageView({
               />
             </div>
           ) : (
-            <p className="py-10 text-xs text-muted-foreground">{t("viewerDrawing")}</p>
+            // Only claims to be rendering when it is. The first version said "rendering
+            // the page…" whenever there was no image, so a viewer that had never started
+            // looked exactly like a viewer that was working — which is how a dead render
+            // path went unnoticed until somebody opened a document.
+            <p className="py-10 text-xs text-muted-foreground">
+              {drawing ? t("viewerDrawing") : t("viewerNothingYet")}
+            </p>
           )}
         </div>
       </div>
