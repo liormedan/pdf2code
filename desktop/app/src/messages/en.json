@@ -454,6 +454,20 @@
     "workbenchScannedExplained": "This document is scanned — it is pictures of pages with no text layer. Rotate, reorder, delete, merge, save and export all work as usual; finding and copying text do not, because there is nothing to find. Character recognition (OCR) is not in this version.",
     "workbenchUnsearched": "{count} pages not read yet",
     "workbenchPageCard": "Page {index} of {total}",
-    "workbenchPageTurned": "turned {degrees}°"
+    "workbenchPageTurned": "turned {degrees}°",
+    "viewerEmpty": "No page to show. Open a document, or click a page in the strip.",
+    "viewerDrawing": "Rendering the page…",
+    "viewerPrevious": "Previous page",
+    "viewerNext": "Next page",
+    "viewerGoToPage": "Go to page",
+    "viewerOfTotal": "of {total}",
+    "viewerZoomIn": "Zoom in",
+    "viewerZoomOut": "Zoom out",
+    "viewerFitWidth": "Fit width",
+    "viewerFitPage": "Fit page",
+    "viewerActualSize": "100%",
+    "viewerPageAlt": "Page {index} of {total}",
+    "viewerScanned": "Scanned — image only",
+    "workbenchPageShown": "shown now"
   }
 }

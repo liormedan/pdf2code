@@ -96,6 +96,33 @@ export const renderThumbnails = (
     (r) => r.thumbnails,
   );
 
+/**
+ * Render pages of one document into a directory, at one width, cancellably.
+ *
+ * **The `thumbnails` operation at a bigger number**, and deliberately not a second way to
+ * rasterise a page: a page view and a page strip that disagreed about what page four looks
+ * like would be two bugs wearing one face. The width is what separates them, and the
+ * caller keeps them in separate directories so the files cannot collide.
+ *
+ * Returns the job id **before** the work, because that is what a cancel names — turning
+ * three pages quickly has to be able to abandon the first two.
+ */
+export async function renderPages(
+  path: string,
+  out: string,
+  width: number,
+  pages: number[],
+): Promise<{ id: string; done: Promise<Thumb[]> }> {
+  const id = await newJobId();
+  const done = engineCall<{ thumbnails: Thumb[] }>(id, "thumbnails", {
+    path,
+    out,
+    width,
+    pages,
+  }).then((result) => result.thumbnails);
+  return { id, done };
+}
+
 /** Build a document from the plan. Throws when `out` is one of the sources. */
 export const applyPlan = (plan: Leaf[], out: string, overwrite = false) =>
   call<{ out: string; pages: number; bytes: number }>("edit", {

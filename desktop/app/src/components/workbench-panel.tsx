@@ -26,6 +26,8 @@ import { useTranslations } from "@/i18n/provider";
 import { pickDocuments, type EngineStatus } from "@/lib/engine";
 import { isTypingTarget } from "@/lib/utils";
 import EngineDown from "@/components/engine-down";
+import PageView from "@/components/page-view";
+import { keepViewing } from "@/lib/viewer";
 import {
   applyPlan,
   compressDocument,
@@ -90,6 +92,22 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
    * the first. Derived, every one of those corrects itself for free.
    */
   const [texts, setTexts] = useState<Map<string, string>>(new Map());
+
+  /**
+   * Which entry of the plan the page view is showing.
+   *
+   * A `uid` and never an index. The plan moves under the viewer constantly — reorder,
+   * delete, keep-only, undo — and an index carried across any of those points at a
+   * different page afterwards. `keepViewing` is the whole rule, and it is tested in
+   * `viewer.test.ts` rather than by clicking, because "the viewer showed the wrong page"
+   * is the kind of fault people notice once and never trust the tool after.
+   */
+  const [viewed, setViewed] = useState<string | null>(null);
+  const lastPlan = useRef<Leaf[]>([]);
+  useEffect(() => {
+    setViewed((current) => keepViewing(lastPlan.current, plan.present, current));
+    lastPlan.current = plan.present;
+  }, [plan.present]);
 
   const running = busy !== null;
 
@@ -239,6 +257,9 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
         return current.size === 1 && current.has(uid) ? new Set() : new Set([uid]);
       });
       lastClicked.current = uid;
+      // Clicking a page is how somebody says "this one", so it opens in the viewer too.
+      // Separate gestures for "select" and "look at" would be one gesture too many.
+      setViewed(uid);
     },
     [plan.present],
   );
@@ -713,8 +734,13 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           <p className="max-w-md text-xs text-muted-foreground/80">{t("workbenchEmptyHint")}</p>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto p-4">
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+        <div className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-[11rem_1fr]">
+          {/* The strip. One column now rather than a grid filling the window: a grid is
+              good for sorting and bad for reading, and reading is the thing the workbench
+              could not do at all. Dragging is unchanged — it was always index-based, and a
+              single column makes the drop position less ambiguous rather than more. */}
+          <div className="min-h-0 overflow-auto">
+          <ul className="flex flex-col gap-2">
             {plan.present.map((leaf, index) => (
               <li
                 key={leaf.uid}
@@ -736,13 +762,19 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                   dragging.current = null;
                   setDropAt(null);
                 }}
+                // Three states a card can be in, and they answer different questions: is
+                // it selected (an operation will affect it), does it match a search, and is
+                // it the one on screen. The last gets a ring rather than a border colour,
+                // so a page can be both viewed and selected without one hiding the other.
                 className={`rounded-lg border p-1.5 transition-colors ${
                   selected.has(leaf.uid)
                     ? "border-primary bg-accent/50"
                     : matches?.has(leaf.uid)
                       ? "border-warning"
                       : "border-divider"
-                } ${dropAt === index ? "ring-2 ring-primary/50" : ""}`}
+                } ${leaf.uid === viewed ? "ring-2 ring-primary" : ""} ${
+                  dropAt === index ? "ring-2 ring-primary/50" : ""
+                }`}
               >
                 {/* The name is on the button and not below it. Everything inside is a
                     picture — an `<img alt="">` or a spinner — so without this the button
@@ -756,12 +788,14 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                   type="button"
                   onClick={(event) => click(leaf.uid, event)}
                   aria-pressed={selected.has(leaf.uid)}
+                  aria-current={leaf.uid === viewed ? "true" : undefined}
                   // Composed rather than one string with empty slots: a single message
                   // with placeholders would read "page 3 of 35, , 0°" in the common case.
                   aria-label={[
                     t("workbenchPageCard", { index: index + 1, total: plan.present.length }),
                     docs.length > 1 ? short(leaf.source) : null,
                     leaf.rotate ? t("workbenchPageTurned", { degrees: leaf.rotate }) : null,
+                    leaf.uid === viewed ? t("workbenchPageShown") : null,
                   ]
                     .filter(Boolean)
                     .join(", ")}
@@ -769,13 +803,13 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                 >
                   {/* Square on purpose: a page turned a quarter turn swaps its width
                       and height, and in a square box neither can overflow. */}
-                  <span className="flex h-36 w-full items-center justify-center overflow-hidden rounded bg-muted/40">
+                  <span className="flex h-24 w-full items-center justify-center overflow-hidden rounded bg-muted/40">
                     {thumbs.get(pageKey(leaf)) ? (
                       <img
                         src={thumbs.get(pageKey(leaf))}
                         alt=""
                         style={{ transform: `rotate(${leaf.rotate}deg)` }}
-                        className="max-h-32 max-w-32 shadow-sm transition-transform"
+                        className="max-h-20 max-w-20 shadow-sm transition-transform"
                       />
                     ) : (
                       <Loader2
@@ -832,12 +866,22 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
               dragging.current = null;
               setDropAt(null);
             }}
-            className={`mt-3 rounded-lg border border-dashed px-4 py-3 text-center text-[11px] text-muted-foreground ${
+            className={`mt-2 rounded-lg border border-dashed px-2 py-2 text-center text-[10px] text-muted-foreground ${
               dropAt === plan.present.length ? "border-primary" : "border-divider"
             }`}
           >
             {t("workbenchDropEnd")}
           </div>
+          </div>
+
+          {/* The page, at a size somebody can read. The point of the sprint. */}
+          <PageView
+            plan={plan.present}
+            docs={docs}
+            viewed={viewed}
+            onView={setViewed}
+            running={running}
+          />
         </div>
       )}
 

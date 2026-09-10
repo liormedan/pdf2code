@@ -25,6 +25,7 @@ HERE = Path(__file__).parent
 FIXTURES = HERE.parent.parent / "fixtures"
 HEBREW = FIXTURES / "08-hebrew-doc.pdf"
 TABLES = FIXTURES / "07-academic-tables.pdf"
+SCANNED = FIXTURES / "04-scanned-ccitt.pdf"
 
 FAILURES: list[str] = []
 
@@ -173,6 +174,36 @@ def check_images(work: Path) -> None:
     check("all of them exist", all(Path(t["path"]).exists() for t in made))
     check("scaled to the width asked for", all(abs(t["width"] - 120) <= 1 for t in made),
           str([t["width"] for t in made]))
+
+    # The page view is this operation at a larger width, so the guarantee it leans on is
+    # that asking for page N draws page N. Nothing else in the viewer can recover from
+    # that being wrong: it would show a page confidently and show the wrong one.
+    one = thumbnails(HEBREW, work / "view", width=700, pages=[1])
+    seven = thumbnails(HEBREW, work / "view", width=700, pages=[7])
+    check("asking for one page renders exactly that page",
+          [t["page"] for t in one] == [1] and [t["page"] for t in seven] == [7])
+    check("and names the file after the page, not the request order",
+          Path(one[0]["path"]).name == "thumb-1.png"
+          and Path(seven[0]["path"]).name == "thumb-7.png",
+          Path(seven[0]["path"]).name)
+    check("so two different pages are two different files",
+          Path(one[0]["path"]).read_bytes() != Path(seven[0]["path"]).read_bytes())
+
+    # The viewer keeps a directory per width. Were they shared, the 170px strip and a
+    # 700px page would both be `thumb-1.png` and the last render would win — which looks
+    # like the viewer showing a blurry page, or the strip showing a huge one.
+    small = thumbnails(HEBREW, work / "strip", width=170, pages=[1])
+    check("the same page at two widths is two files in two directories",
+          Path(small[0]["path"]) != Path(one[0]["path"])
+          and abs(small[0]["width"] - 170) <= 1 and abs(one[0]["width"] - 700) <= 1)
+
+    # A scanned page has no text layer and renders perfectly well. The viewer says so
+    # rather than looking broken, and this is the half of that claim the engine owns.
+    if SCANNED.exists():
+        scan = thumbnails(SCANNED, work / "scan", width=700, pages=[1])
+        check("a scanned page renders like any other",
+              len(scan) == 1 and Path(scan[0]["path"]).exists()
+              and abs(scan[0]["width"] - 700) <= 1)
 
     # Progress per page. A three-hundred-page document takes long enough that a page view
     # with no sign of life reads as a hang, and this is the only thing that reports it.

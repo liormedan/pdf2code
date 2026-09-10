@@ -454,6 +454,20 @@
     "workbenchScannedExplained": "המסמך הזה סרוק — הוא תמונות של עמודים ואין בו שכבת טקסט. סיבוב, שינוי סדר, מחיקה, מיזוג, שמירה וייצוא עובדים כרגיל; חיפוש והעתקת טקסט לא, כי אין מה לחפש. זיהוי תווים (OCR) אינו בגרסה הזו.",
     "workbenchUnsearched": "{count} עמודים טרם נקראו",
     "workbenchPageCard": "עמוד {index} מתוך {total}",
-    "workbenchPageTurned": "מסובב {degrees}°"
+    "workbenchPageTurned": "מסובב {degrees}°",
+    "viewerEmpty": "אין עמוד להציג. פתחו מסמך, או לחצו על עמוד ברצועה שמימין.",
+    "viewerDrawing": "מרנדר את העמוד…",
+    "viewerPrevious": "לעמוד הקודם",
+    "viewerNext": "לעמוד הבא",
+    "viewerGoToPage": "לקפוץ לעמוד",
+    "viewerOfTotal": "מתוך {total}",
+    "viewerZoomIn": "התקרבות",
+    "viewerZoomOut": "התרחקות",
+    "viewerFitWidth": "לרוחב",
+    "viewerFitPage": "לעמוד",
+    "viewerActualSize": "100%",
+    "viewerPageAlt": "עמוד {index} מתוך {total}",
+    "viewerScanned": "סרוק — תמונה בלבד",
+    "workbenchPageShown": "מוצג עכשיו"
   }
 }
