@@ -456,7 +456,6 @@
     "workbenchPageCard": "עמוד {index} מתוך {total}",
     "workbenchPageTurned": "מסובב {degrees}°",
     "viewerEmpty": "אין עמוד להציג. פתחו מסמך, או לחצו על עמוד ברצועה שמימין.",
-    "viewerDrawing": "מרנדר את העמוד…",
     "viewerPrevious": "לעמוד הקודם",
     "viewerNext": "לעמוד הבא",
     "viewerGoToPage": "לקפוץ לעמוד",
@@ -469,6 +468,6 @@
     "viewerPageAlt": "עמוד {index} מתוך {total}",
     "viewerScanned": "סרוק — תמונה בלבד",
     "workbenchPageShown": "מוצג עכשיו",
-    "viewerNothingYet": "ממתין למדידת המסך…"
+    "viewerRegion": "עמודי המסמך"
   }
 }

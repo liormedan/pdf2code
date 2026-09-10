@@ -18,7 +18,7 @@
 
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
-import { keepViewing, latest, pageBox, rungFor, step, viewedAt } from "./viewer.ts";
+import { keepViewing, latest, offsets, pageBox, pagesInView, rungFor, step, viewedAt } from "./viewer.ts";
 import type { Leaf } from "./workbench.ts";
 
 /** A plan, written the way the reducer builds one. */
@@ -241,5 +241,58 @@ describe("a render that arrives after somebody turned the page", () => {
       throw new Error("engine said no");
     }).catch(() => undefined);
     strictEqual(await want("job-2", async () => "page 2"), "page 2");
+  });
+});
+
+describe("scrolling a document rather than paging one", () => {
+  const heights = [1000, 1000, 500, 1000];
+  const GAP = 16;
+
+  test("pages stack with one gap between them", () => {
+    const { tops, total } = offsets(heights, GAP);
+    deepStrictEqual(tops, [0, 1016, 2032, 2548]);
+    // Three gaps between four pages, and none after the last.
+    strictEqual(total, 1000 + 1000 + 500 + 1000 + 3 * GAP);
+  });
+
+  test("the page you are on is the one under the middle of the window", () => {
+    // Top of the document, an 800-tall window: the middle is at 400, inside page one.
+    strictEqual(pagesInView(heights, GAP, 0, 800).current, 0);
+    // The middle sits at scrollTop + 400. Page two starts at 1016, so the change happens
+    // as the middle crosses it and not a pixel earlier.
+    strictEqual(pagesInView(heights, GAP, 615, 800).current, 0, "middle at 1015");
+    strictEqual(pagesInView(heights, GAP, 616, 800).current, 1, "middle at 1016");
+  });
+
+  test("a page whose top is barely visible is not yet the page you are on", () => {
+    // The failure this prevents: counting the first page that touches the top, which
+    // flips the number back and forth over a single pixel at the join.
+    const justPeeking = 1016 - 790;
+    strictEqual(pagesInView(heights, GAP, justPeeking, 800).current, 0);
+  });
+
+  test("what is rendered is what is on screen, plus one either side", () => {
+    deepStrictEqual(pagesInView(heights, GAP, 0, 800).near, [0, 1]);
+    // Backwards costs the same as forwards: somebody hunting a figure they passed is
+    // doing the same work as somebody reading on.
+    deepStrictEqual(pagesInView(heights, GAP, 3200, 800).near, [2, 3]);
+  });
+
+  test("every page on screen is rendered, however many fit", () => {
+    // The failure this prevents: rendering the current page and its neighbours only. A
+    // tall window shows four pages, and the fourth would have sat there as an empty box
+    // with no way for the reader to make it fill.
+    const all = pagesInView(heights, GAP, 0, 4000, 1).near;
+    deepStrictEqual(all, [0, 1, 2, 3]);
+    // Still bounded by what is on screen and not by the document's length: at most the
+    // pages showing, plus one either side. Five hundred pages load four, not five hundred.
+    const long = Array.from({ length: 500 }, () => 1000);
+    strictEqual(pagesInView(long, GAP, 0, 800, 1).near.length, 2, "one page showing, none before it");
+    strictEqual(pagesInView(long, GAP, 100_000, 800, 1).near.length, 4, "two showing, one either side");
+  });
+
+  test("an empty document has no current page and nothing to render", () => {
+    deepStrictEqual(pagesInView([], GAP, 0, 800), { current: -1, near: [] });
+    deepStrictEqual(offsets([], GAP), { tops: [], total: 0 });
   });
 });

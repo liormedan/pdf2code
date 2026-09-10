@@ -166,3 +166,76 @@ export function latest(cancel: (id: string) => void) {
     return mine === ticket ? value : null;
   };
 }
+
+// ---------------------------------------------------------------------------------------
+// Scrolling a document rather than paging one
+// ---------------------------------------------------------------------------------------
+
+/** Where each page's box starts, and the total run. Pages are stacked with one gap each. */
+export function offsets(heights: number[], gap: number): { tops: number[]; total: number } {
+  const tops: number[] = [];
+  let at = 0;
+  for (const height of heights) {
+    tops.push(at);
+    at += height + gap;
+  }
+  return { tops, total: Math.max(0, at - gap) };
+}
+
+/**
+ * Which page a reader is on, and which ones are worth having ready.
+ *
+ * **The page you are on is the one under the middle of the window**, not the first one
+ * touching the top. Scrolling to the join between two pages otherwise flips the number
+ * back and forth over a pixel, and a page counter that flickers is worse than one that
+ * lags — measuring from the centre puts the change where the eye already thinks it is.
+ *
+ * `near` is what gets rendered: the current page and `ahead` on each side. Everything else
+ * keeps its reserved box and no image, which is what stops a five-hundred-page document
+ * from becoming five hundred renders. Reading forwards and reading backwards cost the
+ * same, because somebody looking for a figure they passed is doing the same work.
+ */
+export function pagesInView(
+  heights: number[],
+  gap: number,
+  scrollTop: number,
+  viewportHeight: number,
+  ahead = 1,
+): { current: number; near: number[] } {
+  if (heights.length === 0) return { current: -1, near: [] };
+
+  const { tops } = offsets(heights, gap);
+  const bottom = (index: number) => tops[index]! + heights[index]!;
+  const middle = scrollTop + viewportHeight / 2;
+
+  let current = 0;
+  for (let index = 0; index < tops.length; index += 1) {
+    if (tops[index]! <= middle) current = index;
+    else break;
+  }
+
+  // Everything actually on screen, and then one either side.
+  //
+  // **Not the current page and its neighbours**, which is what this counted first. A tall
+  // window shows four pages at once, and rendering three of them left one visible page as
+  // an empty box — the reader would see a hole in the middle of the document and have no
+  // way to make it fill. Bounded regardless, because only so many pages fit on a screen.
+  let first = heights.length - 1;
+  let last = 0;
+  for (let index = 0; index < heights.length; index += 1) {
+    if (bottom(index) >= scrollTop && tops[index]! <= scrollTop + viewportHeight) {
+      first = Math.min(first, index);
+      last = Math.max(last, index);
+    }
+  }
+  if (first > last) {
+    first = current;
+    last = current;
+  }
+
+  const near: number[] = [];
+  for (let index = first - ahead; index <= last + ahead; index += 1) {
+    if (index >= 0 && index < heights.length) near.push(index);
+  }
+  return { current, near };
+}

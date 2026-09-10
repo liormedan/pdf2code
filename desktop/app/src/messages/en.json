@@ -456,7 +456,6 @@
     "workbenchPageCard": "Page {index} of {total}",
     "workbenchPageTurned": "turned {degrees}°",
     "viewerEmpty": "No page to show. Open a document, or click a page in the strip.",
-    "viewerDrawing": "Rendering the page…",
     "viewerPrevious": "Previous page",
     "viewerNext": "Next page",
     "viewerGoToPage": "Go to page",
@@ -469,6 +468,6 @@
     "viewerPageAlt": "Page {index} of {total}",
     "viewerScanned": "Scanned — image only",
     "workbenchPageShown": "shown now",
-    "viewerNothingYet": "Waiting for the page area to be measured…"
+    "viewerRegion": "The document's pages"
   }
 }
