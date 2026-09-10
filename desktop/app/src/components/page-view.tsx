@@ -222,7 +222,12 @@ export default function PageView({
   const frame = layout?.shown ?? element;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
+    // `min-w-0` is load-bearing. A grid or flex child's automatic minimum is its content,
+    // so at 100% on a large page the scroll box below would stop scrolling and stretch the
+    // whole column instead — squeezing the page strip and pushing the window sideways.
+    // Measured: a 4800px-wide page made the container 4841px rather than scrolling inside
+    // its 1282.
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-1.5">
         <Button
           size="icon"
