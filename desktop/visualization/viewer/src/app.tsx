@@ -32,6 +32,16 @@ import { TOUR, VIEWS, viewById, type ViewId } from "./views";
  */
 const Scene = lazy(() => import("./scene"));
 
+/**
+ * The focus ring every hand-written button here wears.
+ *
+ * The browser's default `outline: auto` is about one pixel and, on this dark ground, easy
+ * to lose — and the product's own buttons already use a three-pixel ring. Keyboard is the
+ * primary way through this tool, so the indicator is the thing least worth economising on.
+ */
+const RING =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
 const data = map as unknown as SystemMap;
 
 export default function App() {
@@ -103,6 +113,59 @@ export default function App() {
     setSelected(null);
   }, []);
 
+  /**
+   * Arrow keys inside the tablist, per the ARIA pattern.
+   *
+   * **Focus moves with the selection, and only the selected tab is in the Tab order.**
+   * The first version had `role="tab"` on five buttons that were all tab stops and never
+   * moved focus — tab semantics announced to a screen reader without the behaviour they
+   * promise, which is worse than plain buttons, because it tells somebody a keyboard
+   * convention applies and then does not honour it.
+   *
+   * Direction is logical rather than physical: in Hebrew the right arrow means back.
+   */
+  const onTabKey = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      const at = VIEWS.findIndex((item) => item.id === view);
+      let next = at;
+
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+        const forward = lang === "he" ? event.key === "ArrowLeft" : event.key === "ArrowRight";
+        next = (at + (forward ? 1 : -1) + VIEWS.length) % VIEWS.length;
+      } else if (event.key === "Home") {
+        next = 0;
+      } else if (event.key === "End") {
+        next = VIEWS.length - 1;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      go(VIEWS[next]!.id);
+      // Focus follows in the effect below, not here: the newly selected tab only becomes
+      // reachable once React has re-rendered it with `tabIndex` 0.
+    },
+    [view, lang, go],
+  );
+
+  /**
+   * Move focus onto the selected tab, but only when focus was already on a tab.
+   *
+   * **An effect and not `requestAnimationFrame`.** The first attempt scheduled the focus
+   * call on the next animation frame — which never arrives in a hidden or backgrounded
+   * tab, because rAF is paused there. Selection moved and focus silently did not, which is
+   * the worst version of this bug: everything looks right and the keyboard user is
+   * stranded. Focus is not animation and has no business on that clock.
+   *
+   * Guarded on where focus already is, so clicking a tab or arrowing through the walk does
+   * not yank it away from whatever the person was on.
+   */
+  useEffect(() => {
+    const active = document.activeElement;
+    if (!active || active.getAttribute("role") !== "tab") return;
+    document.getElementById(`tab-${view}`)?.focus();
+  }, [view]);
+
   const walkTo = useCallback((index: number) => {
     const at = TOUR[index];
     if (!at) return;
@@ -116,9 +179,14 @@ export default function App() {
     }
   }, []);
 
-  // Left and right move between views, which is what somebody reaches for after clicking
-  // one. Ignored while typing, though there is nothing to type into here yet — the guard
-  // is cheaper than the bug it prevents when a filter box eventually arrives.
+  /**
+   * Escape always, and arrows only while the walk is running.
+   *
+   * Arrows used to switch views from anywhere, which meant pressing one while a process
+   * row had focus jumped the whole page somewhere else — surprising, and it also stole the
+   * key from the tablist that is supposed to own it. The walk is a genuine sequence, so
+   * there arrows are the obvious control; everywhere else they belong to the tabs.
+   */
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -127,28 +195,25 @@ export default function App() {
       if (event.key === "Escape") {
         setSelected(null);
         setStep(null);
-      } else if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-        // Physical keys, logical direction: in Hebrew the right arrow means "back".
-        const forward = lang === "he" ? event.key === "ArrowLeft" : event.key === "ArrowRight";
-        if (step !== null) {
-          const next = step + (forward ? 1 : -1);
-          if (next >= 0 && next < TOUR.length) walkTo(next);
-          return;
-        }
-        const at = VIEWS.findIndex((item) => item.id === view);
-        const next = at + (forward ? 1 : -1);
-        if (next >= 0 && next < VIEWS.length) go(VIEWS[next]!.id);
+        return;
       }
+      if (step === null) return;
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+
+      // Physical keys, logical direction: in Hebrew the right arrow means "back".
+      const forward = lang === "he" ? event.key === "ArrowLeft" : event.key === "ArrowRight";
+      const next = step + (forward ? 1 : -1);
+      if (next >= 0 && next < TOUR.length) walkTo(next);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, step, lang, go, walkTo]);
+  }, [step, lang, walkTo]);
 
   const detail = useMemo(() => describe(data, selected, t), [selected, t]);
   const panel = viewById(view).panel;
 
   return (
-    <div className="flex h-screen flex-col gap-2.5 overflow-hidden bg-background p-4 text-foreground">
+    <div className="flex min-h-screen flex-col gap-2.5 bg-background p-4 text-foreground lg:h-screen lg:overflow-hidden">
       {/* Said on the page and not only in the README. Somebody will screenshot this and
           paste it into a thread, and the screenshot should carry what it is. */}
       <p className="shrink-0 rounded-md border border-warning/40 bg-warning-muted px-2 py-1 text-[11px] text-warning">
@@ -169,7 +234,7 @@ export default function App() {
         <button
           type="button"
           onClick={() => setLang(lang === "he" ? "en" : "he")}
-          className="rounded-md border border-divider px-2 py-0.5 text-[11px] hover:bg-accent/50"
+          className={`rounded-md border border-divider px-2 py-0.5 text-[11px] hover:bg-accent/50 ${RING}`}
         >
           {t("language")}
         </button>
@@ -187,11 +252,16 @@ export default function App() {
           {VIEWS.map((item) => (
             <button
               key={item.id}
+              id={`tab-${item.id}`}
               role="tab"
               type="button"
               aria-selected={step === null && view === item.id}
+              aria-controls="map-panel"
+              // Roving: one tab stop for the whole set, and the arrows move within it.
+              tabIndex={view === item.id ? 0 : -1}
+              onKeyDown={onTabKey}
               onClick={() => go(item.id)}
-              className={`rounded-md px-2.5 py-1 text-[11px] ${
+              className={`rounded-md px-2.5 py-1 text-[11px] ${RING} ${
                 step === null && view === item.id
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent/40"
@@ -206,7 +276,7 @@ export default function App() {
           type="button"
           onClick={() => (step === null ? walkTo(0) : setStep(null))}
           aria-pressed={step !== null}
-          className={`rounded-md border px-2.5 py-1 text-[11px] ${
+          className={`rounded-md border px-2.5 py-1 text-[11px] ${RING} ${
             step !== null
               ? "border-primary bg-accent text-accent-foreground"
               : "border-primary text-primary hover:bg-accent/40"
@@ -219,7 +289,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => go("overview")}
-            className="rounded-md border border-divider px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-accent/40"
+            className={`rounded-md border border-divider px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-accent/40 ${RING}`}
           >
             {t("backToOverview")}
           </button>
@@ -249,14 +319,14 @@ export default function App() {
               type="button"
               onClick={() => walkTo(step - 1)}
               disabled={step === 0}
-              className="rounded-md border border-divider px-2 py-1 text-[11px] disabled:opacity-40"
+              className={`rounded-md border border-divider px-2 py-1 text-[11px] disabled:opacity-40 ${RING}`}
             >
               {t("previous")}
             </button>
             <button
               type="button"
               onClick={() => (step + 1 < TOUR.length ? walkTo(step + 1) : setStep(null))}
-              className="rounded-md border border-primary bg-primary px-2 py-1 text-[11px] text-primary-foreground"
+              className={`rounded-md border border-primary bg-primary px-2 py-1 text-[11px] text-primary-foreground ${RING}`}
             >
               {step + 1 < TOUR.length ? t("next") : t("tourDone")}
             </button>
@@ -264,10 +334,22 @@ export default function App() {
         </div>
       ) : null}
 
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_21rem]">
-        {/* On a narrow window the picture goes below the panel and gets a fixed height:
-            an illustration should not push the thing that actually explains it off-screen. */}
-        <div className="order-2 flex min-h-56 flex-col gap-2 lg:order-1">
+      {/*
+        Wide: the picture on one side, the list on the other, the inspector across the
+        bottom. Narrow: **list, then inspector, then picture** — you pick something and the
+        answer is the next thing you read, not something below a five-hundred-pixel
+        illustration. The picture is the supplement, so it goes last where space is scarce.
+
+        And the page scrolls normally below `lg` instead of three nested scroll regions
+        inside a locked viewport, which squeezed the list down to its heading on a phone.
+      */}
+      <div
+        id="map-panel"
+        role="tabpanel"
+        aria-labelledby={`tab-${view}`}
+        className="flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[1fr_21rem] lg:grid-rows-[minmax(0,1fr)_auto]"
+      >
+        <div className="order-3 flex min-h-56 flex-col gap-2 lg:order-none lg:col-start-1 lg:row-start-1">
           <Suspense
             fallback={
               <div className="flex min-h-56 flex-1 items-center justify-center rounded-lg border border-divider">
@@ -289,7 +371,7 @@ export default function App() {
           </p>
         </div>
 
-        <div className="order-1 flex min-h-0 flex-col gap-3 overflow-auto lg:order-2">
+        <div className="order-1 flex flex-col gap-3 lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:overflow-auto">
           <p className="rounded-md bg-muted/40 px-2 py-1.5 text-[11px] leading-relaxed" dir="auto">
             {t(`view_${view}_says` as Key)}
           </p>
@@ -429,17 +511,16 @@ export default function App() {
             </>
           ) : null}
         </div>
-      </div>
 
-      {/* The inspector. Always present rather than appearing on selection — a panel that
-          materialises shifts the layout under the click that summoned it, and a person
-          who has not clicked anything still needs to be told that clicking is a thing. */}
-      <aside
-        role="region"
-        aria-live="polite"
-        aria-label={t("inspector")}
-        className="max-h-44 shrink-0 overflow-auto rounded-lg border border-divider bg-card p-3"
-      >
+        {/* The inspector. Always present rather than appearing on selection — a panel that
+            materialises shifts the layout under the click that summoned it, and a person
+            who has not clicked anything still needs to be told that clicking is a thing. */}
+        <aside
+          role="region"
+          aria-live="polite"
+          aria-label={t("inspector")}
+          className="order-2 shrink-0 overflow-auto rounded-lg border border-divider bg-card p-3 lg:order-none lg:col-span-2 lg:row-start-2 lg:max-h-44"
+        >
         {detail ? (
           <div className="space-y-1.5">
             <h2 className="text-xs font-semibold" dir="auto">
@@ -475,15 +556,16 @@ export default function App() {
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="rounded-md border border-divider px-2 py-1 text-[11px] hover:bg-accent/50"
+              className={`rounded-md border border-divider px-2 py-1 text-[11px] hover:bg-accent/50 ${RING}`}
             >
               {t("clear")}
             </button>
           </div>
         ) : (
-          <p className="text-[11px] text-muted-foreground">{t("pickSomething")}</p>
-        )}
-      </aside>
+            <p className="text-[11px] text-muted-foreground">{t("pickSomething")}</p>
+          )}
+        </aside>
+      </div>
 
       <p className="shrink-0 text-[10px] text-muted-foreground">
         {t("generatedFrom", { count: data.sources.length })}
@@ -529,7 +611,7 @@ function Row({
       type="button"
       onClick={onClick}
       aria-pressed={chosen}
-      className={`flex w-full items-center gap-1.5 rounded-md border px-2 py-1 text-start ${
+      className={`flex w-full items-center gap-1.5 rounded-md border px-2 py-1 text-start ${RING} ${
         small ? "text-[10px]" : "text-[11px]"
       } ${chosen ? "border-primary bg-accent/50" : "border-transparent hover:border-divider"}`}
     >
