@@ -155,27 +155,59 @@ def thumbnails(source: str | Path, out_dir: str | Path, *, width: int = 180,
         document.close()
 
 
-def export_images(source: str | Path, out_dir: str | Path, *, pages: list[int] | None = None,
-                  scale: float = 2.0, format: str = "png") -> list[dict]:
-    """Export pages as images, at a size worth keeping."""
-    source = Path(source)
+def export_images(plan: list[PagePlan], out_dir: str | Path, *, scale: float = 2.0,
+                  format: str = "png",
+                  on_page: Callable[[int, int], None] | None = None) -> list[dict]:
+    """Export the plan as images, at a size worth keeping.
+
+    **A plan and not a page list, for the same reason `apply_plan` takes one.** This used
+    to take one source and a list of page numbers, and the window built that list by
+    collecting the pages of each document, sorting them and removing duplicates. Every one
+    of those three steps discarded something somebody had done on purpose: the order they
+    dragged the pages into, the page they deliberately kept twice, and — because a bare
+    number carries no angle — every rotation.
+
+    So a workbench showing pages 3, 1, 1-turned exported 1, 3, upright. **The images did
+    not match the screen, and nothing said so.** A plan cannot express that mismatch,
+    because it is the same list the screen is drawn from.
+
+    Names are numbered from the plan rather than from the page, and zero-padded to the
+    width of the plan: `007-report-3.png`. A file listing then sorts into the order the
+    pages were arranged in, which is the only order that means anything here — and two
+    copies of page 3 get two names instead of one file written twice.
+    """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if format not in ("png", "jpeg"):
         raise ValueError("format must be png or jpeg")
 
-    document = pdfium.PdfDocument(str(source))
-    try:
-        wanted = pages or range(1, len(document) + 1)
-        made: list[dict] = []
+    suffix = "jpg" if format == "jpeg" else "png"
+    width = len(str(len(plan)))
 
-        for number in wanted:
-            if number < 1 or number > len(document):
+    # One handle per source, as in `apply_plan`: a plan that takes forty pages from one
+    # file should not open it forty times.
+    opened: dict[str, pdfium.PdfDocument] = {}
+    made: list[dict] = []
+
+    try:
+        for index, entry in enumerate(plan, start=1):
+            if on_page is not None:
+                on_page(index, len(plan))
+
+            document = opened.get(entry.source)
+            if document is None:
+                document = pdfium.PdfDocument(entry.source)
+                opened[entry.source] = document
+
+            if entry.page < 1 or entry.page > len(document):
                 continue
-            image = document[number - 1].render(scale=scale).to_pil()
-            suffix = "jpg" if format == "jpeg" else "png"
-            path = out_dir / f"{source.stem}-{number}.{suffix}"
+
+            # PDFium turns the page as it draws it, so the exported image carries the
+            # rotation rather than needing the viewer to know about it.
+            image = document[entry.page - 1].render(scale=scale, rotation=entry.rotate).to_pil()
+            stem = Path(entry.source).stem
+            path = out_dir / f"{index:0{width}d}-{stem}-{entry.page}.{suffix}"
 
             if format == "jpeg":
                 # JPEG has no alpha, and PDFium hands back RGBA for a transparent page.
@@ -183,11 +215,14 @@ def export_images(source: str | Path, out_dir: str | Path, *, pages: list[int] |
             else:
                 image.save(path, format="PNG", optimize=True)
 
-            made.append({"page": number, "path": str(path)})
+            made.append(
+                {"page": entry.page, "path": str(path), "rotate": entry.rotate, "at": index}
+            )
 
         return made
     finally:
-        document.close()
+        for document in opened.values():
+            document.close()
 
 
 def compress(source: str | Path, out: str | Path, *, overwrite: bool = False) -> dict:

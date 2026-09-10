@@ -446,6 +446,14 @@
     "itemUnwritable": "The output could not be written. {detail}",
     "deliverReadHere": "Read it here",
     "previewBack": "Back",
-    "previewInBrowser": "Open in a browser"
+    "previewInBrowser": "Open in a browser",
+    "workbenchDocPages": "{pages} pages",
+    "workbenchDocScanned": "Scanned",
+    "workbenchDocRtl": "Hebrew / RTL",
+    "workbenchDocFonts": "{count} fonts",
+    "workbenchScannedExplained": "This document is scanned — it is pictures of pages with no text layer. Rotate, reorder, delete, merge, save and export all work as usual; finding and copying text do not, because there is nothing to find. Character recognition (OCR) is not in this version.",
+    "workbenchUnsearched": "{count} pages not read yet",
+    "workbenchPageCard": "Page {index} of {total}",
+    "workbenchPageTurned": "turned {degrees}°"
   }
 }

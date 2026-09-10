@@ -18,6 +18,7 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -29,7 +30,8 @@ import {
   applyPlan,
   compressDocument,
   emptyPlan,
-  exportPageImages,
+  discardScratch,
+  exportPlanImages,
   leafOf,
   pageText,
   pickExportDir,
@@ -77,11 +79,19 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   const fetching = useRef(false);
 
   const [query, setQuery] = useState("");
-  const [matches, setMatches] = useState<Set<string> | null>(null);
-  const texts = useRef<Map<string, string>>(new Map());
+  /** The query whose results are on screen, lower-cased. Null before anything ran. */
+  const [ran, setRan] = useState<string | null>(null);
+  /**
+   * Extracted page text, keyed `source#page`.
+   *
+   * State and not a ref, because the matches are **derived** from it rather than stored
+   * beside it. Stored, they went stale the moment the plan changed: deleting a matched
+   * page left the count unchanged, and merging a second document left it describing only
+   * the first. Derived, every one of those corrects itself for free.
+   */
+  const [texts, setTexts] = useState<Map<string, string>>(new Map());
 
   const running = busy !== null;
-  const key = (leaf: Leaf) => `${leaf.source}#${leaf.page}`;
 
   // --- opening documents ----------------------------------------------------------
   const load = useCallback(
@@ -112,7 +122,19 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
             thumbPaths.current.set(`${document.path}#${thumb.page}`, thumb.path);
           }
 
-          opened.push({ path: document.path, name: document.name, pages: probe.pages, dir });
+          opened.push({
+            path: document.path,
+            name: document.name,
+            dir,
+            // Everything the probe returned, not just the page count. What it costs to
+            // keep is four fields; what it costs to drop is a scanned document that
+            // opens looking ordinary.
+            pages: probe.pages,
+            scanned: probe.scanned,
+            rtl: probe.rtl,
+            chars: probe.chars,
+            fonts: probe.fonts,
+          });
           for (let page = 1; page <= probe.pages; page += 1) {
             leaves.push(leafOf(document.path, page));
           }
@@ -122,11 +144,19 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           setDocs(opened);
           setSelected(new Set());
           dispatch({ type: "set", plan: leaves });
+          // A different document: the extracted text is about something nobody is looking
+          // at any more, and a search over it answers nothing. Both are dropped, so the
+          // count disappears rather than becoming a confident zero.
+          setTexts(new Map());
+          setQuery("");
+          setRan(null);
         } else {
+          // Merging keeps both. The pages already searched keep their answer, and the
+          // ones just added show up as unread — which is the case `unsearched` exists
+          // for, and throwing the query away here would have hidden it.
           setDocs((current) => [...current, ...opened]);
           dispatch({ type: "append", leaves });
         }
-        setMatches(null);
       } catch (failure) {
         setError(String(failure));
       } finally {
@@ -141,7 +171,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   useEffect(() => {
     if (fetching.current) return;
     const missing = plan.present.filter((leaf) => {
-      const id = key(leaf);
+      const id = pageKey(leaf);
       return thumbPaths.current.has(id) && !thumbs.has(id);
     });
     if (missing.length === 0) return;
@@ -155,7 +185,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       let batch = new Map<string, string>();
       for (const leaf of missing) {
         if (!live) break;
-        const id = key(leaf);
+        const id = pageKey(leaf);
         try {
           batch.set(id, await readImage(thumbPaths.current.get(id) as string));
         } catch {
@@ -273,37 +303,63 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
     [plan.present],
   );
 
+  /**
+   * Export the plan as images.
+   *
+   * One call with the plan, where this used to be a call per document with that
+   * document's page numbers — sorted, and with duplicates removed. All three of those
+   * were the user's own arrangement being undone on the way out: the order they dragged
+   * the pages into, the page they kept twice, and every rotation, since a page number
+   * carries no angle. What came out did not match what was on screen.
+   */
   const exportImages = useCallback(async () => {
     const dir = await pickExportDir();
     if (!dir) return;
     setBusy(t("workbenchExporting"));
     setError(null);
     try {
-      let count = 0;
-      for (const document of docs) {
-        const pages = pagesOf(document.path);
-        if (pages.length === 0) continue;
-        const result = await exportPageImages(document.path, dir, pages);
-        count += result.images.length;
-      }
-      setNote(t("workbenchExported", { count, path: dir }));
+      const result = await exportPlanImages(plan.present, dir, 2, "png", (event) =>
+        setProgress({ page: event.page, pages: event.pages }),
+      );
+      setNote(t("workbenchExported", { count: result.images.length, path: dir }));
     } catch (failure) {
       setError(String(failure));
     } finally {
       setBusy(null);
+      setProgress(null);
     }
-  }, [docs, pagesOf, t]);
+  }, [plan.present, t]);
 
+  /**
+   * Compress the document the plan describes.
+   *
+   * **Not `docs[0]`, which is what this used to do.** Deleting two hundred pages and
+   * pressing compress produced the original file, at its original size, with every page
+   * still in it — and the only sign was a saving figure that did not match. A workbench
+   * whose output ignores the workbench is worse than one that refuses.
+   *
+   * PDFium compresses a file rather than a plan, so the plan is built into one first. The
+   * temporary document lives in the scratch directory — already writable, because
+   * `workbench_dir` registered it — and is removed in `finally`, including when the
+   * compression failed. Left behind it would be a rebuilt copy of somebody's document
+   * waiting for the next launch to clear it.
+   */
   const compress = useCallback(async () => {
-    const source = docs[0];
-    if (!source) return;
-    const path = await pickSavePath(`${source.name.replace(/\.pdf$/i, "")}-smaller.pdf`);
+    const first = docs[0];
+    if (!first) return;
+    const path = await pickSavePath(`${first.name.replace(/\.pdf$/i, "")}-smaller.pdf`);
     if (!path) return;
 
     setBusy(t("workbenchCompressing"));
     setError(null);
+    let staged: string | null = null;
     try {
-      const result = await compressDocument(source.path, path);
+      const dir = await workbenchDir(`c-${Date.now().toString(36)}`);
+      const separator = dir.includes("\\") ? "\\" : "/";
+      staged = `${dir}${separator}staged.pdf`;
+      await applyPlan(plan.present, staged);
+
+      const result = await compressDocument(staged, path);
       // What it actually saved, including when that is nothing. A button that promises
       // compression and reports the same number is worse than no button.
       setNote(
@@ -317,47 +373,72 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
     } catch (failure) {
       setError(String(failure));
     } finally {
+      // Failing to clear the staged copy is not worth a second error over the first one,
+      // and `clear_scratch` gets it at the next launch either way.
+      if (staged) await discardScratch(staged).catch(() => undefined);
       setBusy(null);
     }
-  }, [docs, t]);
+  }, [docs, plan.present, t]);
 
+  /**
+   * Extract whatever the plan holds and has not been read yet.
+   *
+   * **This no longer decides anything.** It fills the text cache; the matches below are
+   * derived from that cache and the plan, so they answer for the plan as it is now rather
+   * than as it was when somebody pressed the button.
+   */
   const search = useCallback(async () => {
     const needle = query.trim().toLowerCase();
     if (!needle) {
-      setMatches(null);
+      setRan(null);
       return;
     }
 
     setBusy(t("workbenchSearching"));
     setError(null);
     try {
+      const found = new Map(texts);
       for (const document of docs) {
         const wanted = pagesOf(document.path).filter(
-          (page) => !texts.current.has(`${document.path}#${page}`),
+          (page) => !found.has(`${document.path}#${page}`),
         );
         if (wanted.length === 0) continue;
         // The same extraction the converter uses, which is why Hebrew comes back in
         // reading order rather than reversed — situation 5, in a smaller place.
-        for (const found of await pageText(document.path, wanted)) {
-          texts.current.set(
-            `${document.path}#${found.page}`,
-            found.lines.join("\n").toLowerCase(),
-          );
+        for (const page of await pageText(document.path, wanted)) {
+          found.set(`${document.path}#${page.page}`, page.lines.join("\n").toLowerCase());
         }
       }
-      setMatches(
-        new Set(
-          plan.present
-            .filter((leaf) => (texts.current.get(key(leaf)) ?? "").includes(needle))
-            .map((leaf) => leaf.uid),
-        ),
-      );
+      setTexts(found);
+      setRan(needle);
     } catch (failure) {
       setError(String(failure));
     } finally {
       setBusy(null);
     }
-  }, [query, docs, pagesOf, plan.present, t]);
+  }, [query, docs, pagesOf, texts, t]);
+
+  /** Which pages hold the query — recomputed whenever the plan or the text changes. */
+  const matches = useMemo(() => {
+    if (!ran) return null;
+    return new Set(
+      plan.present
+        .filter((leaf) => (texts.get(pageKey(leaf)) ?? "").includes(ran))
+        .map((leaf) => leaf.uid),
+    );
+  }, [ran, texts, plan.present]);
+
+  /**
+   * Pages in the plan whose text nobody has read.
+   *
+   * A document merged in after a search is exactly this, and saying "4 matches" over a
+   * plan where sixty pages were never looked at is a true number that answers the wrong
+   * question. Shown, with the search still there to press again.
+   */
+  const unsearched = useMemo(
+    () => (ran ? plan.present.filter((leaf) => !texts.has(pageKey(leaf))).length : 0),
+    [ran, texts, plan.present],
+  );
 
   const nothing = plan.present.length === 0;
   const some = selected.size > 0;
@@ -485,12 +566,62 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           size="sm"
           variant="ghost"
           onClick={() => void compress()}
-          disabled={running || docs.length !== 1}
+          // Was `docs.length !== 1`, because it compressed the first source and could not
+          // say anything sensible about two. It compresses the plan now, and a plan is
+          // one document however many files it draws from.
+          disabled={running || nothing}
         >
           <Minimize2 className="size-4" />
           {t("workbenchCompress")}
         </Button>
       </div>
+
+      {/* --- what is actually open ------------------------------------------------------
+          The probe was always called and only its page count was kept. These four fields
+          arrived with it and cost nothing to show, and one of them — `scanned` — is the
+          difference between a search that looks broken and one that says why it cannot
+          answer. */}
+      {docs.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-divider px-4 py-1.5">
+          {docs.map((document) => (
+            <span
+              key={document.path}
+              className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground"
+            >
+              <FileText className="size-3 shrink-0" aria-hidden="true" />
+              <span className="truncate font-medium">{document.name}</span>
+              <span className="tabular shrink-0">
+                {t("workbenchDocPages", { pages: document.pages })}
+              </span>
+              {document.scanned ? (
+                <Badge variant="outline" className="border-warning px-1.5 py-0 text-[10px] text-warning">
+                  {t("workbenchDocScanned")}
+                </Badge>
+              ) : (
+                <>
+                  {/* Only claimed when characters were actually seen. A sampled page with
+                      no Hebrew on it is not proof the document has none, so the absence
+                      of this badge says nothing and is not worded as if it did. */}
+                  {document.rtl > 0 ? <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">{t("workbenchDocRtl")}</Badge> : null}
+                  {document.fonts.length > 0 ? (
+                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                      {t("workbenchDocFonts", { count: document.fonts.length })}
+                    </Badge>
+                  ) : null}
+                </>
+              )}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {/* A scanned document is not a broken one, and the difference has to be said before
+          somebody presses Find and reads zero as a defect. */}
+      {docs.some((document) => document.scanned) ? (
+        <p className="border-b border-warning/40 bg-warning-muted px-4 py-2 text-xs text-warning">
+          {t("workbenchScannedExplained")}
+        </p>
+      ) : null}
 
       {/* --- finding a page by what is written on it ---------------------------------- */}
       {!nothing ? (
@@ -512,8 +643,16 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
             </Button>
           </div>
           {matches ? (
-            <span className="tabular text-[11px] text-muted-foreground">
+            <span
+              className="tabular text-[11px] text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
               {t("workbenchMatches", { count: matches.size })}
+              {/* Pages the plan gained after the search ran. Saying "4 matches" over a
+                  plan where sixty pages were never read is a true number answering a
+                  question nobody asked. */}
+              {unsearched > 0 ? ` · ${t("workbenchUnsearched", { count: unsearched })}` : ""}
             </span>
           ) : null}
           <span className="tabular text-[11px] text-muted-foreground">
@@ -605,18 +744,35 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                       : "border-divider"
                 } ${dropAt === index ? "ring-2 ring-primary/50" : ""}`}
               >
+                {/* The name is on the button and not below it. Everything inside is a
+                    picture — an `<img alt="">` or a spinner — so without this the button
+                    reached the accessibility tree with no name at all: "button, pressed",
+                    and no way to know which page. WCAG 4.1.2.
+
+                    The number, the source and the angle are in the label; **whether it is
+                    selected is not**, because `aria-pressed` already carries that and a
+                    screen reader would otherwise say it twice. */}
                 <button
                   type="button"
                   onClick={(event) => click(leaf.uid, event)}
                   aria-pressed={selected.has(leaf.uid)}
+                  // Composed rather than one string with empty slots: a single message
+                  // with placeholders would read "page 3 of 35, , 0°" in the common case.
+                  aria-label={[
+                    t("workbenchPageCard", { index: index + 1, total: plan.present.length }),
+                    docs.length > 1 ? short(leaf.source) : null,
+                    leaf.rotate ? t("workbenchPageTurned", { degrees: leaf.rotate }) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                   className="block w-full cursor-pointer"
                 >
                   {/* Square on purpose: a page turned a quarter turn swaps its width
                       and height, and in a square box neither can overflow. */}
                   <span className="flex h-36 w-full items-center justify-center overflow-hidden rounded bg-muted/40">
-                    {thumbs.get(key(leaf)) ? (
+                    {thumbs.get(pageKey(leaf)) ? (
                       <img
-                        src={thumbs.get(key(leaf))}
+                        src={thumbs.get(pageKey(leaf))}
                         alt=""
                         style={{ transform: `rotate(${leaf.rotate}deg)` }}
                         className="max-h-32 max-w-32 shadow-sm transition-transform"
@@ -752,3 +908,11 @@ function merge(current: Map<string, string>, loaded: Map<string, string>): Map<s
 
 /** Just the file name, for a card that has to say which document it came from. */
 const short = (path: string) => path.split(/[\\/]/).pop()?.replace(/\.pdf$/i, "") ?? path;
+
+/**
+ * What identifies a page across the caches — thumbnails and extracted text both.
+ *
+ * The source and the page, not the `uid`: a uid belongs to one entry in the plan, and the
+ * same page taken twice is two entries holding one image and one piece of text.
+ */
+const pageKey = (leaf: Leaf) => `${leaf.source}#${leaf.page}`;
