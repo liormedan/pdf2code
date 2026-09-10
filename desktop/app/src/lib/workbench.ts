@@ -29,6 +29,18 @@ export interface Doc {
   pages: number;
   /** Where this document's thumbnails were rendered. */
   dir: string;
+  /**
+   * What `probe` said about it.
+   *
+   * The probe was always called and only `pages` was kept, so the workbench knew a
+   * document had no text layer and said nothing — and search over it returned zero with
+   * no explanation, which reads as a broken feature rather than an inapplicable one.
+   */
+  scanned: boolean;
+  /** Hebrew or Arabic characters on the sampled page. Zero is not proof of none. */
+  rtl: number;
+  chars: number;
+  fonts: string[];
 }
 
 export interface Thumb {
@@ -92,19 +104,31 @@ export const applyPlan = (plan: Leaf[], out: string, overwrite = false) =>
     overwrite,
   });
 
-export const exportPageImages = (
-  path: string,
+/**
+ * Export the plan as images — the plan, not a list of page numbers.
+ *
+ * The same shape `applyPlan` sends, because these two are the only ways a workbench turns
+ * into files and they must not disagree about what the workbench says. The version this
+ * replaces took one source and a sorted, de-duplicated list of numbers, which threw away
+ * the order, the duplicates and every rotation. See `pages.export_images`.
+ */
+export const exportPlanImages = (
+  plan: Leaf[],
   out: string,
-  pages: number[],
   scale = 2,
   format: "png" | "jpeg" = "png",
-) => call<{ images: { page: number; path: string }[] }>("exportImages", {
-  path,
-  out,
-  pages,
-  scale,
-  format,
-});
+  track?: (p: Progress) => void,
+) =>
+  call<{ images: { page: number; path: string; rotate: number; at: number }[] }>(
+    "exportImages",
+    {
+      plan: plan.map((leaf) => ({ from: leaf.source, page: leaf.page, rotate: leaf.rotate })),
+      out,
+      scale,
+      format,
+    },
+    track,
+  );
 
 export const compressDocument = (path: string, out: string) =>
   call<{ out: string; before: number; after: number; saved: number }>("compress", { path, out });
@@ -143,6 +167,17 @@ export function workbenchDir(slot: string): Promise<string> {
 export function readImage(path: string): Promise<string> {
   if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
   return invoke<string>("read_image", { path });
+}
+
+/**
+ * Remove one file the workbench put in the scratch directory.
+ *
+ * For the document `compress` builds from the plan before compressing it. Refused for
+ * anything outside that directory, and for anything that is not a file.
+ */
+export function discardScratch(path: string): Promise<void> {
+  if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
+  return invoke<void>("discard_scratch", { path });
 }
 
 // ---------------------------------------------------------------------------

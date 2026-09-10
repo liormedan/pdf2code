@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Check,
   Copy,
+  Eye,
   ExternalLink,
   FileArchive,
   FolderOpen,
@@ -31,7 +32,14 @@ import { isTypingTarget } from "@/lib/utils";
  * **names, not sizes**, and a 40MB `index.html` and a 40KB one are different products.
  * The number is what somebody uses to decide whether to send it to a colleague.
  */
-export default function DeliveryPanel({ dir }: { dir: string }) {
+export default function DeliveryPanel({
+  dir,
+  onRead,
+}: {
+  dir: string;
+  /** Open the converted page full-window, inside the app. */
+  onRead: () => void;
+}) {
   const t = useTranslations("desktop");
   const [files, setFiles] = useState<OutFile[]>([]);
   const [busy, setBusy] = useState(false);
@@ -107,10 +115,25 @@ export default function DeliveryPanel({ dir }: { dir: string }) {
     <div className="space-y-2 rounded-lg border border-divider p-3">
       <div className="flex flex-wrap items-center gap-1.5">
         {page ? (
-          <Button size="sm" onClick={() => void run(() => openPath(`${sep(dir)}index.html`))} disabled={busy}>
-            <ExternalLink className="size-4" />
-            {t("deliverOpenPage")}
-          </Button>
+          <>
+            {/* Reading it here is the primary action now. Handing the path to the
+                operating system depends on the default handler for .html and on that
+                program resolving the path; rendering the file we just wrote in a frame
+                we control depends on neither. */}
+            <Button size="sm" onClick={onRead} disabled={busy}>
+              <Eye className="size-4" />
+              {t("deliverReadHere")}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void run(() => openPath(`${sep(dir)}index.html`))}
+              disabled={busy}
+            >
+              <ExternalLink className="size-4" />
+              {t("deliverOpenPage")}
+            </Button>
+          </>
         ) : null}
 
         <Button

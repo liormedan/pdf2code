@@ -37,6 +37,21 @@ tauri-plugin-dialog = "2"
 # an installed application cannot depend on a library that may not be there.
 rusqlite = { version = "0.40", features = ["bundled"] }
 
+# Opening a file with whatever the machine has registered for it. That is `ShellExecuteW`
+# and not `explorer.exe`, for reasons deliver.rs explains at the call site.
+#
+# Not a new dependency in any meaningful sense: this exact version is already in the tree
+# under Tauri and rusqlite, and naming it here enables three of its feature modules rather
+# than fetching anything. It is also the thinnest of the Windows bindings — declarations,
+# no macros, no runtime.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
 # Debug info is what `link.exe` ran out of memory generating — LNK1102, on a machine
 # with a nearly exhausted commit limit. It is also the cheapest thing to give up: we
 # are not stepping through serde, and there are roughly four hundred of those.

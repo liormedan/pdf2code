@@ -1,0 +1,11 @@
+{
+  "name": "pdf2code-system-map",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Developer tooling. Generates and checks the system map. Not part of the pdf2code product.",
+  "type": "module",
+  "scripts": {
+    "map:sync": "node sync-system-map.mjs",
+    "map:check": "node sync-system-map.mjs --check"
+  }
+}

@@ -181,9 +181,38 @@ def check_images(work: Path) -> None:
                on_page=lambda page, pages: seen.append((page, pages)))
     check("progress is reported once per page", seen == [(1, 3), (2, 3), (3, 3)], str(seen))
 
-    made = export_images(HEBREW, work / "images", pages=[1], scale=1.5, format="jpeg")
+    made = export_images(parse_plan([{"from": str(HEBREW), "page": 1}]), work / "images",
+                         scale=1.5, format="jpeg")
     check("exports at the size asked for", len(made) == 1 and Path(made[0]["path"]).exists())
     check("and in the format asked for", made[0]["path"].endswith(".jpg"))
+
+    # The three things the old signature discarded, in one plan: an order that is not
+    # ascending, a page taken twice, and a rotation. Sorting, de-duplicating or dropping
+    # the angle each breaks exactly one of these three, so all three are asserted.
+    turned = parse_plan([
+        {"from": str(HEBREW), "page": 3},
+        {"from": str(HEBREW), "page": 1},
+        {"from": str(HEBREW), "page": 1, "rotate": 90},
+    ])
+    made = export_images(turned, work / "ordered", scale=0.5)
+    check("a plan exports one image per entry, duplicates included", len(made) == 3,
+          str(len(made)))
+    check("in the order of the plan and not of the page numbers",
+          [item["page"] for item in made] == [3, 1, 1],
+          str([item["page"] for item in made]))
+    check("with names that sort into that order",
+          [Path(item["path"]).name.split("-")[0] for item in made] == ["1", "2", "3"],
+          str([Path(item["path"]).name for item in made]))
+    check("and two copies of one page are two files",
+          made[1]["path"] != made[2]["path"])
+
+    from PIL import Image  # noqa: PLC0415
+    upright = Image.open(made[1]["path"]).size
+    quarter = Image.open(made[2]["path"]).size
+    # A quarter turn swaps width and height. This is the only assertion that can tell a
+    # rotated export from an unrotated one without comparing pixels.
+    check("a rotated entry is exported rotated", quarter == (upright[1], upright[0]),
+          f"{upright} then {quarter}")
 
     out = compress(TABLES, work / "compressed.pdf")
     check("compression writes a readable document", pages_of(Path(out["out"])) == pages_of(TABLES))

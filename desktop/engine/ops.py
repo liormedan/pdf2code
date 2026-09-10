@@ -246,20 +246,33 @@ def op_thumbnails(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
 
 
 def op_export_images(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
-    from pages import export_images  # noqa: PLC0415
+    """Export the plan as images.
 
-    path = args.get("path")
+    Takes the same `plan` shape as `edit`, and deliberately: these two are the only ways
+    a workbench turns into files, and they should not disagree about what the workbench
+    says. When this took a source and a sorted list of page numbers, it did disagree —
+    see `pages.export_images`.
+    """
+    from pages import export_images, parse_plan  # noqa: PLC0415
+
     out = args.get("out")
-    if not isinstance(path, str) or not isinstance(out, str):
-        raise ValueError("export needs a path and an output directory")
+    entries = args.get("plan")
+    if not isinstance(out, str) or not isinstance(entries, list):
+        raise ValueError("export needs a plan and an output directory")
+
+    # Reported per page: exporting five hundred pages at scale 2 takes long enough that a
+    # still window reads as a hang, exactly as in `thumbnails`.
+    def progress(page: int, pages: int) -> None:
+        ctx.checkpoint()
+        ctx.progress(page=page, pages=pages, phase="render")
 
     ctx.checkpoint()
     made = export_images(
-        path,
+        parse_plan(entries),
         out,
-        pages=args.get("pages"),
         scale=float(args.get("scale", 2.0)),
         format=str(args.get("format", "png")),
+        on_page=progress,
     )
     return {"images": made}
 

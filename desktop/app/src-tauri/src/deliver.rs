@@ -15,8 +15,9 @@
 //! open freely; files open only if they are something this app could plausibly have
 //! written.
 //!
-//! No `shell` plugin and no shell at all. `Command` is handed its arguments directly, so
-//! there is no string for a filename to be interpreted inside.
+//! No `shell` plugin and no command interpreter. `Command` is handed its arguments
+//! directly and `ShellExecuteW` is handed a path, so at no point is there a command line
+//! for a filename to be interpreted inside.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -149,6 +150,13 @@ pub fn reveal_path(
 /// Spawned without a shell: the path is one argument, not part of a command line, so a
 /// document called `& del *.*` is a filename and stays one.
 fn launch(path: &Path, select: bool) -> Result<(), String> {
+    // Opening a file is a different operation from showing one, and on Windows it is a
+    // different mechanism too. See [`open_with_shell`].
+    #[cfg(target_os = "windows")]
+    if !select && path.is_file() {
+        return open_with_shell(path);
+    }
+
     #[cfg(target_os = "windows")]
     let mut command = {
         let mut c = Command::new("explorer.exe");
@@ -160,6 +168,9 @@ fn launch(path: &Path, select: bool) -> Result<(), String> {
             arg.push(path.as_os_str());
             c.arg(arg);
         } else {
+            // Only a folder reaches this on Windows now: files were handed to the shell
+            // above. Opening a folder is what Explorer is for, so here it is the right
+            // program rather than a stand-in for one.
             c.arg(path.as_os_str());
         }
         c
@@ -193,6 +204,68 @@ fn launch(path: &Path, select: bool) -> Result<(), String> {
         .spawn()
         .map(|_| ())
         .map_err(|e| format!("could not open it: {e}"))
+}
+
+/// Open a file with whatever this machine has registered to open it.
+///
+/// **Not `explorer.exe`.** Explorer's job is folders. Handed a file it forwards it to the
+/// registered program through a path that does not preserve every name — which is what a
+/// browser opening on `ERR_FILE_NOT_FOUND`, for a file that was sitting right there,
+/// looks like from the outside.
+///
+/// And it could not have been reported. Explorer returns a non-zero exit code on success,
+/// so there is nothing to check; `spawn` succeeding says only that Explorer started. **A
+/// page that failed to open was indistinguishable from a page that opened**, which is the
+/// worse half of the bug: the window said nothing either way.
+///
+/// `ShellExecuteW` is the documented mechanism for this. It takes the path as UTF-16
+/// rather than through any code page, and it returns a value: greater than 32 is success,
+/// and anything else is the reason, which is how the window finally has something to say.
+///
+/// On its own thread, with COM initialised. A registered handler is allowed to be a shell
+/// extension, and Tauri's command threads are not an apartment we own. The thread is
+/// joined, so the result still comes back to the caller — `ShellExecuteW` returns once the
+/// handler has been started, not when it exits.
+#[cfg(target_os = "windows")]
+fn open_with_shell(path: &Path) -> Result<(), String> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx};
+    use windows_sys::Win32::UI::Shell::ShellExecuteW;
+    use windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+
+    // Null-terminated, because the API reads until it finds one. The path arrives from
+    // `permitted`, so it has already been canonicalised and proven to be inside a
+    // directory output may land in.
+    let file: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+    let verb: Vec<u16> = "open\0".encode_utf16().collect();
+
+    let code = std::thread::spawn(move || unsafe {
+        // Ignored on purpose: it fails when the thread already has an apartment, which is
+        // not a problem, and `ShellExecuteW` initialises one itself if it has to.
+        let _ = CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32);
+        ShellExecuteW(
+            std::ptr::null_mut(),
+            verb.as_ptr(),
+            file.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null(),
+            SW_SHOWNORMAL,
+        ) as isize
+    })
+    .join()
+    .map_err(|_| "could not open it: the shell call did not finish".to_string())?;
+
+    if code > 32 {
+        return Ok(());
+    }
+    // The four that a person can act on, and the number for everything else. Naming a
+    // cause is the whole point of having moved off Explorer.
+    Err(match code {
+        2 | 3 => "could not open it: the system could not find that path".into(),
+        5 => "could not open it: access denied".into(),
+        31 => "could not open it: nothing here is registered to open that kind of file".into(),
+        other => format!("could not open it: the shell refused it, code {other}"),
+    })
 }
 
 #[cfg(test)]

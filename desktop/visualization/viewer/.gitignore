@@ -1,0 +1,3 @@
+# Build output. The viewer is only ever run from source with `npm run dev`; `npm run build`
+# exists to prove it still compiles, and its output is not something anybody installs.
+dist/

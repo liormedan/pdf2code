@@ -370,7 +370,7 @@
     "workbenchLater": "להזיז קדימה",
     "workbenchDropEnd": "לגרור לכאן כדי להעביר לסוף",
     "workbenchUntouched": "קובצי המקור לא משתנים. שמירה יוצרת מסמך חדש במקום שתבחרו.",
-    "deliverOpenPage": "לפתוח את הדף",
+    "deliverOpenPage": "בדפדפן",
     "deliverOpenFolder": "לפתוח את התיקייה",
     "deliverZip": "לארוז ל-ZIP",
     "deliverCopyPath": "העתקת הנתיב",
@@ -443,6 +443,17 @@
     "settingsReportShow": "להציג את הדוח",
     "settingsReportSave": "לשמור כקובץ",
     "settingsReportSaved": "נשמר ב-{path}",
-    "itemUnwritable": "לא ניתן היה לכתוב את הפלט. {detail}"
+    "itemUnwritable": "לא ניתן היה לכתוב את הפלט. {detail}",
+    "deliverReadHere": "לקרוא כאן",
+    "previewBack": "חזרה",
+    "previewInBrowser": "לפתוח בדפדפן",
+    "workbenchDocPages": "{pages} עמודים",
+    "workbenchDocScanned": "סרוק",
+    "workbenchDocRtl": "עברית / RTL",
+    "workbenchDocFonts": "{count} גופנים",
+    "workbenchScannedExplained": "המסמך הזה סרוק — הוא תמונות של עמודים ואין בו שכבת טקסט. סיבוב, שינוי סדר, מחיקה, מיזוג, שמירה וייצוא עובדים כרגיל; חיפוש והעתקת טקסט לא, כי אין מה לחפש. זיהוי תווים (OCR) אינו בגרסה הזו.",
+    "workbenchUnsearched": "{count} עמודים טרם נקראו",
+    "workbenchPageCard": "עמוד {index} מתוך {total}",
+    "workbenchPageTurned": "מסובב {degrees}°"
   }
 }

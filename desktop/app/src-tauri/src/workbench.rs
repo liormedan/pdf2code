@@ -179,6 +179,37 @@ pub fn read_image(app: AppHandle, path: String) -> Result<String, String> {
     Ok(format!("data:{mime};base64,{}", base64(&bytes)))
 }
 
+/// Throw away one file the workbench itself put in the scratch directory.
+///
+/// Compressing an edited document means building it first: the plan is applied to a
+/// temporary PDF, that is compressed to where the person chose, and the temporary one has
+/// no reason to outlive the operation. `clear_scratch` would eventually get it — at the
+/// *next* launch — and leaving a rebuilt copy of somebody's document on disk until then is
+/// the kind of small disclosure this module already refuses elsewhere.
+///
+/// **Scoped exactly like [`read_image`], and for a stronger reason: this one deletes.**
+/// The path is resolved before it is compared, so `scratch/../../something.pdf` is
+/// measured by where it really points. Files only — a command that removes directories
+/// would take the whole scratch tree with one argument.
+#[tauri::command]
+pub fn discard_scratch(app: AppHandle, path: String) -> Result<(), String> {
+    let root = scratch(&app)?
+        .canonicalize()
+        .map_err(|e| format!("no scratch directory: {e}"))?;
+    let file = PathBuf::from(&path)
+        .canonicalize()
+        .map_err(|e| format!("no such file: {e}"))?;
+
+    if !file.starts_with(&root) {
+        return Err("refused: outside the workbench directory".into());
+    }
+    if !file.is_file() {
+        return Err("refused: not a file".into());
+    }
+
+    std::fs::remove_file(&file).map_err(|e| format!("could not remove it: {e}"))
+}
+
 fn scratch(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()

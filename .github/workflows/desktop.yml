@@ -114,6 +114,31 @@ jobs:
         run: cargo clippy --lib --no-deps 2>&1 | Select-String -Pattern "^warning" -Context 0,3
         continue-on-error: true
 
+  # The system map is developer tooling, not part of the product — so it gets a job of its
+  # own rather than a step inside `window`. A red build here means the planning documents
+  # moved and the map did not, which is worth knowing and is not a reason to distrust the
+  # installers; keeping it separate is what lets a person read the two apart at a glance.
+  #
+  # No `npm ci`: the generator is plain Node against five Markdown files and has no
+  # dependencies at all. The viewer, which does have them, is not built here — nothing
+  # ships it, so nothing has to prove it compiles on a clean machine.
+  map:
+    name: system map
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Refuses rather than guesses: a sprint blocked on an id nobody defines, a decision
+      # blocking a sprint already closed, weights that do not reach a hundred, or a
+      # headline percentage that disagrees with the sum of the parts.
+      - name: the map still matches the documents
+        working-directory: desktop/visualization
+        run: npm run map:check
+
   installers:
     name: installers
     # Only on main and only after both halves are green: a bundle takes minutes and there
