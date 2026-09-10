@@ -35,7 +35,8 @@ export default function Scene({
   selected,
   onSelect,
   still,
-  compact,
+  dragging,
+  zoom,
 }: {
   map: SystemMap;
   view: ViewId;
@@ -43,8 +44,17 @@ export default function Scene({
   onSelect: (selection: Selection | null) => void;
   /** `prefers-reduced-motion`. The camera jumps instead of flying and the beads hold. */
   still: boolean;
-  /** A window too narrow to orbit in. Presets and the tour do the navigating instead. */
-  compact: boolean;
+  /**
+   * Whether dragging to turn and zoom is on.
+   *
+   * Decided from the canvas's **measured width**, not from the viewport: this element is
+   * what the person actually drags, and it is the thing that changes size when the layout
+   * reflows or the tool goes fullscreen. A viewport query answered the wrong question and,
+   * in one embedded context, answered it with `0`.
+   */
+  dragging: boolean;
+  /** A scale on the current view's camera distance, driven by the zoom buttons. */
+  zoom: number;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const labels = useRef<HTMLDivElement>(null);
@@ -52,13 +62,14 @@ export default function Scene({
   // Read through refs so the scene is built once and not town down on every click.
   const select = useRef(onSelect);
   select.current = onSelect;
-  const current = useRef<{ view: ViewId; selected: Selection | null; still: boolean; compact: boolean }>({
-    view,
-    selected,
-    still,
-    compact,
-  });
-  current.current = { view, selected, still, compact };
+  const current = useRef<{
+    view: ViewId;
+    selected: Selection | null;
+    still: boolean;
+    dragging: boolean;
+    zoom: number;
+  }>({ view, selected, still, dragging, zoom });
+  current.current = { view, selected, still, dragging, zoom };
 
   useEffect(() => {
     const mount = host.current;
@@ -306,8 +317,9 @@ export default function Scene({
      */
     const fit = (position: THREE.Vector3, target: THREE.Vector3) => {
       const shortfall = 1.9 / Math.max(camera.aspect, 0.4);
-      if (shortfall <= 1) return position;
-      return target.clone().add(position.clone().sub(target).multiplyScalar(Math.min(shortfall, 2.1)));
+      const scale = Math.max(shortfall, 1) * current.current.zoom;
+      if (scale === 1) return position;
+      return target.clone().add(position.clone().sub(target).multiplyScalar(Math.min(scale, 3)));
     };
 
     const applyView = (id: ViewId, focus: string | null, jump: boolean) => {
@@ -334,6 +346,7 @@ export default function Scene({
 
     let lastView: ViewId | null = null;
     let lastFocus: string | null = null;
+    let lastZoom = zoom;
 
     // --- the loop ------------------------------------------------------------------------
     const size = () => {
@@ -342,7 +355,13 @@ export default function Scene({
       if (width === 0 || height === 0) return;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(width, height, false);
+      // `setSize` with its default third argument, so three.js also writes the canvas's
+      // CSS size. Passing `false` there leaves the element laying out at its drawing
+      // buffer — which is width times the device pixel ratio — so on any display that is
+      // not exactly 1:1 the canvas is larger than the box holding it and the model is
+      // silently cropped. Invisible on a 1× screen, wrong on most laptops, and it only
+      // surfaced here when the pane running these checks started reporting 1.17.
+      renderer.setSize(width, height);
     };
     size();
     const observer = new ResizeObserver(() => {
@@ -359,14 +378,21 @@ export default function Scene({
 
     const draw = () => {
       frame = requestAnimationFrame(draw);
-      const { view: viewNow, selected: chosen, still: quiet, compact: narrow } = current.current;
+      const {
+        view: viewNow,
+        selected: chosen,
+        still: quiet,
+        dragging: drag,
+        zoom: zoomNow,
+      } = current.current;
       const time = quiet ? 0 : clock.getElapsedTime();
 
-      // Orbit is a nicety on a wide screen and a trap on a small one, where a drag is
-      // usually somebody trying to scroll the page.
-      controls.enableRotate = !narrow;
-      controls.enableZoom = !narrow;
-      controls.enableDamping = !quiet && !narrow;
+      // Orbit is a nicety on a wide canvas and a trap on a small one, where a drag is
+      // usually somebody trying to scroll the page. Read every frame, so going fullscreen
+      // or reflowing the layout turns it on the moment the canvas is actually big enough.
+      controls.enableRotate = drag;
+      controls.enableZoom = drag;
+      controls.enableDamping = !quiet && drag;
 
       const focus =
         chosen?.kind === "process" || chosen?.kind === "end"
@@ -375,10 +401,11 @@ export default function Scene({
             ? chosen.id
             : null;
 
-      if (viewNow !== lastView || focus !== lastFocus) {
+      if (viewNow !== lastView || focus !== lastFocus || zoomNow !== lastZoom) {
         applyView(viewNow, focus, quiet);
         lastView = viewNow;
         lastFocus = focus;
+        lastZoom = zoomNow;
       }
       if (!quiet) {
         // Eased rather than snapped: the movement between two viewpoints is the thing
@@ -437,8 +464,8 @@ export default function Scene({
       const placed: { top: number; left: number; height: number }[] = [];
 
       for (const label of pins) {
-        // A label on a hidden layer, a faded node, or a screen with no room for it.
-        const wanted = !narrow && shown[label.layer] && owners.has(label.owner);
+        // A label on a hidden layer, a faded node, or a canvas with no room for it.
+        const wanted = drag && shown[label.layer] && owners.has(label.owner);
         if (!wanted) {
           label.node.style.display = "none";
           continue;

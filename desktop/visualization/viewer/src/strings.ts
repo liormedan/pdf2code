@@ -100,6 +100,22 @@ const WORDS = {
     flowTitle: "מסלול המסמך",
     canvasNoteCompact:
       "המסך צר מדי לסיבוב חופשי, אז הוא כבוי. השתמשו בכפתורי התצוגה או בסיור — הם מגיעים לכל מקום שהעכבר היה מגיע אליו.",
+    wideView: "פתח תצוגה רחבה",
+    wideViewExit: "לצאת מהתצוגה הרחבה",
+    wideViewFailed:
+      "הדפדפן לא אישר מסך מלא. אפשר להרחיב את החלון ידנית, או להשתמש בכפתורי המצלמה שמתחת — הם מגיעים לכל מקום שהגרירה הייתה מגיעה אליו.",
+    camera: "מצלמה",
+    cameraOverview: "מבט כללי",
+    cameraYou: "אתם",
+    cameraWindow: "החלון",
+    cameraShell: "המעטפת",
+    cameraEngine: "המנוע",
+    cameraOutput: "הפלט",
+    zoomIn: "התקרבות",
+    zoomOut: "התרחקות",
+    zoomReset: "איפוס מצלמה",
+    compactWhy:
+      "סיבוב וזום בגרירה כבויים כאן, כי המסך צר מכדי להבחין בין גרירה שמסובבת מודל לגרירה שגוללת דף. התמונה עדיין מלאה — רק הגרירה כבויה. אפשר לפתוח תצוגה רחבה, או להשתמש בכפתורי המצלמה שמעל: הם מגיעים לכל מקום שהגרירה הייתה מגיעה אליו.",
     language: "English",
   },
   en: {
@@ -191,6 +207,22 @@ const WORDS = {
     flowTitle: "The document's route",
     canvasNoteCompact:
       "The screen is too narrow for free orbit, so it is off. Use the view buttons or the tour \u2014 they reach everywhere the mouse would.",
+    wideView: "Open wide view",
+    wideViewExit: "Leave the wide view",
+    wideViewFailed:
+      "The browser would not allow fullscreen. Widen the window by hand, or use the camera buttons below \u2014 they reach everywhere dragging would.",
+    camera: "Camera",
+    cameraOverview: "Wide shot",
+    cameraYou: "You",
+    cameraWindow: "The window",
+    cameraShell: "The shell",
+    cameraEngine: "The engine",
+    cameraOutput: "The output",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    zoomReset: "Reset the camera",
+    compactWhy:
+      "Drag-to-turn and drag-to-zoom are off here, because the screen is too narrow to tell a drag that turns a model from a drag that scrolls a page. The picture is still complete \u2014 only dragging is off. Open the wide view, or use the camera buttons above: they reach everywhere dragging would.",
     language: "עברית",
   },
 } as const;
