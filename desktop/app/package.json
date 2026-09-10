@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "pdf2code as an installed application. The shell \u2014 no conversion engine yet.",
+  "description": "pdf2code as an installed application. The shell — no conversion engine yet.",
   "engines": {
     "node": ">=22"
   },
@@ -17,9 +17,10 @@
     "bundle": "tauri build",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:a11y": "node scripts/check-a11y.mjs",
-    "check": "npm run check:version && npm run check:credits && npm run typecheck && npm run check:i18n && npm run check:a11y",
+    "check": "npm run check:version && npm run check:credits && npm run typecheck && npm run test && npm run check:i18n && npm run check:a11y",
     "check:version": "node scripts/check-version.mjs",
-    "check:credits": "node scripts/check-credits.mjs"
+    "check:credits": "node scripts/check-credits.mjs",
+    "test": "node --experimental-strip-types --test src/**/*.test.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

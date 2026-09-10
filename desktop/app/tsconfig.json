@@ -16,6 +16,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    // Node's own test runner resolves imports the way the runtime does, so `viewer.test.ts`
+    // has to write `./viewer.ts` rather than `./viewer`. Permitted here because nothing is
+    // emitted — the compiler only checks — and the alternative was leaving the tests
+    // outside the typechecker, which is the half of a test most likely to rot.
+    "allowImportingTsExtensions": true,
     "useDefineForClassFields": true,
     "paths": { "@/*": ["./src/*"] },
     "baseUrl": "."

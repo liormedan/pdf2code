@@ -139,15 +139,49 @@ walk(SRC);
  */
 const PHYSICAL = /\b(?<!slide-in-from-)(-?(?:ml|mr|pl|pr|left|right)-[0-9.]+|text-(?:left|right)|border-[lr]\b)/g;
 
+/**
+ * A line with its trailing comment removed.
+ *
+ * This check is about what ends up in a `className`, and a comment is not one. The comment
+ * most likely to mention `left-1/2` is the comment explaining why the code beside it does
+ * **not** use `left-1/2` — so scanning comments punishes exactly the person who did the
+ * right thing and then wrote down why. Found the first time a fix and its explanation were
+ * committed together.
+ *
+ * The `:` guard keeps `https://` intact, which is the only `//` in this codebase that is
+ * not the start of a comment.
+ */
+const code = (line) => line.replace(/(^|[^:])\/\/.*$/, "$1");
+
 const offenders = [];
 for (const file of files) {
   const text = readFileSync(file, "utf8");
   for (const [index, line] of text.split("\n").entries()) {
-    const cleaned = line.replace(/slide-in-from-(left|right)-[0-9.]+/g, "");
+    const cleaned = code(line).replace(/slide-in-from-(left|right)-[0-9.]+/g, "");
     for (const match of cleaned.matchAll(PHYSICAL)) {
       offenders.push(`${relative(ROOT, file)}:${index + 1} — ${match[1]}`);
     }
   }
+}
+
+// Stripping comments is only safe if the rule still bites through it.
+const IN_A_CLASS = 'className="ml-2 flex"';
+const IN_A_COMMENT = '// deliberately not ml-2 here, see below';
+const A_URL = 'const docs = "https://example.com/a";';
+if ([...code(IN_A_CLASS).matchAll(PHYSICAL)].length === 1) {
+  ok("a physical utility inside a class is still caught");
+} else {
+  fail("stripping comments also stopped the rule catching a real class");
+}
+if ([...code(IN_A_COMMENT).matchAll(PHYSICAL)].length === 0) {
+  ok("and one merely named in a comment is not");
+} else {
+  fail("a comment mentioning a class is still reported");
+}
+if (code(A_URL).includes("https://example.com")) {
+  ok("a URL is not mistaken for a comment");
+} else {
+  fail("comment stripping ate a URL");
 }
 
 if (offenders.length) {
