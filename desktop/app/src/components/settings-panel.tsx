@@ -282,6 +282,9 @@ export default function SettingsPanel({
           rows={[
             ["Ctrl+Z / Ctrl+Shift+Z", "settingsShortcutUndoRedo"],
             ["R / Shift+R", "settingsShortcutRotate"],
+            ["Ctrl+D", "settingsShortcutDuplicate"],
+            ["Ctrl+Home / Ctrl+End", "settingsShortcutEdges"],
+            ["Shift+F10", "settingsShortcutMenu"],
             ["Delete", "settingsShortcutDelete"],
             ["Ctrl+A", "settingsShortcutSelectAll"],
             ["Ctrl+S", "settingsShortcutSave"],

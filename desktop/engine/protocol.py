@@ -51,8 +51,30 @@ ERROR_CODES = (
     # The write side of UNREADABLE: the document opened fine and the output could not be
     # written. A full disk lands here, and so does a folder somebody deleted mid-batch.
     "UNWRITABLE",
+    # An output that names one of the documents a plan was built from. Refused whatever
+    # the caller says, because "the source files do not change" is a promise the window
+    # makes in so many words, and a promise is not something an argument can waive.
+    "SOURCE_OVERWRITE",
+    # A compression whose result was no smaller than what it started from. The result is
+    # deleted rather than delivered: a "smaller" file that is bigger is not an answer.
+    "NOT_SMALLER",
     "INTERNAL",
 )
+
+
+class Refusal(Exception):
+    """An operation declining with a code of its own, rather than a generic one.
+
+    `BAD_REQUEST` covers "your arguments make no sense". These are different: the request
+    was well formed and the operation understood it, and the answer is no — with a reason
+    the window has to word for the reader. The message is for the log.
+    """
+
+    def __init__(self, code: str, message: str) -> None:
+        assert code in ERROR_CODES, code
+        super().__init__(message)
+        self.code = code
+        self.message = message
 
 
 class Wire:

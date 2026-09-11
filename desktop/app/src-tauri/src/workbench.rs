@@ -27,25 +27,61 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 
-/// Every path the engine is allowed to write to, and nothing else.
+/// Every path the engine is allowed to write to, and nothing else — and every path it
+/// must never write to, whatever else is true.
 ///
 /// Files and directories both: a save dialog blesses one file, a folder picker blesses
 /// everything under one directory. It lives only as long as the app runs, because it is
 /// not a permission somebody granted — it is a record of what they just chose.
+///
+/// **A document the app has opened is protected, and protection beats permission.** The
+/// window's footer says "the source files do not change", and until this existed that
+/// was true only because every operation happened to check for itself — and one did
+/// not: compress checked its output against the staged copy it was handed, so the save
+/// dialog could name the original and the engine would have written over it. Every
+/// path that reaches the window as a document comes through this side first, so this is
+/// the one place that can keep the promise for all of them, including against an
+/// `invoke` that never went near the window's own checks.
 #[derive(Default)]
-pub struct Writable(Mutex<HashSet<PathBuf>>);
+pub struct Writable {
+    allowed: Mutex<HashSet<PathBuf>>,
+    protected: Mutex<HashSet<PathBuf>>,
+}
 
 impl Writable {
     pub fn allow(&self, path: &Path) {
-        if let Ok(mut set) = self.0.lock() {
+        if let Ok(mut set) = self.allowed.lock() {
             set.insert(settle(path));
         }
     }
 
+    /// Remember a document the window has been shown, so nothing may write over it.
+    pub fn protect(&self, path: &Path) {
+        if let Ok(mut set) = self.protected.lock() {
+            set.insert(settle(path));
+        }
+    }
+
+    /// Whether this is a document somebody opened. Checked before `permits`, and with
+    /// its own answer, because "you chose your original as the output" deserves a
+    /// different sentence from "you did not choose anywhere".
+    pub fn protects(&self, path: &Path) -> bool {
+        let Ok(set) = self.protected.lock() else { return true };
+        set.contains(&settle(path))
+    }
+
     /// Whether the engine may write here: the exact path somebody chose, or anything
-    /// inside a directory they chose.
+    /// inside a directory they chose — and never a document they opened, even if they
+    /// chose it.
     pub fn permits(&self, path: &Path) -> bool {
-        let Ok(set) = self.0.lock() else { return false };
+        !self.protects(path) && self.chosen(path)
+    }
+
+    /// Whether somebody chose this place, protection aside. Only `engine_call` wants
+    /// the two questions apart, for the one operation allowed to answer the second one
+    /// differently: saving over a source after being asked and saying yes.
+    pub fn chosen(&self, path: &Path) -> bool {
+        let Ok(set) = self.allowed.lock() else { return false };
         let path = settle(path);
         set.iter()
             .any(|allowed| path == *allowed || path.starts_with(allowed))
@@ -178,38 +214,6 @@ pub fn read_image(app: AppHandle, path: String) -> Result<String, String> {
     let bytes = std::fs::read(&file).map_err(|e| format!("could not read: {e}"))?;
     Ok(format!("data:{mime};base64,{}", base64(&bytes)))
 }
-
-/// Throw away one file the workbench itself put in the scratch directory.
-///
-/// Compressing an edited document means building it first: the plan is applied to a
-/// temporary PDF, that is compressed to where the person chose, and the temporary one has
-/// no reason to outlive the operation. `clear_scratch` would eventually get it — at the
-/// *next* launch — and leaving a rebuilt copy of somebody's document on disk until then is
-/// the kind of small disclosure this module already refuses elsewhere.
-///
-/// **Scoped exactly like [`read_image`], and for a stronger reason: this one deletes.**
-/// The path is resolved before it is compared, so `scratch/../../something.pdf` is
-/// measured by where it really points. Files only — a command that removes directories
-/// would take the whole scratch tree with one argument.
-#[tauri::command]
-pub fn discard_scratch(app: AppHandle, path: String) -> Result<(), String> {
-    let root = scratch(&app)?
-        .canonicalize()
-        .map_err(|e| format!("no scratch directory: {e}"))?;
-    let file = PathBuf::from(&path)
-        .canonicalize()
-        .map_err(|e| format!("no such file: {e}"))?;
-
-    if !file.starts_with(&root) {
-        return Err("refused: outside the workbench directory".into());
-    }
-    if !file.is_file() {
-        return Err("refused: not a file".into());
-    }
-
-    std::fs::remove_file(&file).map_err(|e| format!("could not remove it: {e}"))
-}
-
 fn scratch(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -291,6 +295,30 @@ mod tests {
         writable.allow(&dir.join("chosen.pdf"));
         assert!(writable.permits(&dir.join("chosen.pdf")));
         assert!(!writable.permits(&dir.join("not-chosen.pdf")));
+    }
+
+    #[test]
+    fn an_opened_document_is_never_writable_even_when_it_is_chosen() {
+        // The sequence the save dialog makes possible: the document is open, and then
+        // somebody picks that very file as the place to write the smaller copy.
+        let writable = Writable::default();
+        let root = std::env::temp_dir().join("pdf2code-protected-test");
+        std::fs::create_dir_all(&root).unwrap();
+        let original = root.join("Original.pdf");
+        std::fs::write(&original, b"%PDF-1.4\n").unwrap();
+
+        writable.protect(&original);
+        writable.allow(&original);
+        assert!(writable.protects(&original));
+        assert!(!writable.permits(&original), "chosen, but it is a source");
+
+        // Spelled differently, it is still the same file: a folder blessing that covers it,
+        // and a path that walks out and back in.
+        writable.allow(&root);
+        assert!(writable.permits(&root.join("copy.pdf")), "the folder itself is fine");
+        assert!(!writable.permits(&root.join("sub").join("..").join("Original.pdf")));
+
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]

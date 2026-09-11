@@ -5,7 +5,7 @@
   "identifier": "com.pdf2code.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1447",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
@@ -23,7 +23,7 @@
     ],
     "security": {
       "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost; font-src 'self' data:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'",
-      "devCsp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost ws://localhost:1420 http://localhost:1420; font-src 'self' data:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
+      "devCsp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost ws://localhost:1447 http://localhost:1447; font-src 'self' data:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
     }
   },
   "bundle": {

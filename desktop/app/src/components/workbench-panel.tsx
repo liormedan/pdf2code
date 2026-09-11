@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
+  ArrowDownToLine,
+  ArrowUpToLine,
   ChevronDown,
   ChevronUp,
   Copy,
+  CopyPlus,
+  Eye,
   FileDown,
+  FileOutput,
   FilePlus2,
   FileText,
   Images,
@@ -17,20 +22,31 @@ import {
   Search,
   Trash2,
   Undo2,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useTranslations } from "@/i18n/provider";
 import { pickDocuments, type EngineStatus } from "@/lib/engine";
 import { isTypingTarget } from "@/lib/utils";
 import EngineDown from "@/components/engine-down";
+import PageView from "@/components/page-view";
+import { wordEngineError } from "@/lib/engine-words";
+import { keepViewing } from "@/lib/viewer";
 import {
   applyPlan,
-  compressDocument,
+  compressPlan,
   emptyPlan,
-  discardScratch,
   exportPlanImages,
   leafOf,
   pageText,
@@ -58,7 +74,17 @@ import {
  * source files on disk are untouched until Save opens a native dialog. That is also the
  * only way a path becomes writable at all — see workbench.rs.
  */
-export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
+export default function WorkbenchPanel({
+  status,
+  shown,
+}: {
+  status: EngineStatus;
+  /**
+   * Whether the panel is the one on screen. It stays mounted behind the other modes so
+   * a mode switch loses nothing, and while hidden it must not answer the keyboard.
+   */
+  shown: boolean;
+}) {
   const t = useTranslations("desktop");
 
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -71,6 +97,23 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   const [note, setNote] = useState<string | null>(null);
   /** A save that would land on one of the sources, waiting for a yes. */
   const [overwriteAsk, setOverwriteAsk] = useState<string | null>(null);
+
+  /**
+   * Say what went wrong, in the reader's language, and keep the rest for the log.
+   *
+   * `String(failure)` used to go straight to the screen: PDFium's English, an engine
+   * code, once a path. The code picks the sentence; the raw text goes to the console,
+   * which the engine log already mirrors. A cancel says nothing at all.
+   */
+  const report = useCallback(
+    (failure: unknown) => {
+      const raw = String(failure);
+      console.error(raw);
+      const worded = wordEngineError(raw);
+      if (worded) setError(t(worded.key, worded.params));
+    },
+    [t],
+  );
 
   // page image, keyed `source#page`. Rendered by the engine to a scratch directory and
   // read back one at a time, so a three-hundred-page document does not arrive at once.
@@ -90,6 +133,22 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
    * the first. Derived, every one of those corrects itself for free.
    */
   const [texts, setTexts] = useState<Map<string, string>>(new Map());
+
+  /**
+   * Which entry of the plan the page view is showing.
+   *
+   * A `uid` and never an index. The plan moves under the viewer constantly — reorder,
+   * delete, keep-only, undo — and an index carried across any of those points at a
+   * different page afterwards. `keepViewing` is the whole rule, and it is tested in
+   * `viewer.test.ts` rather than by clicking, because "the viewer showed the wrong page"
+   * is the kind of fault people notice once and never trust the tool after.
+   */
+  const [viewed, setViewed] = useState<string | null>(null);
+  const lastPlan = useRef<Leaf[]>([]);
+  useEffect(() => {
+    setViewed((current) => keepViewing(lastPlan.current, plan.present, current));
+    lastPlan.current = plan.present;
+  }, [plan.present]);
 
   const running = busy !== null;
 
@@ -158,7 +217,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           dispatch({ type: "append", leaves });
         }
       } catch (failure) {
-        setError(String(failure));
+        report(failure);
       } finally {
         setBusy(null);
         setProgress(null);
@@ -239,6 +298,9 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
         return current.size === 1 && current.has(uid) ? new Set() : new Set([uid]);
       });
       lastClicked.current = uid;
+      // Clicking a page is how somebody says "this one", so it opens in the viewer too.
+      // Separate gestures for "select" and "look at" would be one gesture too many.
+      setViewed(uid);
     },
     [plan.present],
   );
@@ -246,6 +308,57 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   const selectAll = useCallback(
     () => setSelected(new Set(plan.present.map((leaf) => leaf.uid))),
     [plan.present],
+  );
+
+  // --- the right-click menu ---------------------------------------------------------
+  //
+  // One menu for the whole strip, not one per card: nested menus would both open on a
+  // right-click over a card. The card under the pointer is remembered on the way down
+  // (capture clears it, the card sets it) and the content is built from that.
+  //
+  // Nothing lives only in here. Every item is a button in the toolbar or a key the
+  // settings page lists, because a menu a mouse opens is not the only way somebody
+  // reaches a page — and because Shift+F10 opens this one from the keyboard anyway.
+  const [menuUid, setMenuUid] = useState<string | null>(null);
+
+  /** The pages a card's menu acts on: the selection when the card is in it, the card alone if not. */
+  const targets = useCallback(
+    (uid: string | null): Set<string> =>
+      uid && !selected.has(uid) ? new Set([uid]) : selected,
+    [selected],
+  );
+
+  /**
+   * The chosen pages as a new document, and the plan untouched.
+   *
+   * "Keep only these" followed by "save as" does the same in two steps and leaves the
+   * plan trimmed; this leaves it whole. The engine refuses a source as the target,
+   * exactly as it does for a save.
+   */
+  const extract = useCallback(
+    async (uids: Set<string>) => {
+      const leaves = plan.present.filter((leaf) => uids.has(leaf.uid));
+      if (leaves.length === 0) return;
+      const name = (docs[0]?.name ?? "document.pdf").replace(/\.pdf$/i, "");
+      const path = await pickSavePath(`${name}-pages.pdf`);
+      if (!path) return;
+      setBusy(t("workbenchExtracting"));
+      setError(null);
+      try {
+        const result = await applyPlan(leaves, path, false);
+        setNote(t("workbenchExtracted", { pages: result.pages, path: result.out }));
+      } catch (failure) {
+        const message = String(failure);
+        if (message.includes("overwrite") || message.includes("SOURCE_OVERWRITE")) {
+          setError(t("engineErrorSourceOverwrite"));
+        } else {
+          report(failure);
+        }
+      } finally {
+        setBusy(null);
+      }
+    },
+    [plan.present, docs, t, report],
   );
 
   // Keep the selection honest: a page that was deleted or undone away is not selected.
@@ -259,6 +372,23 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
 
   // --- dragging to reorder ------------------------------------------------------------
   const dragging = useRef<string | null>(null);
+
+  /**
+   * The strip keeps the page on screen in view.
+   *
+   * It marked the viewed page — a ring, `aria-current`, "shown now" in the name — and
+   * never moved to it, so after a jump to page twenty the marker sat somewhere below the
+   * fold. `nearest` rather than `center`: a page already visible does not move at all,
+   * and scrolling the run by hand does not make the strip lurch on every page boundary.
+   * No animation for anyone who asked for none.
+   */
+  const stripRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!viewed) return;
+    const card = stripRef.current?.querySelector<HTMLElement>(`[data-uid="${viewed}"]`);
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    card?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: still ? "auto" : "smooth" });
+  }, [viewed]);
   const [dropAt, setDropAt] = useState<number | null>(null);
 
   // --- saving ---------------------------------------------------------------------------
@@ -278,10 +408,15 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
         setNote(t("workbenchSaved", { pages: result.pages, path: result.out }));
       } catch (failure) {
         const message = String(failure);
-        // The engine's own refusal: the chosen file is one of the sources. It is a
-        // question rather than a failure, so it is asked rather than reported.
-        if (message.includes("overwrite")) setOverwriteAsk(path);
-        else setError(message);
+        // The refusal from either side of the boundary: the chosen file is one of the
+        // sources. It is a question rather than a failure, so it is asked rather than
+        // reported — and answered with `overwrite`, which is the one thing the gate lets
+        // through for a save.
+        if (message.includes("overwrite") || message.includes("SOURCE_OVERWRITE")) {
+          setOverwriteAsk(path);
+        } else {
+          report(failure);
+        }
       } finally {
         setBusy(null);
       }
@@ -323,7 +458,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       );
       setNote(t("workbenchExported", { count: result.images.length, path: dir }));
     } catch (failure) {
-      setError(String(failure));
+      report(failure);
     } finally {
       setBusy(null);
       setProgress(null);
@@ -338,11 +473,14 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
    * still in it — and the only sign was a saving figure that did not match. A workbench
    * whose output ignores the workbench is worse than one that refuses.
    *
-   * PDFium compresses a file rather than a plan, so the plan is built into one first. The
-   * temporary document lives in the scratch directory — already writable, because
-   * `workbench_dir` registered it — and is removed in `finally`, including when the
-   * compression failed. Left behind it would be a rebuilt copy of somebody's document
-   * waiting for the next launch to clear it.
+   * **And not staged here, which is what this did next.** The window built the plan into
+   * `staged.pdf` and handed the engine that file, so everything the engine could check
+   * was about the copy: it measured the result against the staged size and reported
+   * "0% saved" on a file it had more than doubled, and it refused only to write over the
+   * staged copy — the save dialog could name the original. The engine takes the plan now
+   * and does all of that against the sources, and the Rust gate refuses any output that
+   * is an opened document before the engine is asked. What is left here is to say what
+   * happened in the reader's language.
    */
   const compress = useCallback(async () => {
     const first = docs[0];
@@ -350,32 +488,27 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
     const path = await pickSavePath(`${first.name.replace(/\.pdf$/i, "")}-smaller.pdf`);
     if (!path) return;
 
+    // Asked here as well, so the answer is immediate — but not only here. The rule is
+    // kept by the Rust gate and the engine, which cannot be skipped by a click.
+    if (docs.some((doc) => samePath(doc.path, path))) {
+      setError(t("engineErrorSourceOverwrite"));
+      return;
+    }
+
     setBusy(t("workbenchCompressing"));
     setError(null);
-    let staged: string | null = null;
     try {
-      const dir = await workbenchDir(`c-${Date.now().toString(36)}`);
-      const separator = dir.includes("\\") ? "\\" : "/";
-      staged = `${dir}${separator}staged.pdf`;
-      await applyPlan(plan.present, staged);
-
-      const result = await compressDocument(staged, path);
-      // What it actually saved, including when that is nothing. A button that promises
-      // compression and reports the same number is worse than no button.
+      const scratch = await workbenchDir(`c-${Date.now().toString(36)}`);
+      const result = await compressPlan(plan.present, path, scratch);
       setNote(
-        result.saved > 0
-          ? t("workbenchCompressed", {
-              saved: Math.round(result.saved / 1024),
-              percent: Math.round((result.saved / Math.max(1, result.before)) * 100),
-            })
-          : t("workbenchCompressedNothing"),
+        t("workbenchCompressed", {
+          saved: Math.round(result.saved / 1024),
+          percent: Math.round((result.saved / Math.max(1, result.before)) * 100),
+        }),
       );
     } catch (failure) {
-      setError(String(failure));
+      report(failure);
     } finally {
-      // Failing to clear the staged copy is not worth a second error over the first one,
-      // and `clear_scratch` gets it at the next launch either way.
-      if (staged) await discardScratch(staged).catch(() => undefined);
       setBusy(null);
     }
   }, [docs, plan.present, t]);
@@ -412,7 +545,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       setTexts(found);
       setRan(needle);
     } catch (failure) {
-      setError(String(failure));
+      report(failure);
     } finally {
       setBusy(null);
     }
@@ -448,7 +581,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   // allow a hook to appear only on some renders.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (running || isTypingTarget(event.target)) return;
+      if (!shown || running || isTypingTarget(event.target)) return;
       const meta = event.ctrlKey || event.metaKey;
 
       if (meta && event.code === "KeyZ" && !event.shiftKey) {
@@ -465,17 +598,29 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       } else if (meta && event.code === "KeyS" && !nothing) {
         event.preventDefault();
         void saveAs();
+      } else if (meta && event.code === "KeyO" && !event.shiftKey) {
+        // The same key the converter uses to add documents, doing the workbench's version
+        // of it: open when nothing is open, add when something is. The shell leaves this
+        // key alone while the workbench is showing.
+        event.preventDefault();
+        void load(nothing);
       } else if (!meta && some && (event.code === "Delete" || event.code === "Backspace")) {
         event.preventDefault();
         dispatch({ type: "remove", uids: selected });
       } else if (!meta && some && event.code === "KeyR") {
         event.preventDefault();
         dispatch({ type: "rotate", uids: selected, turn: event.shiftKey ? -90 : 90 });
+      } else if (meta && some && event.code === "KeyD") {
+        event.preventDefault();
+        dispatch({ type: "duplicate", uids: selected });
+      } else if (meta && some && (event.code === "Home" || event.code === "End")) {
+        event.preventDefault();
+        dispatch({ type: "edge", uids: selected, edge: event.code === "Home" ? "start" : "end" });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [running, nothing, some, selected, plan.past.length, plan.future.length, saveAs, selectAll]);
+  }, [shown, running, nothing, some, selected, plan.past.length, plan.future.length, saveAs, selectAll, load]);
 
   if (status.state !== "up") {
     return (
@@ -489,7 +634,12 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* --- what you can do to the pages ------------------------------------------- */}
+      {/* --- what you can do to the document ------------------------------------------
+          Three groups: what comes in, undo, what goes out. Nothing here needs a selection.
+          The first version put every action in this one row — thirteen buttons, five of
+          them grey most of the time because nothing was selected, wrapping to two lines
+          on a full-width window. The ones that act on a selection now appear beside it,
+          in the bar below, and only while there is one. */}
       <div className="flex flex-wrap items-center gap-1.5 border-b border-divider px-4 py-2">
         <Button size="sm" variant="outline" onClick={() => void load(true)} disabled={running}>
           <FileText className="size-4" />
@@ -508,33 +658,6 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
         <Divider />
 
         <Tool
-          label={t("workbenchRotateLeft")}
-          icon={RotateCcw}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "rotate", uids: selected, turn: -90 })}
-        />
-        <Tool
-          label={t("workbenchRotateRight")}
-          icon={RotateCw}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "rotate", uids: selected, turn: 90 })}
-        />
-        <Tool
-          label={t("workbenchDelete")}
-          icon={Trash2}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "remove", uids: selected })}
-        />
-        <Tool
-          label={t("workbenchKeep")}
-          icon={Scissors}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "keep", uids: selected })}
-        />
-
-        <Divider />
-
-        <Tool
           label={t("workbenchUndo")}
           icon={Undo2}
           disabled={running || plan.past.length === 0}
@@ -547,9 +670,13 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           onClick={() => dispatch({ type: "redo" })}
         />
 
-        <Divider />
-
-        <Button size="sm" onClick={() => void saveAs()} disabled={running || nothing}>
+        {/* At the far end, so the eye reads the row as "in … out". */}
+        <Button
+          size="sm"
+          className="ms-auto"
+          onClick={() => void saveAs()}
+          disabled={running || nothing}
+        >
           <Save className="size-4" />
           {t("workbenchSave")}
         </Button>
@@ -657,11 +784,82 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           ) : null}
           <span className="tabular text-[11px] text-muted-foreground">
             {t("workbenchCount", { pages: plan.present.length, docs: docs.length })}
-            {some ? ` · ${t("workbenchSelected", { count: selected.size })}` : ""}
           </span>
           <Button size="sm" variant="ghost" onClick={selectAll} disabled={running}>
             <Copy className="size-3.5" />
             {t("workbenchSelectAll")}
+          </Button>
+        </div>
+      ) : null}
+
+      {/* --- what you can do to the selected pages ----------------------------------------
+          Only while something is selected, and it opens with how many: the actions sit
+          next to the thing they act on, and a button that cannot do anything is not on
+          screen to be wondered about. It pushes the pages down by one row when it appears,
+          which is what every status row in this panel already does. Everything in it is
+          also in the right-click menu and on a key. */}
+      {some ? (
+        <div
+          role="toolbar"
+          aria-label={t("workbenchSelectionBar")}
+          className="flex flex-wrap items-center gap-1.5 border-b border-primary/30 bg-accent/40 px-4 py-1.5"
+        >
+          <span
+            role="status"
+            aria-live="polite"
+            className="tabular text-xs font-medium"
+          >
+            {t("workbenchSelected", { count: selected.size })}
+          </span>
+
+          <Divider />
+
+          <Tool
+            label={t("workbenchRotateLeft")}
+            icon={RotateCcw}
+            disabled={running}
+            onClick={() => dispatch({ type: "rotate", uids: selected, turn: -90 })}
+          />
+          <Tool
+            label={t("workbenchRotateRight")}
+            icon={RotateCw}
+            disabled={running}
+            onClick={() => dispatch({ type: "rotate", uids: selected, turn: 90 })}
+          />
+          <Tool
+            label={t("workbenchDuplicate")}
+            icon={CopyPlus}
+            disabled={running}
+            onClick={() => dispatch({ type: "duplicate", uids: selected })}
+          />
+          <Tool
+            label={t("workbenchKeep")}
+            icon={Scissors}
+            disabled={running}
+            onClick={() => dispatch({ type: "keep", uids: selected })}
+          />
+          <Tool
+            label={t("workbenchExtract")}
+            icon={FileOutput}
+            disabled={running}
+            onClick={() => void extract(selected)}
+          />
+          <Tool
+            label={t("workbenchDelete")}
+            icon={Trash2}
+            disabled={running}
+            onClick={() => dispatch({ type: "remove", uids: selected })}
+          />
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ms-auto"
+            onClick={() => setSelected(new Set())}
+            disabled={running}
+          >
+            <X className="size-3.5" />
+            {t("workbenchClearSelection")}
           </Button>
         </div>
       ) : null}
@@ -713,11 +911,27 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           <p className="max-w-md text-xs text-muted-foreground/80">{t("workbenchEmptyHint")}</p>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto p-4">
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+        // Two shapes. Wide: the strip is a column beside the page. Narrow: it is a short row
+        // above it, and the page gets the height — the first version split the height
+        // between them, and on a 720×800 window the page was sixty-five pixels tall.
+        <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-3 p-3 lg:grid-cols-[11rem_1fr] lg:grid-rows-none">
+          {/* The strip. One column now rather than a grid filling the window: a grid is
+              good for sorting and bad for reading, and reading is the thing the workbench
+              could not do at all. Dragging is unchanged — it was always index-based, and a
+              single column makes the drop position less ambiguous rather than more. */}
+          <ContextMenu>
+          <ContextMenuTrigger asChild>
+          <div
+            ref={stripRef}
+            className="max-h-32 min-h-0 overflow-auto lg:max-h-none"
+            onContextMenuCapture={() => setMenuUid(null)}
+          >
+          <ul className="flex flex-row gap-2 lg:flex-col">
             {plan.present.map((leaf, index) => (
               <li
                 key={leaf.uid}
+                data-uid={leaf.uid}
+                onContextMenu={() => setMenuUid(leaf.uid)}
                 draggable={!running}
                 onDragStart={() => {
                   dragging.current = leaf.uid;
@@ -736,13 +950,19 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                   dragging.current = null;
                   setDropAt(null);
                 }}
-                className={`rounded-lg border p-1.5 transition-colors ${
+                // Three states a card can be in, and they answer different questions: is
+                // it selected (an operation will affect it), does it match a search, and is
+                // it the one on screen. The last gets a ring rather than a border colour,
+                // so a page can be both viewed and selected without one hiding the other.
+                className={`w-28 shrink-0 rounded-lg border p-1.5 transition-colors lg:w-auto lg:shrink ${
                   selected.has(leaf.uid)
                     ? "border-primary bg-accent/50"
                     : matches?.has(leaf.uid)
                       ? "border-warning"
                       : "border-divider"
-                } ${dropAt === index ? "ring-2 ring-primary/50" : ""}`}
+                } ${leaf.uid === viewed ? "ring-2 ring-primary" : ""} ${
+                  dropAt === index ? "ring-2 ring-primary/50" : ""
+                }`}
               >
                 {/* The name is on the button and not below it. Everything inside is a
                     picture — an `<img alt="">` or a spinner — so without this the button
@@ -756,12 +976,14 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                   type="button"
                   onClick={(event) => click(leaf.uid, event)}
                   aria-pressed={selected.has(leaf.uid)}
+                  aria-current={leaf.uid === viewed ? "true" : undefined}
                   // Composed rather than one string with empty slots: a single message
                   // with placeholders would read "page 3 of 35, , 0°" in the common case.
                   aria-label={[
                     t("workbenchPageCard", { index: index + 1, total: plan.present.length }),
                     docs.length > 1 ? short(leaf.source) : null,
                     leaf.rotate ? t("workbenchPageTurned", { degrees: leaf.rotate }) : null,
+                    leaf.uid === viewed ? t("workbenchPageShown") : null,
                   ]
                     .filter(Boolean)
                     .join(", ")}
@@ -769,13 +991,13 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                 >
                   {/* Square on purpose: a page turned a quarter turn swaps its width
                       and height, and in a square box neither can overflow. */}
-                  <span className="flex h-36 w-full items-center justify-center overflow-hidden rounded bg-muted/40">
+                  <span className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-muted/40 lg:h-24">
                     {thumbs.get(pageKey(leaf)) ? (
                       <img
                         src={thumbs.get(pageKey(leaf))}
                         alt=""
                         style={{ transform: `rotate(${leaf.rotate}deg)` }}
-                        className="max-h-32 max-w-32 shadow-sm transition-transform"
+                        className="max-h-14 max-w-14 shadow-sm transition-transform lg:max-h-20 lg:max-w-20"
                       />
                     ) : (
                       <Loader2
@@ -832,12 +1054,150 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
               dragging.current = null;
               setDropAt(null);
             }}
-            className={`mt-3 rounded-lg border border-dashed px-4 py-3 text-center text-[11px] text-muted-foreground ${
+            className={`mt-2 hidden rounded-lg border border-dashed px-2 py-2 text-center text-[10px] text-muted-foreground lg:block ${
               dropAt === plan.present.length ? "border-primary" : "border-divider"
             }`}
           >
             {t("workbenchDropEnd")}
           </div>
+          </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            {menuUid ? (
+              <>
+                {menuUid !== viewed ? (
+                  <ContextMenuItem onSelect={() => setViewed(menuUid)}>
+                    <Eye />
+                    {t("menuView")}
+                  </ContextMenuItem>
+                ) : null}
+                <ContextMenuItem
+                  onSelect={() =>
+                    setSelected((current) => {
+                      const next = new Set(current);
+                      if (next.has(menuUid)) next.delete(menuUid);
+                      else next.add(menuUid);
+                      return next;
+                    })
+                  }
+                >
+                  {selected.has(menuUid) ? t("menuDeselect") : t("menuSelect")}
+                </ContextMenuItem>
+                <ContextMenuItem onSelect={selectAll}>
+                  {t("workbenchSelectAll")}
+                  <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "rotate", uids: targets(menuUid), turn: -90 })}
+                >
+                  <RotateCcw />
+                  {t("workbenchRotateLeft")}
+                  <ContextMenuShortcut>Shift+R</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "rotate", uids: targets(menuUid), turn: 90 })}
+                >
+                  <RotateCw />
+                  {t("workbenchRotateRight")}
+                  <ContextMenuShortcut>R</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "edge", uids: targets(menuUid), edge: "start" })}
+                >
+                  <ArrowUpToLine />
+                  {t("workbenchMoveFirst")}
+                  <ContextMenuShortcut>Ctrl+Home</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "edge", uids: targets(menuUid), edge: "end" })}
+                >
+                  <ArrowDownToLine />
+                  {t("workbenchMoveLast")}
+                  <ContextMenuShortcut>Ctrl+End</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "duplicate", uids: targets(menuUid) })}
+                >
+                  <CopyPlus />
+                  {t("workbenchDuplicate")}
+                  <ContextMenuShortcut>Ctrl+D</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem disabled={running} onSelect={() => void extract(targets(menuUid))}>
+                  <FileOutput />
+                  {t("workbenchExtract")}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "keep", uids: targets(menuUid) })}
+                >
+                  <Scissors />
+                  {t("workbenchKeep")}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  variant="destructive"
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "remove", uids: targets(menuUid) })}
+                >
+                  <Trash2 />
+                  {t("workbenchDelete")}
+                  <ContextMenuShortcut>Delete</ContextMenuShortcut>
+                </ContextMenuItem>
+              </>
+            ) : (
+              <>
+                <ContextMenuItem disabled={running} onSelect={() => void load(true)}>
+                  <FileText />
+                  {t("workbenchOpen")}
+                  <ContextMenuShortcut>Ctrl+O</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem disabled={running || nothing} onSelect={() => void load(false)}>
+                  <FilePlus2 />
+                  {t("workbenchAdd")}
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem disabled={nothing} onSelect={selectAll}>
+                  {t("workbenchSelectAll")}
+                  <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running || plan.past.length === 0}
+                  onSelect={() => dispatch({ type: "undo" })}
+                >
+                  <Undo2 />
+                  {t("workbenchUndo")}
+                  <ContextMenuShortcut>Ctrl+Z</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running || plan.future.length === 0}
+                  onSelect={() => dispatch({ type: "redo" })}
+                >
+                  <Redo2 />
+                  {t("workbenchRedo")}
+                  <ContextMenuShortcut>Ctrl+Shift+Z</ContextMenuShortcut>
+                </ContextMenuItem>
+              </>
+            )}
+          </ContextMenuContent>
+          </ContextMenu>
+
+          {/* The page, at a size somebody can read. The point of the sprint. */}
+          <PageView
+            plan={plan.present}
+            docs={docs}
+            viewed={viewed}
+            onView={setViewed}
+            onRotate={(uid, turn) => dispatch({ type: "rotate", uids: new Set([uid]), turn })}
+            running={running}
+            shown={shown}
+          />
         </div>
       )}
 
@@ -849,6 +1209,10 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   );
 }
 
+/**
+ * An icon button whose label is in the accessibility tree always and on screen only
+ * when there is room. The tooltip carries it in between.
+ */
 function Tool({
   label,
   icon: Icon,
@@ -863,7 +1227,7 @@ function Tool({
   return (
     <Button size="sm" variant="ghost" onClick={onClick} disabled={disabled} title={label}>
       <Icon className="size-4" />
-      <span className="sr-only sm:not-sr-only">{label}</span>
+      <span className="sr-only lg:not-sr-only">{label}</span>
     </Button>
   );
 }
@@ -907,6 +1271,17 @@ function merge(current: Map<string, string>, loaded: Map<string, string>): Map<s
 }
 
 /** Just the file name, for a card that has to say which document it came from. */
+/**
+ * Whether two spellings name one file, as far as a string can tell.
+ *
+ * Slashes either way and case-blind, which is what Windows means by "the same path".
+ * Good enough to answer at once; the Rust side does it properly, by resolving both.
+ */
+function samePath(a: string, b: string): boolean {
+  const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
+  return norm(a) === norm(b);
+}
+
 const short = (path: string) => path.split(/[\\/]/).pop()?.replace(/\.pdf$/i, "") ?? path;
 
 /**

@@ -19,7 +19,13 @@ export default defineConfig({
 
   // Tauri drives this server and shows its own error window, so failing loudly on a
   // taken port beats silently moving to another one the Rust side is not pointed at.
-  server: { port: 1420, strictPort: true },
+  //
+  // 1447 and not 1420: 1420 is every Tauri project's default, and another project on
+  // this machine sat on it — with `strictPort` that meant this one could not start, and
+  // with `cargo run` alone it meant the window loaded the other project's page. A port
+  // that is nobody's default collides with nobody. The Rust side names the same number
+  // in tauri.conf.json; the two must agree.
+  server: { port: 1447, strictPort: true },
 
   // Tauri decides the target, not browserslist: the WebView is Edge on Windows and
   // WebKit elsewhere, both of which are far ahead of the default baseline.

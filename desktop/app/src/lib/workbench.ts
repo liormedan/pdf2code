@@ -13,6 +13,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { engineCall, isDesktop, newJobId, onProgress, type Probe, type Progress } from "@/lib/engine";
+import { duplicated, movedToEdge } from "@/lib/plan-ops";
 
 /** One page in the plan. `uid` is ours: React keys and a selection have to survive a move. */
 export interface Leaf {
@@ -96,6 +97,33 @@ export const renderThumbnails = (
     (r) => r.thumbnails,
   );
 
+/**
+ * Render pages of one document into a directory, at one width, cancellably.
+ *
+ * **The `thumbnails` operation at a bigger number**, and deliberately not a second way to
+ * rasterise a page: a page view and a page strip that disagreed about what page four looks
+ * like would be two bugs wearing one face. The width is what separates them, and the
+ * caller keeps them in separate directories so the files cannot collide.
+ *
+ * Returns the job id **before** the work, because that is what a cancel names — turning
+ * three pages quickly has to be able to abandon the first two.
+ */
+export async function renderPages(
+  path: string,
+  out: string,
+  width: number,
+  pages: number[],
+): Promise<{ id: string; done: Promise<Thumb[]> }> {
+  const id = await newJobId();
+  const done = engineCall<{ thumbnails: Thumb[] }>(id, "thumbnails", {
+    path,
+    out,
+    width,
+    pages,
+  }).then((result) => result.thumbnails);
+  return { id, done };
+}
+
 /** Build a document from the plan. Throws when `out` is one of the sources. */
 export const applyPlan = (plan: Leaf[], out: string, overwrite = false) =>
   call<{ out: string; pages: number; bytes: number }>("edit", {
@@ -130,8 +158,23 @@ export const exportPlanImages = (
     track,
   );
 
-export const compressDocument = (path: string, out: string) =>
-  call<{ out: string; before: number; after: number; saved: number }>("compress", { path, out });
+/**
+ * Compress the plan into `out`, staging in `scratch`.
+ *
+ * The plan, for the same reason `applyPlan` and `exportPlanImages` take it — and because
+ * this used to take a staged file the window had built, so the engine compared sizes
+ * against the copy rather than the original and would have written the result over a
+ * source. The engine now builds, measures against the sources, refuses a source as
+ * output, deletes a result that is not smaller (`NOT_SMALLER`), and clears the staged
+ * copy on every path — all where a test can reach it. The Rust side gates `scratch`
+ * exactly like `out`.
+ */
+export const compressPlan = (plan: Leaf[], out: string, scratch: string) =>
+  call<{ out: string; before: number; after: number; saved: number }>("compress", {
+    plan: plan.map((leaf) => ({ from: leaf.source, page: leaf.page, rotate: leaf.rotate })),
+    out,
+    scratch,
+  });
 
 export const pageText = (path: string, pages: number[]) =>
   call<{ pages: PageText[] }>("text", { path, pages }).then((r) => r.pages);
@@ -169,17 +212,6 @@ export function readImage(path: string): Promise<string> {
   return invoke<string>("read_image", { path });
 }
 
-/**
- * Remove one file the workbench put in the scratch directory.
- *
- * For the document `compress` builds from the plan before compressing it. Refused for
- * anything outside that directory, and for anything that is not a file.
- */
-export function discardScratch(path: string): Promise<void> {
-  if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
-  return invoke<void>("discard_scratch", { path });
-}
-
 // ---------------------------------------------------------------------------
 // The plan, with undo. A reducer rather than a pile of setState calls, because undo of
 // six separate operations is one thing to get right here and six to get wrong there.
@@ -199,6 +231,10 @@ export type PlanAction =
   | { type: "keep"; uids: Set<string> }
   | { type: "move"; uid: string; to: number }
   | { type: "nudge"; uid: string; by: number }
+  /** Copies placed right after their originals. */
+  | { type: "duplicate"; uids: Set<string> }
+  /** The chosen pages to one end, in their own order. */
+  | { type: "edge"; uids: Set<string>; edge: "start" | "end" }
   | { type: "undo" }
   | { type: "redo" };
 
@@ -254,6 +290,21 @@ export function planReducer(state: PlanState, action: PlanAction): PlanState {
 
     case "move":
       return remember(state, moved(state.present, action.uid, action.to));
+
+    case "duplicate": {
+      if (action.uids.size === 0) return state;
+      return remember(
+        state,
+        duplicated(state.present, action.uids, (leaf) => leafOf(leaf.source, leaf.page, leaf.rotate)),
+      );
+    }
+
+    case "edge": {
+      const next = movedToEdge(state.present, action.uids, action.edge);
+      // A move that changed nothing is not a step somebody should have to undo.
+      if (next.every((leaf, index) => leaf === state.present[index])) return state;
+      return remember(state, next);
+    }
 
     case "nudge": {
       const from = state.present.findIndex((leaf) => leaf.uid === action.uid);

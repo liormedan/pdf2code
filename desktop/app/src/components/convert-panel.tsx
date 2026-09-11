@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FolderOpen, Loader2, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -78,6 +78,19 @@ export default function ConvertPanel({
   );
 
   const current = items.find((item) => item.state === "running") ?? null;
+
+  /**
+   * Where focus goes when a run starts.
+   *
+   * The reader clicks Run, Run becomes disabled, and Chromium leaves focus on it — and a
+   * focused element that has become disabled receives no key events. Escape, pressed in
+   * the most natural sequence there is, went nowhere. Cancel is the one thing left to
+   * do while a run is under way, so it takes the focus: Escape works, and so does Enter.
+   */
+  const cancelButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (running) cancelButton.current?.focus();
+  }, [running]);
   const waiting = items.filter((item) => item.state === "waiting").length;
   const lastDone = [...items].reverse().find((item) => item.state === "done") ?? null;
 
@@ -165,7 +178,7 @@ export default function ConvertPanel({
         </Button>
 
         {running ? (
-          <Button size="sm" variant="outline" onClick={onCancel}>
+          <Button ref={cancelButton} size="sm" variant="outline" onClick={onCancel}>
             <Square className="size-4" />
             {t("engineCancel")}
           </Button>
@@ -191,8 +204,17 @@ export default function ConvertPanel({
           <p>{t("convertOut")}</p>
           {/* Opening the folder needs a permission this app withheld until sprint 1, and
               it is still not the shell plugin: a Rust command that opens paths inside the
-              output directories, and refuses a file it could not have written. */}
+              output directories, and refuses a file it could not have written.
+
+              Keyed by the folder it lists, and so is the preview below. Both keep state
+              — a file listing, a page — and both cleared it in an effect, which runs after
+              the paint. So the first frame after a new result carried the new path with the
+              old sizes and the old page under it; on a 150-page document, with the main
+              thread busy taking the result in, that frame stayed up long enough to be
+              photographed. A new key mounts a new instance with nothing in it, and there
+              is no frame in which the two can disagree. */}
           <DeliveryPanel
+            key={lastDone.result.out}
             dir={lastDone.result.out}
             onRead={() =>
               lastDone.result &&
@@ -224,7 +246,9 @@ export default function ConvertPanel({
               ))}
             </div>
           ) : null}
-          {shown ? <OutputPreview dir={lastDone.result.out} file={shown} /> : null}
+          {shown ? (
+            <OutputPreview key={`${lastDone.result.out}#${shown}`} dir={lastDone.result.out} file={shown} />
+          ) : null}
         </div>
       ) : null}
     </div>

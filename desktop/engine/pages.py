@@ -31,6 +31,8 @@ from typing import Callable, Iterable
 
 import pypdfium2 as pdfium
 
+from protocol import Refusal
+
 #: Rotation is quarter turns; PDF stores nothing else, and pretending otherwise would
 #: mean re-rendering a page to tilt it five degrees.
 ROTATIONS = (0, 90, 180, 270)
@@ -247,3 +249,43 @@ def compress(source: str | Path, out: str | Path, *, overwrite: bool = False) ->
     before = source.stat().st_size
     after = out.stat().st_size
     return {"out": str(out), "before": before, "after": after, "saved": before - after}
+
+
+def compress_plan(plan: list[PagePlan], out: str | Path, scratch: str | Path) -> dict:
+    """Build the plan into one document, rewrite it, and keep the result only if it is
+    smaller than the documents the plan was made from.
+
+    **Measured against the sources, not the staged copy.** The first version compared
+    the rewritten file to `staged.pdf`, and on the Hebrew fixture reported "0 KB saved,
+    0%" while writing a 3.58 MB file from a 1.54 MB original: importing pages into a new
+    document copies shared resources per page, and the comparison never looked at the
+    file somebody actually had. A button called "shrink" that more than doubles a file
+    and calls it even is worse than no button. So: `before` is what they started with,
+    and a result that is not smaller is deleted and reported as `NOT_SMALLER`.
+
+    **An output that is a source is refused before anything is written.** `apply_plan`
+    already refuses this for its own output; this refuses it for the final one, because
+    the staged copy in between is what the old flow compared against — and the old flow
+    would happily have written the final file over the original.
+
+    The staged copy is removed on every path out of here, including the two refusals.
+    """
+    out = Path(out)
+    scratch = Path(scratch)
+    sources = {Path(entry.source).resolve() for entry in plan}
+    if out.resolve() in sources:
+        raise Refusal("SOURCE_OVERWRITE", "refusing to write over a source document")
+
+    before = sum(path.stat().st_size for path in sources)
+    scratch.mkdir(parents=True, exist_ok=True)
+    staged = scratch / "staged.pdf"
+    try:
+        apply_plan(plan, staged, overwrite=True)
+        result = compress(staged, out)
+        after = int(result["after"])
+        if after >= before:
+            out.unlink(missing_ok=True)
+            raise Refusal("NOT_SMALLER", f"{before} {after}")
+        return {"out": str(out), "before": before, "after": after, "saved": before - after}
+    finally:
+        staged.unlink(missing_ok=True)

@@ -192,6 +192,51 @@ def main() -> int:
     else:
         print(f"  skip  probe — fixture missing at {HEBREW_FIXTURE}")
 
+    # --- PDFium is not thread-safe, and every job is a thread ---------------------
+    #
+    # Found by opening a document in the workbench: the viewer asked for its pages at
+    # once, each job opened the same file on its own thread, and PDFium answered most of
+    # them with "Data format error" for a document that was perfectly well formed. The
+    # engine has to take turns with the library on the callers' behalf, because no
+    # caller can know what else is in flight.
+    if HEBREW_FIXTURE.exists():
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as scratch:
+            ids = [f"t{n}" for n in range(12)]
+            for n, job_id in enumerate(ids):
+                engine.send(
+                    {
+                        "id": job_id,
+                        "op": "thumbnails",
+                        "args": {
+                            "path": str(HEBREW_FIXTURE),
+                            "out": str(Path(scratch) / job_id),
+                            "width": 300,
+                            "pages": [n + 1],
+                        },
+                    }
+                )
+            outcomes: dict[str, dict] = {}
+            while len(outcomes) < len(ids):
+                message = engine.read()
+                if message.get("id") in ids and message.get("type") in ("result", "error"):
+                    outcomes[message["id"]] = message
+            failed = sorted(k for k, m in outcomes.items() if m.get("type") != "result")
+            check(
+                "twelve page renders asked for at once all succeed",
+                not failed,
+                f"failed: {', '.join(failed)}" if failed else "12/12",
+            )
+            drew_its_own_page = all(
+                m.get("type") == "result"
+                and [t.get("page") for t in m.get("thumbnails", [])] == [int(k[1:]) + 1]
+                for k, m in outcomes.items()
+            )
+            check("and each drew the page it was asked for", drew_its_own_page)
+    else:
+        print(f"  skip  concurrent renders — fixture missing at {HEBREW_FIXTURE}")
+
     # --- it does not outlive its parent ------------------------------------------
     engine.close()
     check("exits when stdin closes", engine.proc.returncode == 0, f"rc={engine.proc.returncode}")

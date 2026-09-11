@@ -19,12 +19,14 @@ from pathlib import Path
 
 import pypdfium2 as pdfium
 
-from pages import apply_plan, compress, export_images, parse_plan, thumbnails
+from pages import apply_plan, compress, compress_plan, export_images, parse_plan, thumbnails
+from protocol import Refusal
 
 HERE = Path(__file__).parent
 FIXTURES = HERE.parent.parent / "fixtures"
 HEBREW = FIXTURES / "08-hebrew-doc.pdf"
 TABLES = FIXTURES / "07-academic-tables.pdf"
+SCANNED = FIXTURES / "04-scanned-ccitt.pdf"
 
 FAILURES: list[str] = []
 
@@ -174,6 +176,36 @@ def check_images(work: Path) -> None:
     check("scaled to the width asked for", all(abs(t["width"] - 120) <= 1 for t in made),
           str([t["width"] for t in made]))
 
+    # The page view is this operation at a larger width, so the guarantee it leans on is
+    # that asking for page N draws page N. Nothing else in the viewer can recover from
+    # that being wrong: it would show a page confidently and show the wrong one.
+    one = thumbnails(HEBREW, work / "view", width=700, pages=[1])
+    seven = thumbnails(HEBREW, work / "view", width=700, pages=[7])
+    check("asking for one page renders exactly that page",
+          [t["page"] for t in one] == [1] and [t["page"] for t in seven] == [7])
+    check("and names the file after the page, not the request order",
+          Path(one[0]["path"]).name == "thumb-1.png"
+          and Path(seven[0]["path"]).name == "thumb-7.png",
+          Path(seven[0]["path"]).name)
+    check("so two different pages are two different files",
+          Path(one[0]["path"]).read_bytes() != Path(seven[0]["path"]).read_bytes())
+
+    # The viewer keeps a directory per width. Were they shared, the 170px strip and a
+    # 700px page would both be `thumb-1.png` and the last render would win — which looks
+    # like the viewer showing a blurry page, or the strip showing a huge one.
+    small = thumbnails(HEBREW, work / "strip", width=170, pages=[1])
+    check("the same page at two widths is two files in two directories",
+          Path(small[0]["path"]) != Path(one[0]["path"])
+          and abs(small[0]["width"] - 170) <= 1 and abs(one[0]["width"] - 700) <= 1)
+
+    # A scanned page has no text layer and renders perfectly well. The viewer says so
+    # rather than looking broken, and this is the half of that claim the engine owns.
+    if SCANNED.exists():
+        scan = thumbnails(SCANNED, work / "scan", width=700, pages=[1])
+        check("a scanned page renders like any other",
+              len(scan) == 1 and Path(scan[0]["path"]).exists()
+              and abs(scan[0]["width"] - 700) <= 1)
+
     # Progress per page. A three-hundred-page document takes long enough that a page view
     # with no sign of life reads as a hang, and this is the only thing that reports it.
     seen: list[tuple[int, int]] = []
@@ -217,6 +249,86 @@ def check_images(work: Path) -> None:
     out = compress(TABLES, work / "compressed.pdf")
     check("compression writes a readable document", pages_of(Path(out["out"])) == pages_of(TABLES))
     check("and reports what it actually saved", "saved" in out, str(out.get("saved")))
+
+
+def check_compress_plan(work: Path) -> None:
+    """Compression measured against the documents somebody has, not the staged copy.
+
+    Every case checks the same three things the window used to leave to luck: the
+    staged copy is gone, the output is exactly what was promised (a file, or no file),
+    and no source has changed by a byte.
+    """
+    print("\n  compressing a plan")
+    scratch = work / "scratch"
+
+    def staged_gone(name: str) -> None:
+        check(f"{name}: staged copy removed", not (scratch / "staged.pdf").exists())
+
+    # --- the case that was measured in the app: 1.54 MB in, 3.58 MB out ---------------
+    whole = parse_plan([{"from": str(HEBREW), "page": n} for n in range(1, 36)])
+    source_bytes = HEBREW.read_bytes()
+    out = work / "smaller.pdf"
+    try:
+        compress_plan(whole, out, scratch)
+        check("a rewrite that is not smaller is refused", False, "no refusal")
+    except Refusal as refusal:
+        check("a rewrite that is not smaller is refused", refusal.code == "NOT_SMALLER", refusal.code)
+        before, after = (int(n) for n in refusal.message.split())
+        check(
+            "and the numbers are the source and the result, not the staged copy",
+            before == HEBREW.stat().st_size and after > before,
+            f"{before} -> {after}",
+        )
+    check("the not-smaller output is deleted, not delivered", not out.exists())
+    staged_gone("not smaller")
+    check("the source is untouched", HEBREW.read_bytes() == source_bytes)
+
+    # --- a document that really does shrink: a small one padded with junk ---------------
+    padded = work / "padded.pdf"
+    padded.write_bytes(TABLES.read_bytes() + b"%" * 2_000_000)
+    plan = parse_plan([{"from": str(padded), "page": 1}])
+    result = compress_plan(plan, work / "shrunk.pdf", scratch)
+    check(
+        "a document with waste in it comes out smaller",
+        result["saved"] > 0 and Path(result["out"]).stat().st_size == result["after"],
+        f"{result['before']} -> {result['after']}",
+    )
+    check("before is the size of the source file", result["before"] == padded.stat().st_size)
+    check("the result opens", pages_of(Path(result["out"])) == 1)
+    staged_gone("success")
+
+    # --- an output that is a source, however it is spelled ----------------------------
+    copy = work / "Original.pdf"
+    copy.write_bytes(TABLES.read_bytes())
+    original = copy.read_bytes()
+    plan = parse_plan([{"from": str(copy), "page": 1}])
+    for spelled in (copy, work / "original.PDF", work / "sub" / ".." / "Original.pdf"):
+        try:
+            compress_plan(plan, spelled, scratch)
+            check(f"writing over a source is refused ({spelled.name})", False, "no refusal")
+        except Refusal as refusal:
+            check(
+                f"writing over a source is refused ({spelled.name})",
+                refusal.code == "SOURCE_OVERWRITE",
+                refusal.code,
+            )
+        except OSError as failure:
+            # `resolve()` may fail on a spelling that does not exist; that is still a "no".
+            check(f"writing over a source is refused ({spelled.name})", False, repr(failure))
+    check("and the source is byte-for-byte what it was", copy.read_bytes() == original)
+    staged_gone("source overwrite")
+
+    # --- a failure on the way out: the output cannot be written -------------------------
+    blocked = work / "not-a-folder.pdf"
+    blocked.write_bytes(b"x")
+    try:
+        compress_plan(plan, blocked / "inside-a-file.pdf", scratch)
+        check("an unwritable output fails", False, "no failure")
+    except Refusal as refusal:
+        check("an unwritable output fails", False, f"refused as {refusal.code} instead")
+    except OSError:
+        check("an unwritable output fails", True)
+    staged_gone("failure")
 
 
 def check_acceptance(work: Path) -> None:
@@ -269,6 +381,7 @@ def main() -> int:
         check_plan(work)
         check_refusals(work)
         check_images(work)
+        check_compress_plan(work)
         check_acceptance(work)
     finally:
         shutil.rmtree(work, ignore_errors=True)

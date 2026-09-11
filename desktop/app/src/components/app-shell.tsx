@@ -22,7 +22,7 @@ import {
 } from "@/lib/engine";
 import { useConversions, type ConversionSettings } from "@/lib/use-conversions";
 import { getSettings } from "@/lib/settings";
-import { isTypingTarget } from "@/lib/utils";
+import { cn, isTypingTarget } from "@/lib/utils";
 
 /**
  * The window.
@@ -124,9 +124,13 @@ export default function AppShell() {
       } else if (event.code === "Digit3") {
         event.preventDefault();
         go("settings");
-      } else if (event.code === "KeyO" && !event.shiftKey) {
+      } else if (event.code === "KeyO" && !event.shiftKey && mode !== "workbench") {
         // Shift+Ctrl+O is delivery-panel's "open the output folder" — this is the plain
         // one, "add a document", and the two must not collide.
+        //
+        // Not in the workbench, which handles it itself. It used to fire here whatever
+        // was showing, so Ctrl+O in the workbench opened a dialog and put the chosen file
+        // into the conversion queue — in another mode, with nothing on screen to say so.
         event.preventDefault();
         void pickDocuments().then((picked) => picked.length && queue.add(picked));
       } else if (event.code === "Enter") {
@@ -139,7 +143,17 @@ export default function AppShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [queue, status.state]);
+  }, [queue, status.state, mode]);
+
+  // The WebView's own right-click menu — back, reload, inspect — is a browser's menu in
+  // a window that is not a browser. Suppressed everywhere; the strip and the page view
+  // open menus of their own on the same event, and Radix has already handled those by
+  // the time this listener runs at the window.
+  useEffect(() => {
+    const quiet = (event: MouseEvent) => event.preventDefault();
+    window.addEventListener("contextmenu", quiet);
+    return () => window.removeEventListener("contextmenu", quiet);
+  }, []);
 
   // Escape cancels a running conversion. Its own listener: Escape has no modifier, and a
   // modifier-gated handler above should not also have to reason about the one shortcut
@@ -193,6 +207,29 @@ export default function AppShell() {
         </div>
       </header>
 
+      {/* The workbench is always mounted and merely hidden when another mode shows.
+          Rendering it conditionally meant Ctrl+1 and then Ctrl+2 unmounted it — the
+          document, the plan, an hour of reordering, gone without a word, under a footer
+          that promises nothing is lost. `hidden` keeps the state and takes the panel out
+          of layout, the tab order and the accessibility tree; the panel itself stops
+          listening to keys while it is hidden, so R in the converter turns no pages.
+
+          A flex column, unlike the settings main below it. The workbench scrolls inside
+          itself — the page run and the strip each have their own scroll box — and a
+          scroll box only scrolls if something above it has a definite height to hand
+          down. As a block this main handed down nothing, the region grew to fit its
+          content, and the viewer's "viewport" was measured at 33,974 pixels tall: every
+          page was on screen at once, so every page was rendered at once. */}
+      <main className="flex min-h-0 flex-1 flex-col p-5" hidden={showing !== "workbench"}>
+        <Region icon={Wrench} title={t("workbench")} fill>
+          {isDesktop() ? (
+            <WorkbenchPanel status={status} shown={showing === "workbench"} />
+          ) : (
+            <Empty line={t("engineNotInApp")} />
+          )}
+        </Region>
+      </main>
+
       {reading ? (
         <main className="flex min-h-0 flex-1 flex-col p-0">
           <PreviewScreen dir={reading.dir} files={reading.files} onBack={() => setReading(null)} />
@@ -203,13 +240,7 @@ export default function AppShell() {
             <SettingsPanel settings={settings} onSettings={setSettings} />
           </Region>
         </main>
-      ) : mode === "workbench" ? (
-        <main className="min-h-0 flex-1 p-5">
-          <Region icon={Wrench} title={t("workbench")}>
-            {isDesktop() ? <WorkbenchPanel status={status} /> : <Empty line={t("engineNotInApp")} />}
-          </Region>
-        </main>
-      ) : (
+      ) : mode === "workbench" ? null : (
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-5">
       {showIntro && isDesktop() ? <IntroCard onDone={() => setShowIntro(false)} /> : null}
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_1fr_1fr]">
@@ -311,15 +342,21 @@ function Region({
   icon: Icon,
   title,
   children,
+  fill = false,
 }: {
   icon: typeof FileText;
   title: string;
   children: React.ReactNode;
+  /** Take the whole of a flex-column parent, so children that scroll have a height to scroll in. */
+  fill?: boolean;
 }) {
   return (
     <section
       aria-label={title}
-      className="flex min-h-0 flex-col rounded-xl border border-divider bg-card"
+      className={cn(
+        "flex min-h-0 flex-col rounded-xl border border-divider bg-card",
+        fill && "flex-1",
+      )}
     >
       <h2 className="flex items-center gap-2 border-b border-divider px-4 py-2.5 text-sm font-semibold">
         <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
