@@ -41,6 +41,7 @@ export default function PageView({
   viewed,
   onView,
   running,
+  shown,
 }: {
   plan: Leaf[];
   docs: Doc[];
@@ -48,6 +49,8 @@ export default function PageView({
   onView: (uid: string | null) => void;
   /** A conversion or a save is using the engine; a render now would queue behind it. */
   running: boolean;
+  /** On screen. The workbench stays mounted behind other modes; hidden, this answers no keys. */
+  shown: boolean;
 }) {
   const t = useTranslations("desktop");
 
@@ -295,6 +298,7 @@ export default function PageView({
   // field is in this toolbar, and `4` there must be a digit and not a page turn.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (!shown) return;
       const target = event.target as HTMLElement | null;
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -308,7 +312,7 @@ export default function PageView({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go, onView, plan, count]);
+  }, [go, onView, plan, count, shown]);
 
   return (
     // `min-w-0` is load-bearing. A grid or flex child's automatic minimum is its content, so

@@ -197,6 +197,29 @@ export default function AppShell() {
         </div>
       </header>
 
+      {/* The workbench is always mounted and merely hidden when another mode shows.
+          Rendering it conditionally meant Ctrl+1 and then Ctrl+2 unmounted it — the
+          document, the plan, an hour of reordering, gone without a word, under a footer
+          that promises nothing is lost. `hidden` keeps the state and takes the panel out
+          of layout, the tab order and the accessibility tree; the panel itself stops
+          listening to keys while it is hidden, so R in the converter turns no pages.
+
+          A flex column, unlike the settings main below it. The workbench scrolls inside
+          itself — the page run and the strip each have their own scroll box — and a
+          scroll box only scrolls if something above it has a definite height to hand
+          down. As a block this main handed down nothing, the region grew to fit its
+          content, and the viewer's "viewport" was measured at 33,974 pixels tall: every
+          page was on screen at once, so every page was rendered at once. */}
+      <main className="flex min-h-0 flex-1 flex-col p-5" hidden={showing !== "workbench"}>
+        <Region icon={Wrench} title={t("workbench")} fill>
+          {isDesktop() ? (
+            <WorkbenchPanel status={status} shown={showing === "workbench"} />
+          ) : (
+            <Empty line={t("engineNotInApp")} />
+          )}
+        </Region>
+      </main>
+
       {reading ? (
         <main className="flex min-h-0 flex-1 flex-col p-0">
           <PreviewScreen dir={reading.dir} files={reading.files} onBack={() => setReading(null)} />
@@ -207,19 +230,7 @@ export default function AppShell() {
             <SettingsPanel settings={settings} onSettings={setSettings} />
           </Region>
         </main>
-      ) : mode === "workbench" ? (
-        // A flex column, unlike the settings main above it. The workbench scrolls inside
-        // itself — the page run and the strip each have their own scroll box — and a
-        // scroll box only scrolls if something above it has a definite height to hand
-        // down. As a block this main handed down nothing, the region grew to fit its
-        // content, and the viewer's "viewport" was measured at 33,974 pixels tall: every
-        // page was on screen at once, so every page was rendered at once.
-        <main className="flex min-h-0 flex-1 flex-col p-5">
-          <Region icon={Wrench} title={t("workbench")} fill>
-            {isDesktop() ? <WorkbenchPanel status={status} /> : <Empty line={t("engineNotInApp")} />}
-          </Region>
-        </main>
-      ) : (
+      ) : mode === "workbench" ? null : (
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-5">
       {showIntro && isDesktop() ? <IntroCard onDone={() => setShowIntro(false)} /> : null}
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_1fr_1fr]">

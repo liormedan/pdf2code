@@ -60,7 +60,17 @@ import {
  * source files on disk are untouched until Save opens a native dialog. That is also the
  * only way a path becomes writable at all — see workbench.rs.
  */
-export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
+export default function WorkbenchPanel({
+  status,
+  shown,
+}: {
+  status: EngineStatus;
+  /**
+   * Whether the panel is the one on screen. It stays mounted behind the other modes so
+   * a mode switch loses nothing, and while hidden it must not answer the keyboard.
+   */
+  shown: boolean;
+}) {
   const t = useTranslations("desktop");
 
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -506,7 +516,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   // allow a hook to appear only on some renders.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (running || isTypingTarget(event.target)) return;
+      if (!shown || running || isTypingTarget(event.target)) return;
       const meta = event.ctrlKey || event.metaKey;
 
       if (meta && event.code === "KeyZ" && !event.shiftKey) {
@@ -539,7 +549,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [running, nothing, some, selected, plan.past.length, plan.future.length, saveAs, selectAll, load]);
+  }, [shown, running, nothing, some, selected, plan.past.length, plan.future.length, saveAs, selectAll, load]);
 
   if (status.state !== "up") {
     return (
@@ -928,6 +938,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
             viewed={viewed}
             onView={setViewed}
             running={running}
+            shown={shown}
           />
         </div>
       )}
