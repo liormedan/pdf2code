@@ -467,6 +467,32 @@ pub fn engine_job_id(engine: State<'_, Engine>) -> String {
 /// could name any `out` would have a write primitive at an arbitrary path, through an
 /// engine that creates directories on the way. A path is writable only if a native
 /// dialog produced it or this side made it; see workbench::Writable.
+/// Whether a request may write where it says it will. Both places an operation writes
+/// are checked: its output, and the scratch it stages in.
+///
+/// Protection is checked first and answered with a code of its own, because writing over
+/// the original is a different mistake from writing somewhere unchosen — and the window
+/// has to word them differently. One operation may cross it: `edit` saving over a source,
+/// which the window only sends with `overwrite` after asking and being told yes.
+/// `compress` never may, whatever its arguments say, and the engine refuses it a second
+/// time on its own — so an `invoke` that adds `overwrite` to a compress gets past nothing.
+pub fn gate(writable: &crate::workbench::Writable, op: &str, args: &Value) -> Result<(), String> {
+    let may_overwrite =
+        op == "edit" && args.get("overwrite").and_then(Value::as_bool) == Some(true);
+    for key in ["out", "scratch"] {
+        if let Some(target) = args.get(key).and_then(Value::as_str) {
+            let target = std::path::Path::new(target);
+            if writable.protects(target) && !may_overwrite {
+                return Err("SOURCE_OVERWRITE: that is one of the documents".into());
+            }
+            if !writable.chosen(target) {
+                return Err("refused: nobody chose that place to write to".into());
+            }
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn engine_call(
     app: AppHandle,
@@ -476,11 +502,7 @@ pub async fn engine_call(
     op: String,
     args: Value,
 ) -> Result<Value, String> {
-    if let Some(out) = args.get("out").and_then(Value::as_str) {
-        if !writable.permits(std::path::Path::new(out)) {
-            return Err("refused: nobody chose that place to write to".into());
-        }
-    }
+    gate(&writable, &op, &args)?;
 
     let outcome = engine.call(id, op, args).await;
 
@@ -517,6 +539,50 @@ pub fn engine_restart(app: AppHandle, engine: State<'_, Engine>) -> Status {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_gate_keeps_the_footers_promise_for_every_operation() {
+        // The sequence the save dialog makes possible: a document is open, and the
+        // person picks that very file as where to write. The dialog blesses it; the gate
+        // must still say no — except for the one operation that asks first.
+        let writable = crate::workbench::Writable::default();
+        let root = std::env::temp_dir().join("pdf2code-gate-test");
+        std::fs::create_dir_all(&root).unwrap();
+        let source = root.join("source.pdf");
+        std::fs::write(&source, b"%PDF-1.4\n").unwrap();
+        let scratch = root.join("scratch");
+        std::fs::create_dir_all(&scratch).unwrap();
+        writable.protect(&source);
+        writable.allow(&source);
+        writable.allow(&scratch);
+        let s = source.to_string_lossy().into_owned();
+        let sc = scratch.to_string_lossy().into_owned();
+        let code = |r: Result<(), String>| r.err().map(|e| e.split(':').next().unwrap().to_string());
+
+        // Compress over a source: refused, and `overwrite` changes nothing.
+        let compress = json!({ "plan": [], "out": s, "scratch": sc });
+        assert_eq!(code(gate(&writable, "compress", &compress)), Some("SOURCE_OVERWRITE".into()));
+        let forced = json!({ "plan": [], "out": s, "scratch": sc, "overwrite": true });
+        assert_eq!(code(gate(&writable, "compress", &forced)), Some("SOURCE_OVERWRITE".into()));
+
+        // Saving over a source: refused until the window says it asked.
+        let save = json!({ "plan": [], "out": s });
+        assert_eq!(code(gate(&writable, "edit", &save)), Some("SOURCE_OVERWRITE".into()));
+        let confirmed = json!({ "plan": [], "out": s, "overwrite": true });
+        assert_eq!(gate(&writable, "edit", &confirmed), Ok(()));
+
+        // Nothing unchosen, as before.
+        let elsewhere = json!({ "out": root.join("unchosen.pdf").to_string_lossy() });
+        assert_eq!(code(gate(&writable, "edit", &elsewhere)), Some("refused".into()));
+
+        // Scratch is gated like out: staging inside a document is writing over it, even
+        // when the output itself is somewhere perfectly fine.
+        writable.allow(&root);
+        let staged_in_source = json!({ "plan": [], "out": root.join("x.pdf").to_string_lossy(), "scratch": s });
+        assert_eq!(code(gate(&writable, "compress", &staged_in_source)), Some("SOURCE_OVERWRITE".into()));
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
 
     #[test]
     fn silence_under_the_limit_is_just_a_slow_job() {

@@ -27,12 +27,12 @@ import { pickDocuments, type EngineStatus } from "@/lib/engine";
 import { isTypingTarget } from "@/lib/utils";
 import EngineDown from "@/components/engine-down";
 import PageView from "@/components/page-view";
+import { wordEngineError } from "@/lib/engine-words";
 import { keepViewing } from "@/lib/viewer";
 import {
   applyPlan,
-  compressDocument,
+  compressPlan,
   emptyPlan,
-  discardScratch,
   exportPlanImages,
   leafOf,
   pageText,
@@ -73,6 +73,23 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
   const [note, setNote] = useState<string | null>(null);
   /** A save that would land on one of the sources, waiting for a yes. */
   const [overwriteAsk, setOverwriteAsk] = useState<string | null>(null);
+
+  /**
+   * Say what went wrong, in the reader's language, and keep the rest for the log.
+   *
+   * `String(failure)` used to go straight to the screen: PDFium's English, an engine
+   * code, once a path. The code picks the sentence; the raw text goes to the console,
+   * which the engine log already mirrors. A cancel says nothing at all.
+   */
+  const report = useCallback(
+    (failure: unknown) => {
+      const raw = String(failure);
+      console.error(raw);
+      const worded = wordEngineError(raw);
+      if (worded) setError(t(worded.key, worded.params));
+    },
+    [t],
+  );
 
   // page image, keyed `source#page`. Rendered by the engine to a scratch directory and
   // read back one at a time, so a three-hundred-page document does not arrive at once.
@@ -176,7 +193,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           dispatch({ type: "append", leaves });
         }
       } catch (failure) {
-        setError(String(failure));
+        report(failure);
       } finally {
         setBusy(null);
         setProgress(null);
@@ -299,10 +316,15 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
         setNote(t("workbenchSaved", { pages: result.pages, path: result.out }));
       } catch (failure) {
         const message = String(failure);
-        // The engine's own refusal: the chosen file is one of the sources. It is a
-        // question rather than a failure, so it is asked rather than reported.
-        if (message.includes("overwrite")) setOverwriteAsk(path);
-        else setError(message);
+        // The refusal from either side of the boundary: the chosen file is one of the
+        // sources. It is a question rather than a failure, so it is asked rather than
+        // reported — and answered with `overwrite`, which is the one thing the gate lets
+        // through for a save.
+        if (message.includes("overwrite") || message.includes("SOURCE_OVERWRITE")) {
+          setOverwriteAsk(path);
+        } else {
+          report(failure);
+        }
       } finally {
         setBusy(null);
       }
@@ -344,7 +366,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       );
       setNote(t("workbenchExported", { count: result.images.length, path: dir }));
     } catch (failure) {
-      setError(String(failure));
+      report(failure);
     } finally {
       setBusy(null);
       setProgress(null);
@@ -359,11 +381,14 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
    * still in it — and the only sign was a saving figure that did not match. A workbench
    * whose output ignores the workbench is worse than one that refuses.
    *
-   * PDFium compresses a file rather than a plan, so the plan is built into one first. The
-   * temporary document lives in the scratch directory — already writable, because
-   * `workbench_dir` registered it — and is removed in `finally`, including when the
-   * compression failed. Left behind it would be a rebuilt copy of somebody's document
-   * waiting for the next launch to clear it.
+   * **And not staged here, which is what this did next.** The window built the plan into
+   * `staged.pdf` and handed the engine that file, so everything the engine could check
+   * was about the copy: it measured the result against the staged size and reported
+   * "0% saved" on a file it had more than doubled, and it refused only to write over the
+   * staged copy — the save dialog could name the original. The engine takes the plan now
+   * and does all of that against the sources, and the Rust gate refuses any output that
+   * is an opened document before the engine is asked. What is left here is to say what
+   * happened in the reader's language.
    */
   const compress = useCallback(async () => {
     const first = docs[0];
@@ -371,32 +396,27 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
     const path = await pickSavePath(`${first.name.replace(/\.pdf$/i, "")}-smaller.pdf`);
     if (!path) return;
 
+    // Asked here as well, so the answer is immediate — but not only here. The rule is
+    // kept by the Rust gate and the engine, which cannot be skipped by a click.
+    if (docs.some((doc) => samePath(doc.path, path))) {
+      setError(t("engineErrorSourceOverwrite"));
+      return;
+    }
+
     setBusy(t("workbenchCompressing"));
     setError(null);
-    let staged: string | null = null;
     try {
-      const dir = await workbenchDir(`c-${Date.now().toString(36)}`);
-      const separator = dir.includes("\\") ? "\\" : "/";
-      staged = `${dir}${separator}staged.pdf`;
-      await applyPlan(plan.present, staged);
-
-      const result = await compressDocument(staged, path);
-      // What it actually saved, including when that is nothing. A button that promises
-      // compression and reports the same number is worse than no button.
+      const scratch = await workbenchDir(`c-${Date.now().toString(36)}`);
+      const result = await compressPlan(plan.present, path, scratch);
       setNote(
-        result.saved > 0
-          ? t("workbenchCompressed", {
-              saved: Math.round(result.saved / 1024),
-              percent: Math.round((result.saved / Math.max(1, result.before)) * 100),
-            })
-          : t("workbenchCompressedNothing"),
+        t("workbenchCompressed", {
+          saved: Math.round(result.saved / 1024),
+          percent: Math.round((result.saved / Math.max(1, result.before)) * 100),
+        }),
       );
     } catch (failure) {
-      setError(String(failure));
+      report(failure);
     } finally {
-      // Failing to clear the staged copy is not worth a second error over the first one,
-      // and `clear_scratch` gets it at the next launch either way.
-      if (staged) await discardScratch(staged).catch(() => undefined);
       setBusy(null);
     }
   }, [docs, plan.present, t]);
@@ -433,7 +453,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       setTexts(found);
       setRan(needle);
     } catch (failure) {
-      setError(String(failure));
+      report(failure);
     } finally {
       setBusy(null);
     }
@@ -951,6 +971,17 @@ function merge(current: Map<string, string>, loaded: Map<string, string>): Map<s
 }
 
 /** Just the file name, for a card that has to say which document it came from. */
+/**
+ * Whether two spellings name one file, as far as a string can tell.
+ *
+ * Slashes either way and case-blind, which is what Windows means by "the same path".
+ * Good enough to answer at once; the Rust side does it properly, by resolving both.
+ */
+function samePath(a: string, b: string): boolean {
+  const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
+  return norm(a) === norm(b);
+}
+
 const short = (path: string) => path.split(/[\\/]/).pop()?.replace(/\.pdf$/i, "") ?? path;
 
 /**

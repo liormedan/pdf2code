@@ -21,7 +21,7 @@ from typing import Any
 
 from failures import classify
 from ops import OPS, Cancelled
-from protocol import Wire, claim_stdout, log
+from protocol import Refusal, Wire, claim_stdout, log
 
 # Taken before anything else can print. See protocol.claim_stdout.
 WIRE = Wire(claim_stdout())
@@ -96,6 +96,10 @@ def run_job(job: Job, op_name: str, args: dict[str, Any]) -> None:
             WIRE.result(job.id, payload)
     except Cancelled:
         WIRE.error(job.id, "CANCELLED", "cancelled")
+    except Refusal as exc:
+        # A "no" with its own code, so the window can say why in the reader's language.
+        log(f"job {job.id} refused ({exc.code}): {exc.message}")
+        WIRE.error(job.id, exc.code, exc.message)
     except ValueError as exc:
         # An operation refusing its arguments — an empty plan, a page that does not
         # exist, an output that is also an input. Those are answers rather than

@@ -191,8 +191,17 @@ export default function ConvertPanel({
           <p>{t("convertOut")}</p>
           {/* Opening the folder needs a permission this app withheld until sprint 1, and
               it is still not the shell plugin: a Rust command that opens paths inside the
-              output directories, and refuses a file it could not have written. */}
+              output directories, and refuses a file it could not have written.
+
+              Keyed by the folder it lists, and so is the preview below. Both keep state
+              — a file listing, a page — and both cleared it in an effect, which runs after
+              the paint. So the first frame after a new result carried the new path with the
+              old sizes and the old page under it; on a 150-page document, with the main
+              thread busy taking the result in, that frame stayed up long enough to be
+              photographed. A new key mounts a new instance with nothing in it, and there
+              is no frame in which the two can disagree. */}
           <DeliveryPanel
+            key={lastDone.result.out}
             dir={lastDone.result.out}
             onRead={() =>
               lastDone.result &&
@@ -224,7 +233,9 @@ export default function ConvertPanel({
               ))}
             </div>
           ) : null}
-          {shown ? <OutputPreview dir={lastDone.result.out} file={shown} /> : null}
+          {shown ? (
+            <OutputPreview key={`${lastDone.result.out}#${shown}`} dir={lastDone.result.out} file={shown} />
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "@/i18n/provider";
 import { engineCancel } from "@/lib/engine";
+import { wordEngineError, type Worded } from "@/lib/engine-words";
 import { offsets, pageBox, pagesInView, rungFor, step, viewedAt, type Fit } from "@/lib/viewer";
 import { readImage, renderPages, workbenchDir, type Doc, type Leaf } from "@/lib/workbench";
 
@@ -54,7 +55,8 @@ export default function PageView({
   const [zoom, setZoom] = useState(1);
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [scrollTop, setScrollTop] = useState(0);
-  const [problem, setProblem] = useState<string | null>(null);
+  /** What went wrong, as the key of a sentence — never the engine's own words. */
+  const [problem, setProblem] = useState<Worded>(null);
   const [drawing, setDrawing] = useState(0);
 
   /**
@@ -235,7 +237,11 @@ export default function PageView({
           setProblem(null);
         } catch (failure) {
           jobs.current.delete(key);
-          if (mounted.current) setProblem(String(failure));
+          // The code chooses the sentence; the text itself goes to the console, which the
+          // engine log already carries. Found showing `TypeError: Cannot read properties
+          // of undefined (reading '0')` to a reader, in English, above a Hebrew page.
+          console.error(String(failure));
+          if (mounted.current) setProblem(wordEngineError(String(failure)));
         } finally {
           // Exactly once per job, whichever way it ended. The sweep deliberately does not
           // touch this count; it only takes the reservation away.
@@ -426,7 +432,7 @@ export default function PageView({
 
       {problem ? (
         <p role="alert" className="text-[11px] text-destructive">
-          {problem}
+          {t("viewerRenderFailed")} {t(problem.key, problem.params)}
         </p>
       ) : null}
 

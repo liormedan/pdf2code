@@ -96,7 +96,6 @@ pub fn run() {
             workbench::pick_export_dir,
             workbench::workbench_dir,
             workbench::read_image,
-            workbench::discard_scratch,
             deliver::list_output,
             deliver::open_path,
             deliver::reveal_path,

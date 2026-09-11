@@ -19,7 +19,8 @@ from pathlib import Path
 
 import pypdfium2 as pdfium
 
-from pages import apply_plan, compress, export_images, parse_plan, thumbnails
+from pages import apply_plan, compress, compress_plan, export_images, parse_plan, thumbnails
+from protocol import Refusal
 
 HERE = Path(__file__).parent
 FIXTURES = HERE.parent.parent / "fixtures"
@@ -250,6 +251,86 @@ def check_images(work: Path) -> None:
     check("and reports what it actually saved", "saved" in out, str(out.get("saved")))
 
 
+def check_compress_plan(work: Path) -> None:
+    """Compression measured against the documents somebody has, not the staged copy.
+
+    Every case checks the same three things the window used to leave to luck: the
+    staged copy is gone, the output is exactly what was promised (a file, or no file),
+    and no source has changed by a byte.
+    """
+    print("\n  compressing a plan")
+    scratch = work / "scratch"
+
+    def staged_gone(name: str) -> None:
+        check(f"{name}: staged copy removed", not (scratch / "staged.pdf").exists())
+
+    # --- the case that was measured in the app: 1.54 MB in, 3.58 MB out ---------------
+    whole = parse_plan([{"from": str(HEBREW), "page": n} for n in range(1, 36)])
+    source_bytes = HEBREW.read_bytes()
+    out = work / "smaller.pdf"
+    try:
+        compress_plan(whole, out, scratch)
+        check("a rewrite that is not smaller is refused", False, "no refusal")
+    except Refusal as refusal:
+        check("a rewrite that is not smaller is refused", refusal.code == "NOT_SMALLER", refusal.code)
+        before, after = (int(n) for n in refusal.message.split())
+        check(
+            "and the numbers are the source and the result, not the staged copy",
+            before == HEBREW.stat().st_size and after > before,
+            f"{before} -> {after}",
+        )
+    check("the not-smaller output is deleted, not delivered", not out.exists())
+    staged_gone("not smaller")
+    check("the source is untouched", HEBREW.read_bytes() == source_bytes)
+
+    # --- a document that really does shrink: a small one padded with junk ---------------
+    padded = work / "padded.pdf"
+    padded.write_bytes(TABLES.read_bytes() + b"%" * 2_000_000)
+    plan = parse_plan([{"from": str(padded), "page": 1}])
+    result = compress_plan(plan, work / "shrunk.pdf", scratch)
+    check(
+        "a document with waste in it comes out smaller",
+        result["saved"] > 0 and Path(result["out"]).stat().st_size == result["after"],
+        f"{result['before']} -> {result['after']}",
+    )
+    check("before is the size of the source file", result["before"] == padded.stat().st_size)
+    check("the result opens", pages_of(Path(result["out"])) == 1)
+    staged_gone("success")
+
+    # --- an output that is a source, however it is spelled ----------------------------
+    copy = work / "Original.pdf"
+    copy.write_bytes(TABLES.read_bytes())
+    original = copy.read_bytes()
+    plan = parse_plan([{"from": str(copy), "page": 1}])
+    for spelled in (copy, work / "original.PDF", work / "sub" / ".." / "Original.pdf"):
+        try:
+            compress_plan(plan, spelled, scratch)
+            check(f"writing over a source is refused ({spelled.name})", False, "no refusal")
+        except Refusal as refusal:
+            check(
+                f"writing over a source is refused ({spelled.name})",
+                refusal.code == "SOURCE_OVERWRITE",
+                refusal.code,
+            )
+        except OSError as failure:
+            # `resolve()` may fail on a spelling that does not exist; that is still a "no".
+            check(f"writing over a source is refused ({spelled.name})", False, repr(failure))
+    check("and the source is byte-for-byte what it was", copy.read_bytes() == original)
+    staged_gone("source overwrite")
+
+    # --- a failure on the way out: the output cannot be written -------------------------
+    blocked = work / "not-a-folder.pdf"
+    blocked.write_bytes(b"x")
+    try:
+        compress_plan(plan, blocked / "inside-a-file.pdf", scratch)
+        check("an unwritable output fails", False, "no failure")
+    except Refusal as refusal:
+        check("an unwritable output fails", False, f"refused as {refusal.code} instead")
+    except OSError:
+        check("an unwritable output fails", True)
+    staged_gone("failure")
+
+
 def check_acceptance(work: Path) -> None:
     """The sprint's acceptance criterion, run rather than asserted in a document.
 
@@ -300,6 +381,7 @@ def main() -> int:
         check_plan(work)
         check_refusals(work)
         check_images(work)
+        check_compress_plan(work)
         check_acceptance(work)
     finally:
         shutil.rmtree(work, ignore_errors=True)

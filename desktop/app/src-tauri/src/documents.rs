@@ -33,7 +33,10 @@ pub struct Picked {
 /// The window can name a path but cannot learn anything about it, which is the same
 /// boundary the picker enforces from the other direction.
 #[tauri::command]
-pub fn describe_document(path: String) -> Option<Picked> {
+pub fn describe_document(
+    writable: tauri::State<'_, crate::workbench::Writable>,
+    path: String,
+) -> Option<Picked> {
     let path = PathBuf::from(&path);
     let size = std::fs::metadata(&path).ok()?.len();
 
@@ -43,6 +46,10 @@ pub fn describe_document(path: String) -> Option<Picked> {
         return None;
     }
 
+    // From here on nothing may write over it. Every path the window treats as a document
+    // comes through this function or the two pickers below, so these three calls are the
+    // whole of the promise the footer makes.
+    writable.protect(&path);
     Some(Picked {
         name: path.file_name().map(|n| n.to_string_lossy().into_owned())?,
         path: path.to_string_lossy().into_owned(),
@@ -52,7 +59,10 @@ pub fn describe_document(path: String) -> Option<Picked> {
 
 /// Choose several documents at once.
 #[tauri::command]
-pub fn pick_documents(app: AppHandle) -> Vec<Picked> {
+pub fn pick_documents(
+    app: AppHandle,
+    writable: tauri::State<'_, crate::workbench::Writable>,
+) -> Vec<Picked> {
     let Some(paths) = app
         .dialog()
         .file()
@@ -67,6 +77,7 @@ pub fn pick_documents(app: AppHandle) -> Vec<Picked> {
         .filter_map(|p| {
             let path: PathBuf = p.into_path().ok()?;
             let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+            writable.protect(&path);
             Some(Picked {
                 name: path.file_name().map(|n| n.to_string_lossy().into_owned())?,
                 path: path.to_string_lossy().into_owned(),
@@ -120,7 +131,10 @@ fn write_output_root(app: &AppHandle, root: Option<&str>) -> Result<(), String> 
 }
 
 #[tauri::command]
-pub fn pick_document(app: AppHandle) -> Option<Picked> {
+pub fn pick_document(
+    app: AppHandle,
+    writable: tauri::State<'_, crate::workbench::Writable>,
+) -> Option<Picked> {
     // Blocking on purpose: a modal file dialog is modal, and the window has nothing
     // useful to do while it is open. `None` means the person cancelled, which is an
     // answer rather than an error.
@@ -132,6 +146,7 @@ pub fn pick_document(app: AppHandle) -> Option<Picked> {
 
     let path: PathBuf = path.into_path().ok()?;
     let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+    writable.protect(&path);
 
     Some(Picked {
         name: path

@@ -23,12 +23,19 @@ import {
   type Progress,
 } from "@/lib/engine";
 import { recordProject } from "@/lib/projects";
+import { applyPatch, nextRun } from "@/lib/queue";
 
 export type ItemState = "waiting" | "running" | "done" | "failed" | "cancelled";
 
 export interface QueueItem {
   /** The path, which is also what makes a document unique in the queue. */
   key: string;
+  /**
+   * This entry, as distinct from any other entry that ever had this key. A result is
+   * routed by key *and* run, so one that arrives after its entry was removed and the
+   * document dropped in again lands nowhere — see queue.ts.
+   */
+  run: number;
   document: PickedDocument;
   state: ItemState;
   progress: Progress | null;
@@ -45,6 +52,7 @@ export interface ConversionSettings {
 
 const asItem = (document: PickedDocument): QueueItem => ({
   key: document.path,
+  run: nextRun(),
   document,
   state: "waiting",
   progress: null,
@@ -104,10 +112,8 @@ export function useConversions(settings: ConversionSettings, onRecorded: () => v
     setItems((current) => current.filter((item) => item.state === "waiting"));
   }, []);
 
-  const patch = useCallback((key: string, change: Partial<QueueItem>) => {
-    setItems((current) =>
-      current.map((item) => (item.key === key ? { ...item, ...change } : item)),
-    );
+  const patch = useCallback((item: QueueItem, change: Partial<QueueItem>) => {
+    setItems((current) => applyPatch(current, item.key, item.run, change));
   }, []);
 
   const run = useCallback(async () => {
@@ -121,12 +127,12 @@ export function useConversions(settings: ConversionSettings, onRecorded: () => v
 
     for (const item of pending) {
       if (stopped.current) {
-        patch(item.key, { state: "cancelled" });
+        patch(item, { state: "cancelled" });
         continue;
       }
 
       const started = performance.now();
-      patch(item.key, { state: "running", progress: null, error: null, result: null });
+      patch(item, { state: "running", progress: null, error: null, result: null });
 
       try {
         const id = await newJobId();
@@ -141,7 +147,7 @@ export function useConversions(settings: ConversionSettings, onRecorded: () => v
           background: settings.background,
         });
 
-        patch(item.key, {
+        patch(item, {
           state: "done",
           result,
           progress: null,
@@ -177,7 +183,7 @@ export function useConversions(settings: ConversionSettings, onRecorded: () => v
             : message.includes("ENCRYPTED")
               ? "itemEncrypted"
               : null;
-        patch(item.key, {
+        patch(item, {
           state: cancelled ? "cancelled" : "failed",
           error: cancelled ? null : reason ? `${reason}|${message}` : message,
           progress: null,

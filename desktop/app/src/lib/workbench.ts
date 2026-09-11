@@ -157,8 +157,23 @@ export const exportPlanImages = (
     track,
   );
 
-export const compressDocument = (path: string, out: string) =>
-  call<{ out: string; before: number; after: number; saved: number }>("compress", { path, out });
+/**
+ * Compress the plan into `out`, staging in `scratch`.
+ *
+ * The plan, for the same reason `applyPlan` and `exportPlanImages` take it — and because
+ * this used to take a staged file the window had built, so the engine compared sizes
+ * against the copy rather than the original and would have written the result over a
+ * source. The engine now builds, measures against the sources, refuses a source as
+ * output, deletes a result that is not smaller (`NOT_SMALLER`), and clears the staged
+ * copy on every path — all where a test can reach it. The Rust side gates `scratch`
+ * exactly like `out`.
+ */
+export const compressPlan = (plan: Leaf[], out: string, scratch: string) =>
+  call<{ out: string; before: number; after: number; saved: number }>("compress", {
+    plan: plan.map((leaf) => ({ from: leaf.source, page: leaf.page, rotate: leaf.rotate })),
+    out,
+    scratch,
+  });
 
 export const pageText = (path: string, pages: number[]) =>
   call<{ pages: PageText[] }>("text", { path, pages }).then((r) => r.pages);
@@ -194,17 +209,6 @@ export function workbenchDir(slot: string): Promise<string> {
 export function readImage(path: string): Promise<string> {
   if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
   return invoke<string>("read_image", { path });
-}
-
-/**
- * Remove one file the workbench put in the scratch directory.
- *
- * For the document `compress` builds from the plan before compressing it. Refused for
- * anything outside that directory, and for anything that is not a file.
- */
-export function discardScratch(path: string): Promise<void> {
-  if (!isDesktop()) return Promise.reject(new Error("not running in the app"));
-  return invoke<void>("discard_scratch", { path });
 }
 
 // ---------------------------------------------------------------------------

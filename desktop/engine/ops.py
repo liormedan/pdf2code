@@ -319,15 +319,34 @@ def op_export_images(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
 
 @serialised
 def op_compress(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
-    from pages import compress  # noqa: PLC0415
+    """Compress the plan — the same list `edit` and `exportImages` take.
 
-    path = args.get("path")
+    A plan and not a path, for the reason the other two take one: the window used to
+    build the plan into a staged file itself and hand that file here, and everything
+    this op could check was then about the staged copy — the size it compared against,
+    the source it refused to overwrite. Neither was the document somebody had. Taking
+    the plan puts the sources in front of the one place that has to know them.
+
+    `scratch` is where the staged copy goes; the Rust side gates it like `out`.
+    """
+    from pages import compress_plan, parse_plan  # noqa: PLC0415
+
+    plan = args.get("plan")
     out = args.get("out")
-    if not isinstance(path, str) or not isinstance(out, str):
-        raise ValueError("compress needs a path and an output path")
+    scratch = args.get("scratch")
+    if not isinstance(plan, list) or not plan:
+        raise ValueError("compress needs a non-empty plan")
+    if not isinstance(out, str) or not out:
+        raise ValueError("compress needs an output path")
+    if not isinstance(scratch, str) or not scratch:
+        raise ValueError("compress needs a scratch directory")
 
     ctx.checkpoint()
-    return compress(path, out, overwrite=bool(args.get("overwrite", False)))
+    parsed = parse_plan(plan)
+    ctx.progress(page=1, pages=2, phase="generate")
+    result = compress_plan(parsed, out, scratch)
+    ctx.progress(page=2, pages=2, phase="generate")
+    return result
 
 
 @serialised
