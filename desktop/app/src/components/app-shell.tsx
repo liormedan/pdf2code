@@ -124,9 +124,13 @@ export default function AppShell() {
       } else if (event.code === "Digit3") {
         event.preventDefault();
         go("settings");
-      } else if (event.code === "KeyO" && !event.shiftKey) {
+      } else if (event.code === "KeyO" && !event.shiftKey && mode !== "workbench") {
         // Shift+Ctrl+O is delivery-panel's "open the output folder" — this is the plain
         // one, "add a document", and the two must not collide.
+        //
+        // Not in the workbench, which handles it itself. It used to fire here whatever
+        // was showing, so Ctrl+O in the workbench opened a dialog and put the chosen file
+        // into the conversion queue — in another mode, with nothing on screen to say so.
         event.preventDefault();
         void pickDocuments().then((picked) => picked.length && queue.add(picked));
       } else if (event.code === "Enter") {
@@ -139,7 +143,7 @@ export default function AppShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [queue, status.state]);
+  }, [queue, status.state, mode]);
 
   // Escape cancels a running conversion. Its own listener: Escape has no modifier, and a
   // modifier-gated handler above should not also have to reason about the one shortcut

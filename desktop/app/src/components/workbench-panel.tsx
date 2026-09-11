@@ -297,6 +297,23 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
 
   // --- dragging to reorder ------------------------------------------------------------
   const dragging = useRef<string | null>(null);
+
+  /**
+   * The strip keeps the page on screen in view.
+   *
+   * It marked the viewed page — a ring, `aria-current`, "shown now" in the name — and
+   * never moved to it, so after a jump to page twenty the marker sat somewhere below the
+   * fold. `nearest` rather than `center`: a page already visible does not move at all,
+   * and scrolling the run by hand does not make the strip lurch on every page boundary.
+   * No animation for anyone who asked for none.
+   */
+  const stripRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!viewed) return;
+    const card = stripRef.current?.querySelector<HTMLElement>(`[data-uid="${viewed}"]`);
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    card?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: still ? "auto" : "smooth" });
+  }, [viewed]);
   const [dropAt, setDropAt] = useState<number | null>(null);
 
   // --- saving ---------------------------------------------------------------------------
@@ -506,6 +523,12 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
       } else if (meta && event.code === "KeyS" && !nothing) {
         event.preventDefault();
         void saveAs();
+      } else if (meta && event.code === "KeyO" && !event.shiftKey) {
+        // The same key the converter uses to add documents, doing the workbench's version
+        // of it: open when nothing is open, add when something is. The shell leaves this
+        // key alone while the workbench is showing.
+        event.preventDefault();
+        void load(nothing);
       } else if (!meta && some && (event.code === "Delete" || event.code === "Backspace")) {
         event.preventDefault();
         dispatch({ type: "remove", uids: selected });
@@ -516,7 +539,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [running, nothing, some, selected, plan.past.length, plan.future.length, saveAs, selectAll]);
+  }, [running, nothing, some, selected, plan.past.length, plan.future.length, saveAs, selectAll, load]);
 
   if (status.state !== "up") {
     return (
@@ -754,16 +777,20 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
           <p className="max-w-md text-xs text-muted-foreground/80">{t("workbenchEmptyHint")}</p>
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-[11rem_1fr]">
+        // Two shapes. Wide: the strip is a column beside the page. Narrow: it is a short row
+        // above it, and the page gets the height — the first version split the height
+        // between them, and on a 720×800 window the page was sixty-five pixels tall.
+        <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-3 p-3 lg:grid-cols-[11rem_1fr] lg:grid-rows-none">
           {/* The strip. One column now rather than a grid filling the window: a grid is
               good for sorting and bad for reading, and reading is the thing the workbench
               could not do at all. Dragging is unchanged — it was always index-based, and a
               single column makes the drop position less ambiguous rather than more. */}
-          <div className="min-h-0 overflow-auto">
-          <ul className="flex flex-col gap-2">
+          <div ref={stripRef} className="max-h-32 min-h-0 overflow-auto lg:max-h-none">
+          <ul className="flex flex-row gap-2 lg:flex-col">
             {plan.present.map((leaf, index) => (
               <li
                 key={leaf.uid}
+                data-uid={leaf.uid}
                 draggable={!running}
                 onDragStart={() => {
                   dragging.current = leaf.uid;
@@ -786,7 +813,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                 // it selected (an operation will affect it), does it match a search, and is
                 // it the one on screen. The last gets a ring rather than a border colour,
                 // so a page can be both viewed and selected without one hiding the other.
-                className={`rounded-lg border p-1.5 transition-colors ${
+                className={`w-28 shrink-0 rounded-lg border p-1.5 transition-colors lg:w-auto lg:shrink ${
                   selected.has(leaf.uid)
                     ? "border-primary bg-accent/50"
                     : matches?.has(leaf.uid)
@@ -823,13 +850,13 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
                 >
                   {/* Square on purpose: a page turned a quarter turn swaps its width
                       and height, and in a square box neither can overflow. */}
-                  <span className="flex h-24 w-full items-center justify-center overflow-hidden rounded bg-muted/40">
+                  <span className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-muted/40 lg:h-24">
                     {thumbs.get(pageKey(leaf)) ? (
                       <img
                         src={thumbs.get(pageKey(leaf))}
                         alt=""
                         style={{ transform: `rotate(${leaf.rotate}deg)` }}
-                        className="max-h-20 max-w-20 shadow-sm transition-transform"
+                        className="max-h-14 max-w-14 shadow-sm transition-transform lg:max-h-20 lg:max-w-20"
                       />
                     ) : (
                       <Loader2
@@ -886,7 +913,7 @@ export default function WorkbenchPanel({ status }: { status: EngineStatus }) {
               dragging.current = null;
               setDropAt(null);
             }}
-            className={`mt-2 rounded-lg border border-dashed px-2 py-2 text-center text-[10px] text-muted-foreground ${
+            className={`mt-2 hidden rounded-lg border border-dashed px-2 py-2 text-center text-[10px] text-muted-foreground lg:block ${
               dropAt === plan.present.length ? "border-primary" : "border-divider"
             }`}
           >

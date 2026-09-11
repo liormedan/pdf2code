@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FolderOpen, Loader2, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -78,6 +78,19 @@ export default function ConvertPanel({
   );
 
   const current = items.find((item) => item.state === "running") ?? null;
+
+  /**
+   * Where focus goes when a run starts.
+   *
+   * The reader clicks Run, Run becomes disabled, and Chromium leaves focus on it — and a
+   * focused element that has become disabled receives no key events. Escape, pressed in
+   * the most natural sequence there is, went nowhere. Cancel is the one thing left to
+   * do while a run is under way, so it takes the focus: Escape works, and so does Enter.
+   */
+  const cancelButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (running) cancelButton.current?.focus();
+  }, [running]);
   const waiting = items.filter((item) => item.state === "waiting").length;
   const lastDone = [...items].reverse().find((item) => item.state === "done") ?? null;
 
@@ -165,7 +178,7 @@ export default function ConvertPanel({
         </Button>
 
         {running ? (
-          <Button size="sm" variant="outline" onClick={onCancel}>
+          <Button ref={cancelButton} size="sm" variant="outline" onClick={onCancel}>
             <Square className="size-4" />
             {t("engineCancel")}
           </Button>
