@@ -13,6 +13,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { engineCall, isDesktop, newJobId, onProgress, type Probe, type Progress } from "@/lib/engine";
+import { duplicated, movedToEdge } from "@/lib/plan-ops";
 
 /** One page in the plan. `uid` is ours: React keys and a selection have to survive a move. */
 export interface Leaf {
@@ -230,6 +231,10 @@ export type PlanAction =
   | { type: "keep"; uids: Set<string> }
   | { type: "move"; uid: string; to: number }
   | { type: "nudge"; uid: string; by: number }
+  /** Copies placed right after their originals. */
+  | { type: "duplicate"; uids: Set<string> }
+  /** The chosen pages to one end, in their own order. */
+  | { type: "edge"; uids: Set<string>; edge: "start" | "end" }
   | { type: "undo" }
   | { type: "redo" };
 
@@ -285,6 +290,21 @@ export function planReducer(state: PlanState, action: PlanAction): PlanState {
 
     case "move":
       return remember(state, moved(state.present, action.uid, action.to));
+
+    case "duplicate": {
+      if (action.uids.size === 0) return state;
+      return remember(
+        state,
+        duplicated(state.present, action.uids, (leaf) => leafOf(leaf.source, leaf.page, leaf.rotate)),
+      );
+    }
+
+    case "edge": {
+      const next = movedToEdge(state.present, action.uids, action.edge);
+      // A move that changed nothing is not a step somebody should have to undo.
+      if (next.every((leaf, index) => leaf === state.present[index])) return state;
+      return remember(state, next);
+    }
 
     case "nudge": {
       const from = state.present.findIndex((leaf) => leaf.uid === action.uid);

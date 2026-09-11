@@ -1,6 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Loader2, Maximize2, Minus, Plus, ScanLine, Square } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Hash,
+  Loader2,
+  Maximize2,
+  Minus,
+  Plus,
+  RotateCcw,
+  RotateCw,
+  ScanLine,
+  Square,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "@/i18n/provider";
 import { engineCancel } from "@/lib/engine";
@@ -40,6 +60,7 @@ export default function PageView({
   docs,
   viewed,
   onView,
+  onRotate,
   running,
   shown,
 }: {
@@ -47,6 +68,8 @@ export default function PageView({
   docs: Doc[];
   viewed: string | null;
   onView: (uid: string | null) => void;
+  /** Turn one page a quarter, from this view's own menu. The plan is the workbench's. */
+  onRotate: (uid: string, turn: number) => void;
   /** A conversion or a save is using the engine; a render now would queue behind it. */
   running: boolean;
   /** On screen. The workbench stays mounted behind other modes; hidden, this answers no keys. */
@@ -76,6 +99,10 @@ export default function PageView({
   const [images, setImages] = useState<Map<string, string>>(new Map());
 
   const at = useMemo(() => viewedAt(plan, viewed), [plan, viewed]);
+  /** The page-number field, so the menu's "go to page" can put the cursor in it. */
+  const numberField = useRef<HTMLInputElement | null>(null);
+  /** Set by the menu's "go to page": the menu must hand focus to the field, not back to the run. */
+  const wantField = useRef(false);
   const scanned = docs.some((item) => item.scanned);
   const count = plan.length;
 
@@ -346,6 +373,7 @@ export default function PageView({
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
           <span className="sr-only">{t("viewerGoToPage")}</span>
           <Input
+            ref={numberField}
             type="number"
             min={1}
             max={Math.max(1, count)}
@@ -440,6 +468,11 @@ export default function PageView({
         </p>
       ) : null}
 
+      {/* The page's own menu: what this view controls (fit, zoom), one thing it asks the
+          workbench for (a quarter turn of the page on screen), and a way to the page
+          field. Everything here is also a button in the row above. */}
+      <ContextMenu>
+      <ContextMenuTrigger asChild>
       <div
         ref={roomRef}
         onScroll={onScroll}
@@ -503,6 +536,61 @@ export default function PageView({
           </div>
         )}
       </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent
+        // Radix gives focus back to the trigger as the menu closes, which would undo a
+        // focus() made inside an item. "Go to page" is the one item that wants the focus
+        // somewhere else, so it says so here, where the decision is actually made.
+        onCloseAutoFocus={(event) => {
+          if (!wantField.current) return;
+          wantField.current = false;
+          event.preventDefault();
+          numberField.current?.focus();
+          numberField.current?.select();
+        }}
+      >
+        <ContextMenuItem onSelect={() => { setFit("width"); setZoom(1); }}>
+          <Maximize2 />
+          {t("viewerFitWidth")}
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => { setFit("page"); setZoom(1); }}>
+          <Square />
+          {t("viewerFitPage")}
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => { setFit("actual"); setZoom(1); }}>
+          {t("viewerActualSize")}
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem disabled={zoom >= 4} onSelect={() => setZoom((z) => Math.min(4, +(z * 1.25).toFixed(3)))}>
+          <Plus />
+          {t("viewerZoomIn")}
+        </ContextMenuItem>
+        <ContextMenuItem disabled={zoom <= 0.25} onSelect={() => setZoom((z) => Math.max(0.25, +(z / 1.25).toFixed(3)))}>
+          <Minus />
+          {t("viewerZoomOut")}
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem disabled={!at || running} onSelect={() => at && onRotate(at.leaf.uid, -90)}>
+          <RotateCcw />
+          {t("viewerRotateThisLeft")}
+        </ContextMenuItem>
+        <ContextMenuItem disabled={!at || running} onSelect={() => at && onRotate(at.leaf.uid, 90)}>
+          <RotateCw />
+          {t("viewerRotateThisRight")}
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          disabled={count === 0}
+          onSelect={() => {
+            wantField.current = true;
+          }}
+        >
+          <Hash />
+          {t("viewerGoToPage")}
+          <ContextMenuShortcut>{`1–${count}`}</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+      </ContextMenu>
     </div>
   );
 }

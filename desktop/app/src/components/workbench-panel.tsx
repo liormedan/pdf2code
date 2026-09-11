@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
+  ArrowDownToLine,
+  ArrowUpToLine,
   ChevronDown,
   ChevronUp,
   Copy,
+  CopyPlus,
+  Eye,
   FileDown,
+  FileOutput,
   FilePlus2,
   FileText,
   Images,
@@ -20,6 +25,14 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useTranslations } from "@/i18n/provider";
@@ -296,6 +309,57 @@ export default function WorkbenchPanel({
     [plan.present],
   );
 
+  // --- the right-click menu ---------------------------------------------------------
+  //
+  // One menu for the whole strip, not one per card: nested menus would both open on a
+  // right-click over a card. The card under the pointer is remembered on the way down
+  // (capture clears it, the card sets it) and the content is built from that.
+  //
+  // Nothing lives only in here. Every item is a button in the toolbar or a key the
+  // settings page lists, because a menu a mouse opens is not the only way somebody
+  // reaches a page — and because Shift+F10 opens this one from the keyboard anyway.
+  const [menuUid, setMenuUid] = useState<string | null>(null);
+
+  /** The pages a card's menu acts on: the selection when the card is in it, the card alone if not. */
+  const targets = useCallback(
+    (uid: string | null): Set<string> =>
+      uid && !selected.has(uid) ? new Set([uid]) : selected,
+    [selected],
+  );
+
+  /**
+   * The chosen pages as a new document, and the plan untouched.
+   *
+   * "Keep only these" followed by "save as" does the same in two steps and leaves the
+   * plan trimmed; this leaves it whole. The engine refuses a source as the target,
+   * exactly as it does for a save.
+   */
+  const extract = useCallback(
+    async (uids: Set<string>) => {
+      const leaves = plan.present.filter((leaf) => uids.has(leaf.uid));
+      if (leaves.length === 0) return;
+      const name = (docs[0]?.name ?? "document.pdf").replace(/\.pdf$/i, "");
+      const path = await pickSavePath(`${name}-pages.pdf`);
+      if (!path) return;
+      setBusy(t("workbenchExtracting"));
+      setError(null);
+      try {
+        const result = await applyPlan(leaves, path, false);
+        setNote(t("workbenchExtracted", { pages: result.pages, path: result.out }));
+      } catch (failure) {
+        const message = String(failure);
+        if (message.includes("overwrite") || message.includes("SOURCE_OVERWRITE")) {
+          setError(t("engineErrorSourceOverwrite"));
+        } else {
+          report(failure);
+        }
+      } finally {
+        setBusy(null);
+      }
+    },
+    [plan.present, docs, t, report],
+  );
+
   // Keep the selection honest: a page that was deleted or undone away is not selected.
   useEffect(() => {
     setSelected((current) => {
@@ -545,6 +609,12 @@ export default function WorkbenchPanel({
       } else if (!meta && some && event.code === "KeyR") {
         event.preventDefault();
         dispatch({ type: "rotate", uids: selected, turn: event.shiftKey ? -90 : 90 });
+      } else if (meta && some && event.code === "KeyD") {
+        event.preventDefault();
+        dispatch({ type: "duplicate", uids: selected });
+      } else if (meta && some && (event.code === "Home" || event.code === "End")) {
+        event.preventDefault();
+        dispatch({ type: "edge", uids: selected, edge: event.code === "Home" ? "start" : "end" });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -605,6 +675,12 @@ export default function WorkbenchPanel({
           disabled={running || !some}
           onClick={() => dispatch({ type: "keep", uids: selected })}
         />
+        <Tool
+          label={t("workbenchDuplicate")}
+          icon={CopyPlus}
+          disabled={running || !some}
+          onClick={() => dispatch({ type: "duplicate", uids: selected })}
+        />
 
         <Divider />
 
@@ -626,6 +702,15 @@ export default function WorkbenchPanel({
         <Button size="sm" onClick={() => void saveAs()} disabled={running || nothing}>
           <Save className="size-4" />
           {t("workbenchSave")}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => void extract(selected)}
+          disabled={running || !some}
+        >
+          <FileOutput className="size-4" />
+          {t("workbenchExtract")}
         </Button>
         <Button
           size="sm"
@@ -795,12 +880,19 @@ export default function WorkbenchPanel({
               good for sorting and bad for reading, and reading is the thing the workbench
               could not do at all. Dragging is unchanged — it was always index-based, and a
               single column makes the drop position less ambiguous rather than more. */}
-          <div ref={stripRef} className="max-h-32 min-h-0 overflow-auto lg:max-h-none">
+          <ContextMenu>
+          <ContextMenuTrigger asChild>
+          <div
+            ref={stripRef}
+            className="max-h-32 min-h-0 overflow-auto lg:max-h-none"
+            onContextMenuCapture={() => setMenuUid(null)}
+          >
           <ul className="flex flex-row gap-2 lg:flex-col">
             {plan.present.map((leaf, index) => (
               <li
                 key={leaf.uid}
                 data-uid={leaf.uid}
+                onContextMenu={() => setMenuUid(leaf.uid)}
                 draggable={!running}
                 onDragStart={() => {
                   dragging.current = leaf.uid;
@@ -930,6 +1022,132 @@ export default function WorkbenchPanel({
             {t("workbenchDropEnd")}
           </div>
           </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            {menuUid ? (
+              <>
+                {menuUid !== viewed ? (
+                  <ContextMenuItem onSelect={() => setViewed(menuUid)}>
+                    <Eye />
+                    {t("menuView")}
+                  </ContextMenuItem>
+                ) : null}
+                <ContextMenuItem
+                  onSelect={() =>
+                    setSelected((current) => {
+                      const next = new Set(current);
+                      if (next.has(menuUid)) next.delete(menuUid);
+                      else next.add(menuUid);
+                      return next;
+                    })
+                  }
+                >
+                  {selected.has(menuUid) ? t("menuDeselect") : t("menuSelect")}
+                </ContextMenuItem>
+                <ContextMenuItem onSelect={selectAll}>
+                  {t("workbenchSelectAll")}
+                  <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "rotate", uids: targets(menuUid), turn: -90 })}
+                >
+                  <RotateCcw />
+                  {t("workbenchRotateLeft")}
+                  <ContextMenuShortcut>Shift+R</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "rotate", uids: targets(menuUid), turn: 90 })}
+                >
+                  <RotateCw />
+                  {t("workbenchRotateRight")}
+                  <ContextMenuShortcut>R</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "edge", uids: targets(menuUid), edge: "start" })}
+                >
+                  <ArrowUpToLine />
+                  {t("workbenchMoveFirst")}
+                  <ContextMenuShortcut>Ctrl+Home</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "edge", uids: targets(menuUid), edge: "end" })}
+                >
+                  <ArrowDownToLine />
+                  {t("workbenchMoveLast")}
+                  <ContextMenuShortcut>Ctrl+End</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "duplicate", uids: targets(menuUid) })}
+                >
+                  <CopyPlus />
+                  {t("workbenchDuplicate")}
+                  <ContextMenuShortcut>Ctrl+D</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem disabled={running} onSelect={() => void extract(targets(menuUid))}>
+                  <FileOutput />
+                  {t("workbenchExtract")}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "keep", uids: targets(menuUid) })}
+                >
+                  <Scissors />
+                  {t("workbenchKeep")}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  variant="destructive"
+                  disabled={running}
+                  onSelect={() => dispatch({ type: "remove", uids: targets(menuUid) })}
+                >
+                  <Trash2 />
+                  {t("workbenchDelete")}
+                  <ContextMenuShortcut>Delete</ContextMenuShortcut>
+                </ContextMenuItem>
+              </>
+            ) : (
+              <>
+                <ContextMenuItem disabled={running} onSelect={() => void load(true)}>
+                  <FileText />
+                  {t("workbenchOpen")}
+                  <ContextMenuShortcut>Ctrl+O</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem disabled={running || nothing} onSelect={() => void load(false)}>
+                  <FilePlus2 />
+                  {t("workbenchAdd")}
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem disabled={nothing} onSelect={selectAll}>
+                  {t("workbenchSelectAll")}
+                  <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running || plan.past.length === 0}
+                  onSelect={() => dispatch({ type: "undo" })}
+                >
+                  <Undo2 />
+                  {t("workbenchUndo")}
+                  <ContextMenuShortcut>Ctrl+Z</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                  disabled={running || plan.future.length === 0}
+                  onSelect={() => dispatch({ type: "redo" })}
+                >
+                  <Redo2 />
+                  {t("workbenchRedo")}
+                  <ContextMenuShortcut>Ctrl+Shift+Z</ContextMenuShortcut>
+                </ContextMenuItem>
+              </>
+            )}
+          </ContextMenuContent>
+          </ContextMenu>
 
           {/* The page, at a size somebody can read. The point of the sprint. */}
           <PageView
@@ -937,6 +1155,7 @@ export default function WorkbenchPanel({
             docs={docs}
             viewed={viewed}
             onView={setViewed}
+            onRotate={(uid, turn) => dispatch({ type: "rotate", uids: new Set([uid]), turn })}
             running={running}
             shown={shown}
           />

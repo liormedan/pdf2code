@@ -145,6 +145,16 @@ export default function AppShell() {
     return () => window.removeEventListener("keydown", onKey);
   }, [queue, status.state, mode]);
 
+  // The WebView's own right-click menu — back, reload, inspect — is a browser's menu in
+  // a window that is not a browser. Suppressed everywhere; the strip and the page view
+  // open menus of their own on the same event, and Radix has already handled those by
+  // the time this listener runs at the window.
+  useEffect(() => {
+    const quiet = (event: MouseEvent) => event.preventDefault();
+    window.addEventListener("contextmenu", quiet);
+    return () => window.removeEventListener("contextmenu", quiet);
+  }, []);
+
   // Escape cancels a running conversion. Its own listener: Escape has no modifier, and a
   // modifier-gated handler above should not also have to reason about the one shortcut
   // that is a bare key.
