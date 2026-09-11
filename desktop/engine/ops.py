@@ -13,6 +13,8 @@ often enough that a person clicking Cancel sees it stop.
 
 from __future__ import annotations
 
+import functools
+import threading
 import time
 from typing import Any, Callable, Protocol
 
@@ -35,6 +37,39 @@ class Context(Protocol):
 
     def checkpoint(self) -> None:
         """Raise Cancelled if a cancel has arrived."""
+
+
+# One turn at a time with PDFium, for every operation that touches it.
+#
+# PDFium is not thread-safe, and every job here runs on its own thread. Two documents
+# open at once — even two handles on the same file — race inside the library, and the
+# loser is told "Data format error" about a file that is perfectly well formed. Found
+# the first time the workbench asked for a document's pages all at once: of 35 renders,
+# one succeeded.
+#
+# The lock lives here and not in the callers because no caller can know what else is
+# in flight. Re-entrant, because `convert` calls `extract` calls the rasteriser, all on
+# the one thread that holds it.
+PDFIUM = threading.RLock()
+
+
+def serialised(handler: Callable[[dict[str, Any], Context], dict[str, Any]]):
+    """Run the handler holding the PDFium lock.
+
+    Polled rather than blocked on, so that a job cancelled while it waits its turn stops
+    then — and not after doing, at length, the very work it was told to abandon.
+    """
+
+    @functools.wraps(handler)
+    def wrapped(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
+        while not PDFIUM.acquire(timeout=0.05):
+            ctx.checkpoint()
+        try:
+            return handler(args, ctx)
+        finally:
+            PDFIUM.release()
+
+    return wrapped
 
 
 def op_echo(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
@@ -67,6 +102,7 @@ def op_sleep(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     return {"slept": steps * every, "steps": steps}
 
 
+@serialised
 def op_probe(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     """Open a document and report what is in it, without converting anything.
 
@@ -133,6 +169,7 @@ def op_probe(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     }
 
 
+@serialised
 def op_convert(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     """Convert a document, writing the result to disk and reporting where.
 
@@ -198,6 +235,7 @@ def op_convert(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     }
 
 
+@serialised
 def op_edit(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     """Rotate, reorder, delete, extract, split or merge — all of them, from one plan.
 
@@ -221,6 +259,7 @@ def op_edit(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     return result
 
 
+@serialised
 def op_thumbnails(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     """Small page images, for a page view. Written to disk; paths come back."""
     from pages import thumbnails  # noqa: PLC0415
@@ -245,6 +284,7 @@ def op_thumbnails(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     return {"thumbnails": made}
 
 
+@serialised
 def op_export_images(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     """Export the plan as images.
 
@@ -277,6 +317,7 @@ def op_export_images(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     return {"images": made}
 
 
+@serialised
 def op_compress(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     from pages import compress  # noqa: PLC0415
 
@@ -289,6 +330,7 @@ def op_compress(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     return compress(path, out, overwrite=bool(args.get("overwrite", False)))
 
 
+@serialised
 def op_page_text(args: dict[str, Any], ctx: Context) -> dict[str, Any]:
     """The text of some pages, in reading order.
 

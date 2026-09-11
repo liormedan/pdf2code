@@ -18,7 +18,7 @@
 
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
-import { keepViewing, latest, offsets, pageBox, pagesInView, rungFor, step, viewedAt } from "./viewer.ts";
+import { keepViewing, latest, MOST_AT_ONCE, offsets, pageBox, pagesInView, rungFor, step, viewedAt } from "./viewer.ts";
 import type { Leaf } from "./workbench.ts";
 
 /** A plan, written the way the reducer builds one. */
@@ -289,6 +289,22 @@ describe("scrolling a document rather than paging one", () => {
     const long = Array.from({ length: 500 }, () => 1000);
     strictEqual(pagesInView(long, GAP, 0, 800, 1).near.length, 2, "one page showing, none before it");
     strictEqual(pagesInView(long, GAP, 100_000, 800, 1).near.length, 4, "two showing, one either side");
+  });
+
+  test("a viewport that claims to show the whole document does not get it", () => {
+    // What happened in the real app, not a hypothetical: the scroll box had no height to
+    // scroll in, so it reported its content height as its viewport, and a 35-page document
+    // was asked for in full — 35 concurrent renders, of which PDFium survived one.
+    const long = Array.from({ length: 35 }, () => 955);
+    const whole = offsets(long, GAP).total;
+    const { current, near } = pagesInView(long, GAP, 0, whole, 1);
+    strictEqual(current, 17, "the middle of a whole-document viewport is the middle page");
+    strictEqual(near.length, MOST_AT_ONCE + 2, "capped, plus one either side");
+    strictEqual(near.includes(current), true, "and the cap is kept around the current page");
+    // The cap is not reached by an honest viewport, which is the point of setting it high.
+    strictEqual(pagesInView(long, GAP, 0, 2000, 1).near.length, 4);
+    // And it still does not run off the end of a short document.
+    deepStrictEqual(pagesInView([955, 955, 955], GAP, 0, whole, 1).near, [0, 1, 2]);
   });
 
   test("an empty document has no current page and nothing to render", () => {

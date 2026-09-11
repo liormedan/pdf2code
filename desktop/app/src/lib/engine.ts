@@ -74,10 +74,33 @@ export function newJobId(): Promise<string> {
  *
  * Rejects on `error`, including `CANCELLED` — the caller decides that a cancellation
  * is not a failure, because only the caller knows whether it asked for one.
+ *
+ * **This is where that promise is kept.** The Rust side hands back the engine's terminal
+ * message whichever kind it is — "deciding which is bad news is the caller's job" — and
+ * until the first manual pass of the workbench nobody was deciding. An `error` resolved
+ * like a `result`, so every consumer read fields that were not there: the viewer threw
+ * `reading '0'` at `thumbnails[0]`, and a cancelled conversion would have failed on
+ * `info.converted` instead of being marked cancelled. The code leads the message so the
+ * `includes("CANCELLED")` checks the callers were already written with start to hold.
  */
-export function engineCall<T = unknown>(id: string, op: string, args: unknown = {}): Promise<T> {
+export async function engineCall<T = unknown>(
+  id: string,
+  op: string,
+  args: unknown = {},
+): Promise<T> {
   if (!isDesktop()) return unavailable<T>();
-  return invoke<T>("engine_call", { id, op, args });
+  const reply = await invoke<T | EngineError>("engine_call", { id, op, args });
+  if (isEngineError(reply)) throw new Error(`${reply.code}: ${reply.message}`);
+  return reply;
+}
+
+function isEngineError(reply: unknown): reply is EngineError {
+  return (
+    typeof reply === "object" &&
+    reply !== null &&
+    (reply as { type?: unknown }).type === "error" &&
+    typeof (reply as { code?: unknown }).code === "string"
+  );
 }
 
 /**

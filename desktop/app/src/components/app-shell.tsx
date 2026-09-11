@@ -22,7 +22,7 @@ import {
 } from "@/lib/engine";
 import { useConversions, type ConversionSettings } from "@/lib/use-conversions";
 import { getSettings } from "@/lib/settings";
-import { isTypingTarget } from "@/lib/utils";
+import { cn, isTypingTarget } from "@/lib/utils";
 
 /**
  * The window.
@@ -204,8 +204,14 @@ export default function AppShell() {
           </Region>
         </main>
       ) : mode === "workbench" ? (
-        <main className="min-h-0 flex-1 p-5">
-          <Region icon={Wrench} title={t("workbench")}>
+        // A flex column, unlike the settings main above it. The workbench scrolls inside
+        // itself — the page run and the strip each have their own scroll box — and a
+        // scroll box only scrolls if something above it has a definite height to hand
+        // down. As a block this main handed down nothing, the region grew to fit its
+        // content, and the viewer's "viewport" was measured at 33,974 pixels tall: every
+        // page was on screen at once, so every page was rendered at once.
+        <main className="flex min-h-0 flex-1 flex-col p-5">
+          <Region icon={Wrench} title={t("workbench")} fill>
             {isDesktop() ? <WorkbenchPanel status={status} /> : <Empty line={t("engineNotInApp")} />}
           </Region>
         </main>
@@ -311,15 +317,21 @@ function Region({
   icon: Icon,
   title,
   children,
+  fill = false,
 }: {
   icon: typeof FileText;
   title: string;
   children: React.ReactNode;
+  /** Take the whole of a flex-column parent, so children that scroll have a height to scroll in. */
+  fill?: boolean;
 }) {
   return (
     <section
       aria-label={title}
-      className="flex min-h-0 flex-col rounded-xl border border-divider bg-card"
+      className={cn(
+        "flex min-h-0 flex-col rounded-xl border border-divider bg-card",
+        fill && "flex-1",
+      )}
     >
       <h2 className="flex items-center gap-2 border-b border-divider px-4 py-2.5 text-sm font-semibold">
         <Icon className="size-4 text-muted-foreground" aria-hidden="true" />

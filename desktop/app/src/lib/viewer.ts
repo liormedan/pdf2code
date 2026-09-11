@@ -195,6 +195,9 @@ export function offsets(heights: number[], gap: number): { tops: number[]; total
  * from becoming five hundred renders. Reading forwards and reading backwards cost the
  * same, because somebody looking for a figure they passed is doing the same work.
  */
+/** The most pages `pagesInView` will ever call visible, before the ones either side. */
+export const MOST_AT_ONCE = 8;
+
 export function pagesInView(
   heights: number[],
   gap: number,
@@ -231,6 +234,18 @@ export function pagesInView(
   if (first > last) {
     first = current;
     last = current;
+  }
+
+  // A ceiling, whatever the viewport claims. "Only so many pages fit on a screen" was
+  // true of screens and false of the number handed in: a scroll box that was never given
+  // a height to scroll in reports its content height as its viewport, and the first time
+  // that happened every page of a 35-page document was on screen and asked for at once.
+  // The layout is fixed; this makes sure the next layout mistake costs a blank page and
+  // not a document's worth of renders. Kept around the current page, which is the one
+  // the reader is actually looking at.
+  if (last - first + 1 > MOST_AT_ONCE) {
+    first = Math.max(0, Math.min(current - Math.floor(MOST_AT_ONCE / 2), heights.length - MOST_AT_ONCE));
+    last = Math.min(heights.length - 1, first + MOST_AT_ONCE - 1);
   }
 
   const near: number[] = [];

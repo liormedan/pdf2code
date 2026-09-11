@@ -155,6 +155,26 @@ export default function PageView({
   const dirs = useRef<Map<string, string>>(new Map());
   const wanted = useRef<Set<string>>(new Set());
 
+  /**
+   * Whether this component is still on the page — and nothing narrower than that.
+   *
+   * The drawing effect used to keep a `live` flag that its cleanup set false, so a render
+   * that finished after the effect had re-run threw its image away. But the effect re-runs
+   * whenever the room changes width, and the room changes width **during the first render
+   * of every document**: the run's height is set, the scrollbar appears, the width shrinks
+   * by its size. So the first two pages of every document were drawn by the engine, read
+   * back, and dropped — with the reservation gone and nothing left to ask again. Found in
+   * the app with the pages on disk and the viewer empty. Whether a result is still wanted
+   * is `wanted`'s question; this only answers whether there is anywhere to put it.
+   */
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (box.width === 0 || rung === 0 || count === 0) return;
 
@@ -175,7 +195,6 @@ export default function PageView({
       jobs.current.delete(key);
     }
 
-    let live = true;
     for (const index of near) {
       const leaf = plan[index];
       if (!leaf) continue;
@@ -204,19 +223,19 @@ export default function PageView({
           jobs.current.set(key, id);
           const made = await done;
           jobs.current.delete(key);
-          if (!live || !wanted.current.has(key)) return;
+          if (!mounted.current || !wanted.current.has(key)) return;
 
           const drawn = made[0];
           if (!drawn) return;
           const data = await readImage(drawn.path);
-          if (!live) return;
+          if (!mounted.current || !wanted.current.has(key)) return;
 
           setShape((current) => current ?? { width: drawn.width, height: drawn.height });
           setImages((current) => remember(current, key, data, wanted.current));
           setProblem(null);
         } catch (failure) {
           jobs.current.delete(key);
-          if (live) setProblem(String(failure));
+          if (mounted.current) setProblem(String(failure));
         } finally {
           // Exactly once per job, whichever way it ended. The sweep deliberately does not
           // touch this count; it only takes the reservation away.
@@ -224,10 +243,6 @@ export default function PageView({
         }
       })();
     }
-
-    return () => {
-      live = false;
-    };
     // `nearKey` and not `near`: the pages wanted, compared by value. See above.
   }, [nearKey, plan, rung, box.width, count, images]);
 
