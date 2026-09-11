@@ -351,6 +351,8 @@
     "workbenchCount": "{pages} עמודים מתוך {docs} מסמכים",
     "workbenchSelected": "{count} נבחרו",
     "workbenchSelectAll": "בחירת הכל",
+    "workbenchClearSelection": "ניקוי הבחירה",
+    "workbenchSelectionBar": "פעולות על העמודים שנבחרו",
     "workbenchReading": "קורא את {name}…",
     "workbenchRendering": "מרנדר את עמודי {name}…",
     "workbenchSaving": "שומר…",

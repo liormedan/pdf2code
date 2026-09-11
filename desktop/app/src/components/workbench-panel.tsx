@@ -22,6 +22,7 @@ import {
   Search,
   Trash2,
   Undo2,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -633,7 +634,12 @@ export default function WorkbenchPanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* --- what you can do to the pages ------------------------------------------- */}
+      {/* --- what you can do to the document ------------------------------------------
+          Three groups: what comes in, undo, what goes out. Nothing here needs a selection.
+          The first version put every action in this one row — thirteen buttons, five of
+          them grey most of the time because nothing was selected, wrapping to two lines
+          on a full-width window. The ones that act on a selection now appear beside it,
+          in the bar below, and only while there is one. */}
       <div className="flex flex-wrap items-center gap-1.5 border-b border-divider px-4 py-2">
         <Button size="sm" variant="outline" onClick={() => void load(true)} disabled={running}>
           <FileText className="size-4" />
@@ -652,39 +658,6 @@ export default function WorkbenchPanel({
         <Divider />
 
         <Tool
-          label={t("workbenchRotateLeft")}
-          icon={RotateCcw}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "rotate", uids: selected, turn: -90 })}
-        />
-        <Tool
-          label={t("workbenchRotateRight")}
-          icon={RotateCw}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "rotate", uids: selected, turn: 90 })}
-        />
-        <Tool
-          label={t("workbenchDelete")}
-          icon={Trash2}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "remove", uids: selected })}
-        />
-        <Tool
-          label={t("workbenchKeep")}
-          icon={Scissors}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "keep", uids: selected })}
-        />
-        <Tool
-          label={t("workbenchDuplicate")}
-          icon={CopyPlus}
-          disabled={running || !some}
-          onClick={() => dispatch({ type: "duplicate", uids: selected })}
-        />
-
-        <Divider />
-
-        <Tool
           label={t("workbenchUndo")}
           icon={Undo2}
           disabled={running || plan.past.length === 0}
@@ -697,20 +670,15 @@ export default function WorkbenchPanel({
           onClick={() => dispatch({ type: "redo" })}
         />
 
-        <Divider />
-
-        <Button size="sm" onClick={() => void saveAs()} disabled={running || nothing}>
-          <Save className="size-4" />
-          {t("workbenchSave")}
-        </Button>
+        {/* At the far end, so the eye reads the row as "in … out". */}
         <Button
           size="sm"
-          variant="ghost"
-          onClick={() => void extract(selected)}
-          disabled={running || !some}
+          className="ms-auto"
+          onClick={() => void saveAs()}
+          disabled={running || nothing}
         >
-          <FileOutput className="size-4" />
-          {t("workbenchExtract")}
+          <Save className="size-4" />
+          {t("workbenchSave")}
         </Button>
         <Button
           size="sm"
@@ -816,11 +784,82 @@ export default function WorkbenchPanel({
           ) : null}
           <span className="tabular text-[11px] text-muted-foreground">
             {t("workbenchCount", { pages: plan.present.length, docs: docs.length })}
-            {some ? ` · ${t("workbenchSelected", { count: selected.size })}` : ""}
           </span>
           <Button size="sm" variant="ghost" onClick={selectAll} disabled={running}>
             <Copy className="size-3.5" />
             {t("workbenchSelectAll")}
+          </Button>
+        </div>
+      ) : null}
+
+      {/* --- what you can do to the selected pages ----------------------------------------
+          Only while something is selected, and it opens with how many: the actions sit
+          next to the thing they act on, and a button that cannot do anything is not on
+          screen to be wondered about. It pushes the pages down by one row when it appears,
+          which is what every status row in this panel already does. Everything in it is
+          also in the right-click menu and on a key. */}
+      {some ? (
+        <div
+          role="toolbar"
+          aria-label={t("workbenchSelectionBar")}
+          className="flex flex-wrap items-center gap-1.5 border-b border-primary/30 bg-accent/40 px-4 py-1.5"
+        >
+          <span
+            role="status"
+            aria-live="polite"
+            className="tabular text-xs font-medium"
+          >
+            {t("workbenchSelected", { count: selected.size })}
+          </span>
+
+          <Divider />
+
+          <Tool
+            label={t("workbenchRotateLeft")}
+            icon={RotateCcw}
+            disabled={running}
+            onClick={() => dispatch({ type: "rotate", uids: selected, turn: -90 })}
+          />
+          <Tool
+            label={t("workbenchRotateRight")}
+            icon={RotateCw}
+            disabled={running}
+            onClick={() => dispatch({ type: "rotate", uids: selected, turn: 90 })}
+          />
+          <Tool
+            label={t("workbenchDuplicate")}
+            icon={CopyPlus}
+            disabled={running}
+            onClick={() => dispatch({ type: "duplicate", uids: selected })}
+          />
+          <Tool
+            label={t("workbenchKeep")}
+            icon={Scissors}
+            disabled={running}
+            onClick={() => dispatch({ type: "keep", uids: selected })}
+          />
+          <Tool
+            label={t("workbenchExtract")}
+            icon={FileOutput}
+            disabled={running}
+            onClick={() => void extract(selected)}
+          />
+          <Tool
+            label={t("workbenchDelete")}
+            icon={Trash2}
+            disabled={running}
+            onClick={() => dispatch({ type: "remove", uids: selected })}
+          />
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ms-auto"
+            onClick={() => setSelected(new Set())}
+            disabled={running}
+          >
+            <X className="size-3.5" />
+            {t("workbenchClearSelection")}
           </Button>
         </div>
       ) : null}
@@ -1170,6 +1209,10 @@ export default function WorkbenchPanel({
   );
 }
 
+/**
+ * An icon button whose label is in the accessibility tree always and on screen only
+ * when there is room. The tooltip carries it in between.
+ */
 function Tool({
   label,
   icon: Icon,
@@ -1184,7 +1227,7 @@ function Tool({
   return (
     <Button size="sm" variant="ghost" onClick={onClick} disabled={disabled} title={label}>
       <Icon className="size-4" />
-      <span className="sr-only sm:not-sr-only">{label}</span>
+      <span className="sr-only lg:not-sr-only">{label}</span>
     </Button>
   );
 }

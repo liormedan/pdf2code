@@ -351,6 +351,8 @@
     "workbenchCount": "{pages} pages from {docs} documents",
     "workbenchSelected": "{count} selected",
     "workbenchSelectAll": "Select all",
+    "workbenchClearSelection": "Clear selection",
+    "workbenchSelectionBar": "Actions on the selected pages",
     "workbenchReading": "Reading {name}…",
     "workbenchRendering": "Rendering pages of {name}…",
     "workbenchSaving": "Saving…",
